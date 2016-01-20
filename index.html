@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html ng-app="facetApp">
+
+<head>
+  <title>Semantic Faceted Search</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.js"></script>
+  <script src="facetedsearch.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="facetedsearch.css">
+</head>
+
+
+<body>
+  <div ng-controller="FacetListCtrl as ctrl" class="left">
+    <div class="top">
+        Name: <input name="name" type="text" class="text-input" ng-model="namefilter"/>
+    </div>
+
+    <div class="facet" ng-repeat="facet in ctrl.facets">
+      {{ facet.name }}
+      {{ facet.property }}
+      <div class="facet" ng-repeat="facet in ctrl.facets">
+      </div>
+    </div>
+
+  </div>
+  <div ng-controller="MainCtrl" class="right">
+    <ul>
+    <li ng-repeat="result in results" >
+        <p><b>{{result.name}}</b></p>
+        <p>result.occupation</p>
+    </li>
+    </ul>
+  </div>
+</body>
+
+</html>
