@@ -25,7 +25,7 @@ ObjectMapper.prototype.makeObject = function(obj) {
 
 ObjectMapper.prototype.mergeObjects = function(first, second) {
     // Merge two objects into one object.
-    return _.merge(first, second, function(a, b) {
+    return _.mergeWith(first, second, function(a, b) {
         if (_.isEqual(a, b)) {
             return a;
         }
@@ -101,5 +101,44 @@ ObjectMapper.prototype.makeObjectListNoGrouping = function(objects) {
     return obj_list;
 };
 
+function FacetMapper() {
+    this.objectClass = Object;
+}
+
+function parseValue(value) {
+    if (value.type === 'uri') {
+        return '<' + value.value + '>';
+    }
+    if (value.type === 'typed-literal' && value.datatype === 'http://www.w3.org/2001/XMLSchema#integer') {
+        return value.value;
+    }
+    return '"' + value.value + '"';
+}
+
+FacetMapper.prototype.makeObject = function(obj) {
+    var o = new this.objectClass();
+
+    o.id = '<' + obj.id.value + '>';
+
+    o.values = [{
+        value: parseValue(obj.value),
+        text: obj.facet_text.value,
+        count: parseInt(obj.cnt.value)
+    }];
+
+    return o;
+}
+
+FacetMapper.prototype.mergeObjects = function(first, second) {
+    first.values.push(second.values[0]);
+    return first;
+}
+
 angular.module('facetApp')
-    .service('objectMapperService', ObjectMapper);
+.service('objectMapperService', ObjectMapper)
+.factory('facetMapperService', function(objectMapperService) {
+        var proto = Object.getPrototypeOf(objectMapperService);
+        FacetMapper.prototype = angular.extend({}, proto, FacetMapper.prototype);
+
+        return new FacetMapper();
+});

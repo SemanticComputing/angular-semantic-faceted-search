@@ -5,34 +5,48 @@
   <title>Semantic Faceted Search</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
   <link rel="stylesheet" type="text/css" href="facetedsearch.css">
 </head>
 
 
 <body>
-  <div ng-controller="FacetListCtrl as ctrl" class="left">
-    <div class="top">
-        Name: <input name="name" type="text" class="text-input" ng-model="namefilter"/>
-    </div>
+  <div class="container-fluid" ng-controller="FacetListCtrl as vm" class="left">
+    <div class="row">
+      <div class="col-md-2">
+        <div class="facet" ng-repeat="(id, facet) in vm.facets">
+          <span>
+          {{ facet.name }}
+          </span>
+          <select size="10" id="{{ vm.getFacetName( facet.id ) }}_select" class="selector form-control"
+                  ng-options="value as (value.text + ' (' + value.count + ')') for value in facet.state.values track by value.value"
+                  ng-model="vm.selectedFacets[id]">
+          <option value="">-- choose value --</option>
+          </select>
+        </div>
+      </div>
 
-    <div class="facet" ng-repeat="facet in ctrl.facets">
-      {{ facet.name }}
-      {{ facet.property }}
-      <div class="facet" ng-repeat="facet in ctrl.facets">
+    </div>
+    <div class="col-md-10">
+      <div ng-controller="MainCtrl" class="right">
+        <ul>
+        <li ng-repeat="result in results" >
+            <p><b>{{ result.name }}</b></p>
+            <p>result.occupation</p>
+        </li>
+        </ul>
       </div>
     </div>
-
-  </div>
-  <div ng-controller="MainCtrl" class="right">
-    <ul>
-    <li ng-repeat="result in results" >
-        <p><b>{{result.name}}</b></p>
-        <p>result.occupation</p>
-    </li>
-    </ul>
   </div>
 
+
+  <script src="http://code.jquery.com/jquery-2.2.0.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.0.0/lodash.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+          integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+          crossorigin="anonymous"></script>
+
   <script src="facetedsearch.js"></script>
   <script src="object_mapper.js"></script>
 </body>
