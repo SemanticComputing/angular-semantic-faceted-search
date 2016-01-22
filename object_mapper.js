@@ -112,6 +112,9 @@ function parseValue(value) {
     if (value.type === 'typed-literal' && value.datatype === 'http://www.w3.org/2001/XMLSchema#integer') {
         return value.value;
     }
+    if (value.type === 'typed-literal' && value.datatype === 'http://www.w3.org/2001/XMLSchema#date') {
+        return '"' + value.value + '"^^<http://www.w3.org/2001/XMLSchema#date>';
+    }
     return '"' + value.value + '"';
 }
 

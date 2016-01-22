@@ -4,37 +4,31 @@
 <head>
   <title>Semantic Faceted Search</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
 
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/ng-table/1.0.0-beta.9/ng-table.min.css">
   <link rel="stylesheet" type="text/css" href="facetedsearch.css">
 </head>
 
 
 <body>
-  <div class="container-fluid" ng-controller="FacetListCtrl as vm" class="left">
+  <div class="container-fluid" ng-controller="MainCtrl as vm" class="left">
     <div class="row">
       <div class="col-md-2">
-        <div class="facet" ng-repeat="(id, facet) in vm.facets">
-          <span>
-          {{ facet.name }}
-          </span>
-          <select size="{{ vm.getFacetSize(facet.state.values) }}" id="{{ facet.name + '_select' }}" class="selector form-control"
-                  ng-options="value as (value.text + ' (' + value.count + ')') for value in facet.state.values track by value.value"
-                  ng-model="vm.selectedFacets[id]">
-          <option value="">-- choose value --</option>
-          </select>
-        </div>
+        <facet-selector data-endpoint-url="vm.endpoint_url" data-facets="vm.facets" data-update-results="vm.updateResults">
+        </facet-selector>
       </div>
 
-    </div>
-    <div class="col-md-10">
-      <div ng-controller="MainCtrl" class="right">
-        <ul>
-        <li ng-repeat="result in results" >
-            <p><b>{{ result.name }}</b></p>
-            <p>result.occupation</p>
-        </li>
-        </ul>
+      <div class="col-md-10">
+        <table class="table" ng-table="vm.tableParams">
+          <tr ng-repeat="person in $data">
+              <td title="'Name'" filter="{ name: 'text'}" sortable="'name'">
+                  {{person.name}}</td>
+              <td title="'Occupation'" sortable="'occupation'">
+                  {{person.occupation}}</td>
+          </tr>
+        </table>
       </div>
     </div>
   </div>
@@ -46,6 +40,7 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
           integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
           crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ng-table/1.0.0-beta.9/ng-table.min.js"></script>
 
   <script src="facetedsearch.js"></script>
   <script src="object_mapper.js"></script>
