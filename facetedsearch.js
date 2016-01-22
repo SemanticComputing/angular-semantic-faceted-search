@@ -27,6 +27,9 @@ facetApp.factory('SparqlService', function($http, $q) {
     };
 })
 
+/*
+ * Facet handler service.
+ */
 facetApp.factory( 'Facets', function( $rootScope, $q, SparqlService, facetMapperService ) {
     return function( endpoint_url, facets ) {
 
@@ -95,6 +98,9 @@ facetApp.factory( 'Facets', function( $rootScope, $q, SparqlService, facetMapper
     }
 });
 
+/*
+ * Controller for the facet selector view.
+ */
 facetApp.controller( 'FacetListCtrl', function ( $scope, Facets ) {
     var vm = this;
     
@@ -112,8 +118,11 @@ facetApp.controller( 'FacetListCtrl', function ( $scope, Facets ) {
 
 //    vm.facetHandler.getStates().then( function( states ) { vm.facetStates = states; });
 
-    vm.getFacetName = function( uri ) {
-        return vm.facets[uri];
+    vm.getFacetSize = function( facetStates ) {
+        if (facetStates) {
+            return Math.min(facetStates.length + 2, 10).toString();
+        }
+        return '10';
     }
 
     vm.selectedFacets = {};
@@ -125,6 +134,9 @@ facetApp.controller( 'FacetListCtrl', function ( $scope, Facets ) {
     }, true)
 });
 
+/*
+ * Result handler service.
+ */
 facetApp.factory( 'Results', [ '$rootScope', function( $rootScope ) {
     var service = {
 
@@ -133,7 +145,9 @@ facetApp.factory( 'Results', [ '$rootScope', function( $rootScope ) {
     return service;
 }]);
 
-
+/*
+ * Controller for the results view.
+ */
 facetApp.controller( 'MainCtrl', function ( $scope ) {
 });
 
