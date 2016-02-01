@@ -17,7 +17,6 @@
     <div class="row">
       <div class="col-md-2">
         <facet-selector
-          data-endpoint-url="vm.endpoint_url"
           data-facets="vm.facets"
           data-update-results="vm.updateResults"
           data-options="vm.facetOptions">
@@ -28,9 +27,14 @@
         <table class="table" ng-table="vm.tableParams">
           <tr ng-repeat="person in $data">
               <td title="'Name'" filter="{ name: 'text'}" sortable="'name'">
-                  {{person.name}}</td>
+                  {{person.name}}
+              </td>
               <td title="'Occupation'" sortable="'occupation'">
-                  {{person.occupation}}</td>
+                  {{person.occupation}}
+              </td>
+              <td title="'Marital Status'" sortable="'marital_status'">
+                  {{person.marital_status}}
+              </td>
           </tr>
         </table>
       </div>
@@ -49,6 +53,7 @@
   <script src="sparql/sparql.service.js"></script>
   <script src="sparql-mapper/object.mapper.js"></script>
   <script src="facets/facets.module.js"></script>
+  <script src="facets/facets.facet-selection-formatter.js"></script>
   <script src="facets/facets.mapper.js"></script>
   <script src="facets/facets.service.js"></script>
   <script src="facets/facets.directive.js"></script>

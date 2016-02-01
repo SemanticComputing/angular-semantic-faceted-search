@@ -11,12 +11,12 @@
 
     /* ngInject */
     function Facets( $rootScope, $q, SparqlService, facetMapperService, facetSelectionFormatter ) {
-        return function( endpointUrl, facets, config ) {
+        return function( facets, config ) {
 
             this.getStates = getStates;
 
             var facetStates = [];
-            var endpoint = new SparqlService(endpointUrl);
+            var endpoint = new SparqlService(config.endpointUrl);
             var queryTemplate = '' +
                 ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#>' +
                 ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>' +

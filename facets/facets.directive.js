@@ -15,7 +15,6 @@
         return {
             restrict: 'E',
             scope: {
-                endpointUrl: '=',
                 facets: '=',
                 updateResults: '=',
                 options: '='
@@ -36,7 +35,7 @@
         vm.facets = $scope.facets;
         vm.selectedFacets = {};
 
-        vm.facetHandler = new Facets($scope.endpointUrl, vm.facets, $scope.options);
+        vm.facetHandler = new Facets(vm.facets, $scope.options);
 
         vm.getFacetSize = function( facetStates ) {
             if (facetStates) {
