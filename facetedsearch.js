@@ -34,7 +34,7 @@ facetApp.factory('SparqlService', function($http, $q) {
             }
         };
     };
-})
+});
 
 /*
  * Facet handler service.
@@ -48,7 +48,7 @@ facetApp.factory( 'Facets', function( $rootScope, $q, SparqlService, facetMapper
 
         this.selectFacet = function( facet, value ) {
             return $q.when(facetStates);
-        }
+        };
 
         this.getStates = function(facetSelections) {
             var query = ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#>' +
@@ -84,13 +84,13 @@ facetApp.factory( 'Facets', function( $rootScope, $q, SparqlService, facetMapper
 
             var promise = SPARQL.getObjects(query);
             return promise.then(parseResults);
-        }
+        };
 
         function parseResults( sparqlResults ) {
             facetStates = facetMapperService.makeObjectList(sparqlResults);
             return facetStates;
         }
-    }
+    };
 });
 
 
@@ -117,25 +117,27 @@ facetApp.directive('facetSelector', function() {
         var vm = this;
 
         vm.facets = $scope.facets;
+        vm.selectedFacets = {};
 
-        vm.facetHandler = new Facets($scope.endpointUrl, $scope.facets);
+        vm.facetHandler = new Facets($scope.endpointUrl, vm.facets);
 
         vm.getFacetSize = function( facetStates ) {
             if (facetStates) {
                 return Math.min(facetStates.length + 2, 10).toString();
             }
             return '10';
-        }
-
-        vm.selectedFacets = {};
+        };
 
         $scope.$watch(function() { return vm.selectedFacets; }, function(val) {
             vm.facetHandler.getStates( val ).then( function ( states ) {
-                states.forEach( function (state) { vm.facets[state.id].state = state; });
+                _.forOwn(vm.facets, function (facet, key) {
+                    facet.state = _.find(states, ['id', key]);
+                });
             });
+
             $scope.updateResults(vm.selectedFacets);
-        }, true)
-    };
+        }, true);
+    }
 });
 
 
@@ -213,7 +215,7 @@ facetApp.factory( 'Results', function( $rootScope, $q, SparqlService, objectMapp
 //
 //                ' BIND(CONCAT("<a href=\"http://www.sotasampo.fi/times/page?uri=http://ldf.fi/warsa/events/times/time_",STR(?kuolinaika),"-",STR(?kuolinaika),"\">",STR(?kuolinaika),"</a>") AS ?kuolinpaiva) .' +
 //                ' }' +
-                ' OPTIONAL { ?s m_schema:ammatti ?occupation . }' +
+//                ' OPTIONAL { ?s m_schema:ammatti ?occupation . }' +
 //                ' OPTIONAL { ?s m_schema:kuolinpaikka ?kuolinpaikka . }' +
 //                ' OPTIONAL { ?s m_schema:sotilasarvo ?arvouri .' +
 //                ' GRAPH <http://ldf.fi/warsa/actors/actor_types> {' +
@@ -260,11 +262,11 @@ facetApp.controller( 'MainCtrl', function ( $scope, Results, NgTableParams ) {
         '<http://ldf.fi/schema/narc-menehtyneet1939-45/kuolinaika>': { name: 'Kuolinaika' },
         '<http://ldf.fi/schema/narc-menehtyneet1939-45/osasto>': { name: 'Joukko-osasto' },
         '<http://ldf.fi/schema/narc-menehtyneet1939-45/sukupuoli>': { name: 'Sukupuoli' },
-        '<http://ldf.fi/schema/narc-menehtyneet1939-45/siviilisaeaety>': { name: 'Siviilisääty' },
+        '<http://ldf.fi/schema/narc-menehtyneet1939-45/siviilisaeaety>': { name: 'Siviilisääty' }
     };
 
     vm.properties = {
-        '?occupation': '<http://ldf.fi/schema/narc-menehtyneet1939-45/ammatti>',
+        '?occupation': '<http://ldf.fi/schema/narc-menehtyneet1939-45/ammatti>'
     };
 
     vm.endpoint_url = 'http://ldf.fi/warsa/sparql';
@@ -276,7 +278,9 @@ facetApp.controller( 'MainCtrl', function ( $scope, Results, NgTableParams ) {
     vm.updateResults = function ( facetSelections ) {
         var numResults = null;
         _.forOwn( facetSelections, function( val, key ) {
-            if (val && (numResults===null || val.count < numResults)) { numResults = val.count };
+            if (val && (numResults===null || val.count < numResults)) {
+                numResults = val.count;
+            }
         });
         console.log(numResults);
         if (numResults && numResults <= 25000) {
@@ -297,5 +301,5 @@ facetApp.service('facetSelectionFormatter', function () {
             }
         });
         return result;
-    }
+    };
 });
