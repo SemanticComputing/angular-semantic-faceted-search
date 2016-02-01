@@ -16,7 +16,11 @@
   <div class="container-fluid" ng-controller="MainCtrl as vm" class="left">
     <div class="row">
       <div class="col-md-2">
-        <facet-selector data-endpoint-url="vm.endpoint_url" data-facets="vm.facets" data-update-results="vm.updateResults">
+        <facet-selector
+          data-endpoint-url="vm.endpoint_url"
+          data-facets="vm.facets"
+          data-update-results="vm.updateResults"
+          data-options="vm.facetOptions">
         </facet-selector>
       </div>
 

@@ -40,7 +40,7 @@ facetApp.factory('SparqlService', function($http, $q) {
  * Facet handler service.
  */
 facetApp.factory( 'Facets', function( $rootScope, $q, SparqlService, facetMapperService, facetSelectionFormatter ) {
-    return function( endpoint_url, facets ) {
+    return function( endpoint_url, facets, config ) {
 
         var facetStates = [];
 
@@ -65,18 +65,17 @@ facetApp.factory( 'Facets', function( $rootScope, $q, SparqlService, facetMapper
                         Object.keys( facets ).join(' ') +
 
                         '     }' +
-                        '     GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> {' +
-//                        '       ?s a foaf:Person .' +
+                        (config.graph ? '     GRAPH ' + config.graph + ' { ' : '') +
+                        (config.rdfClass ? ' ?s a ' + config.rdfClass + ' . ' : '') +
 
                         facetSelectionFormatter.parseFacetSelections(facetSelections) +
 
                         '       ?s ?id ?value .' +
-                        '     }' +
-
+                        (config.graph ? ' } ' : '') +
                         '   } GROUP BY ?id ?value' +
                         ' }' +
                         '   OPTIONAL {' +
-                        '     ?value sf:preferredLanguageLiteral (skos:prefLabel "fi" "" ?lbl) .' +
+                        '     ?value sf:preferredLanguageLiteral (skos:prefLabel "' + (config.preferredLang ? config.preferredLang : 'fi') + '" "" ?lbl) .' +
                         '   }' +
                         '   BIND(COALESCE(?lbl, ?value) as ?facet_text)' +
                         ' }' +
@@ -103,7 +102,8 @@ facetApp.directive('facetSelector', function() {
         scope: {
             endpointUrl: '=',
             facets: '=',
-            updateResults: '='
+            updateResults: '=',
+            options: '='
         },
         controller: FacetListCtrl,
         controllerAs: 'vm',
@@ -119,7 +119,7 @@ facetApp.directive('facetSelector', function() {
         vm.facets = $scope.facets;
         vm.selectedFacets = {};
 
-        vm.facetHandler = new Facets($scope.endpointUrl, vm.facets);
+        vm.facetHandler = new Facets($scope.endpointUrl, vm.facets, $scope.options);
 
         vm.getFacetSize = function( facetStates ) {
             if (facetStates) {
@@ -144,10 +144,11 @@ facetApp.directive('facetSelector', function() {
 /*
  * Result handler service.
  */
-facetApp.factory( 'Results', function( $rootScope, $q, SparqlService, objectMapperService, facetSelectionFormatter ) {
-    return function( endpoint_url, properties ) {
+facetApp.factory( 'Results', function( $rootScope, $q, SparqlService,
+            objectMapperService, facetSelectionFormatter ) {
+    return function( endpointUrl, properties ) {
 
-        var SPARQL = new SparqlService(endpoint_url);
+        var endpoint = new SparqlService(endpointUrl);
 
         this.getResults = function(facetSelections) {
             console.log(facetSelections);
@@ -237,7 +238,7 @@ facetApp.factory( 'Results', function( $rootScope, $q, SparqlService, objectMapp
 
                 ' ORDER BY ?name';
 
-            var promise = SPARQL.getObjects(query);
+            var promise = endpoint.getObjects(query);
             return promise.then(parseResults);
 
             function parseResults( sparqlResults ) {
@@ -271,13 +272,16 @@ facetApp.controller( 'MainCtrl', function ( $scope, Results, NgTableParams ) {
 
     vm.endpoint_url = 'http://ldf.fi/warsa/sparql';
 
-    vm.FacetClass = '<http://xmlns.com/foaf/0.1/Person>';
+    vm.facetOptions = {
+        graph : '<http://ldf.fi/narc-menehtyneet1939-45/>',
+        preferredLang : 'fi'
+    };
 
     vm.resultHandler = new Results('http://ldf.fi/warsa/sparql', vm.properties);
 
     vm.updateResults = function ( facetSelections ) {
         var numResults = null;
-        _.forOwn( facetSelections, function( val, key ) {
+        _.forOwn( facetSelections, function( val ) {
             if (val && (numResults===null || val.count < numResults)) {
                 numResults = val.count;
             }
