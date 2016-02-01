@@ -111,8 +111,7 @@
 
                     ' ORDER BY ?name';
 
-                var promise = endpoint.getObjects(query);
-                return promise.then(parseResults);
+                return endpoint.getObjects(query).then(parseResults);
 
                 function parseResults( sparqlResults ) {
                     return objectMapperService.makeObjectListNoGrouping(sparqlResults);

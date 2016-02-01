@@ -2,11 +2,11 @@
     'use strict';
 
     /*
-    * Service for transforming SPARQL result triples into more manageable objects.
+    * Service for transforming SPARQL result triples into facet objects.
     *
     * Author Erkki Heino.
     */
-    angular.module('facets', ['sparqlMapper'])
+    angular.module('facets')
 
     .factory('facetMapperService', facetMapperService);
 
