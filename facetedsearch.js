@@ -3,6 +3,7 @@
  *
  * TODO:
  *  - Get counts for selection clearing
+ *  - LICENSE & authors
  */
 
 
