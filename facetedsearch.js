@@ -10,6 +10,7 @@
 
     'use strict';
 
+    /* eslint-disable angular/no-service-method */
     angular.module('facetApp', ['ngTable'])
 
     .constant('_', _) // eslint-disable-line no-undef
@@ -284,7 +285,7 @@
     /*
     * Controller for the results view.
     */
-    .controller( 'MainCtrl', function ( $scope, _, Results, NgTableParams ) {
+    .controller( 'MainController', function ( $scope, _, Results, NgTableParams ) {
         var vm = this;
 
         vm.facets = {
