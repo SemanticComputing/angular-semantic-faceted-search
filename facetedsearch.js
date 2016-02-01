@@ -18,15 +18,17 @@
     /*
     * Result handler service.
     */
-    .factory( 'Results', function( SparqlService, objectMapperService ) {
+    .factory( 'Results', function( SparqlService, objectMapperService, facetSelectionFormatter ) {
         return function( endpointUrl ) {
 
             var endpoint = new SparqlService(endpointUrl);
 
             this.getResults = getResults;
 
-            function getResults(query) {
-                return endpoint.getObjects(query).then(parseResults);
+            function getResults(query, facetSelections) {
+                return endpoint.getObjects(query.replace('<FACET_SELECTIONS>',
+                        facetSelectionFormatter.parseFacetSelections(facetSelections)))
+                .then(parseResults);
             }
 
             function parseResults( sparqlResults ) {
@@ -56,7 +58,10 @@
 
         var properties = {
             '?occupation': '<http://ldf.fi/schema/narc-menehtyneet1939-45/ammatti>',
-            '?marital_status': '<http://ldf.fi/schema/narc-menehtyneet1939-45/ammatti>'
+            '?marital_status': '',
+            '?death_municipality': '',
+            '?tod': '',
+            '?casualty_class': ''
         };
 
         var facetOptions = {
@@ -91,28 +96,28 @@
             ' OPTIONAL {' +
             ' ?s m_schema:siviilisaeaety ?siviilisaeaetyuri .' +
             ' ?siviilisaeaetyuri skos:prefLabel ?marital_status . }' +
-            ' OPTIONAL { ?s m_schema:sukupuoli ?sukupuoliuri .' +
-            ' ?sukupuoliuri skos:prefLabel ?sukupuoli . }' +
-            ' OPTIONAL { ?s m_schema:lasten_lukumaeaerae ?lasten_lukumaeaerae . }' +
-            ' OPTIONAL { ?s m_schema:kansalaisuus ?kansalaisuusuri .' +
-            ' ?kansalaisuusuri skos:prefLabel ?kansalaisuus . }' +
-            ' OPTIONAL { ?s m_schema:aeidinkieli ?aeidinkieliuri .' +
-            ' ?aeidinkieliuri skos:prefLabel ?aeidinkieli . }' +
+//            ' OPTIONAL { ?s m_schema:sukupuoli ?sukupuoliuri .' +
+//            ' ?sukupuoliuri skos:prefLabel ?sukupuoli . }' +
+//            ' OPTIONAL { ?s m_schema:lasten_lukumaeaerae ?lasten_lukumaeaerae . }' +
+//            ' OPTIONAL { ?s m_schema:kansalaisuus ?kansalaisuusuri .' +
+//            ' ?kansalaisuusuri skos:prefLabel ?kansalaisuus . }' +
+//            ' OPTIONAL { ?s m_schema:aeidinkieli ?aeidinkieliuri .' +
+//            ' ?aeidinkieliuri skos:prefLabel ?aeidinkieli . }' +
             ' OPTIONAL { ?s m_schema:menehtymisluokka ?menehtymisluokkauri .' +
-            ' ?menehtymisluokkauri skos:prefLabel ?menehtymisluokka  . }' +
-//                    ' OPTIONAL { ?s m_schema:kuolinkunta ?kuolinkunta_uri .' +
-//                    ' OPTIONAL {' +
-//                    ' 	GRAPH <http://ldf.fi/warsa/places/municipalities> {' +
-//                    ' 		?kuolinkunta_uri skos:prefLabel ?kuolinkunta_warsa .' +
-//                    ' 	}' +
-//                    ' } OPTIONAL {' +
-//                    ' 	?kuolinkunta_uri skos:prefLabel ?kuolinkunta_narc .' +
-//                    ' }' +
-//                    ' }' +
-//                    ' OPTIONAL { ?s m_schema:kuolinaika ?kuolinaika .' +
-//    
+            ' ?menehtymisluokkauri skos:prefLabel ?casualty_class . }' +
+            ' OPTIONAL { ?s m_schema:kuolinkunta ?kuolinkunta_uri .' +
+            ' OPTIONAL {' +
+            ' 	GRAPH <http://ldf.fi/warsa/places/municipalities> {' +
+            ' 		?kuolinkunta_uri skos:prefLabel ?kuolinkunta_warsa .' +
+            ' 	}' +
+            ' } OPTIONAL {' +
+            ' 	?kuolinkunta_uri skos:prefLabel ?kuolinkunta_narc .' +
+            ' }' +
+            ' }' +
+            ' OPTIONAL { ?s m_schema:kuolinaika ?tod .' +
+
 //                    ' BIND(CONCAT("<a href=\"http://www.sotasampo.fi/times/page?uri=http://ldf.fi/warsa/events/times/time_",STR(?kuolinaika),"-",STR(?kuolinaika),"\">",STR(?kuolinaika),"</a>") AS ?kuolinpaiva) .' +
-//                    ' }' +
+            ' }' +
             ' OPTIONAL { ?s m_schema:ammatti ?occupation . }' +
 //                    ' OPTIONAL { ?s m_schema:kuolinpaikka ?kuolinpaikka . }' +
 //                    ' OPTIONAL { ?s m_schema:sotilasarvo ?arvouri .' +
@@ -128,7 +133,7 @@
 //                    ' }' +
 
             ' }' +
-//                   ' BIND(COALESCE(?kuolinkunta_warsa, ?kuolinkunta_narc) as ?kuolinkunta)' +
+                ' BIND(COALESCE(?kuolinkunta_warsa, ?kuolinkunta_narc) as ?death_municipality)' +
             ' }' +
             ' GROUP BY ?s ?name ' +
             Object.keys( properties ).join(' ') +
@@ -140,8 +145,7 @@
         this.getFacetOptions = getFacetOptions;
 
         function getResults(facetSelections) {
-            return resultHandler.getResults(query.replace('<FACET_SELECTIONS>',
-                    facetSelectionFormatter.parseFacetSelections(facetSelections)));
+            return resultHandler.getResults(query, facetSelections);
         }
 
         function getFacets() {
