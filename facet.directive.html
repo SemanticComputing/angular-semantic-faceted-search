@@ -2,9 +2,12 @@
   <div class="facet-name">
     {{ facet.name }}
   </div>
-  <select size="{{ vm.getFacetSize(facet.state.values) }}" id="{{ facet.name + '_select' }}" class="selector form-control"
-          ng-options="value as (value.text + ' (' + value.count + ')') for value in facet.state.values track by value.value"
-          ng-model="vm.selectedFacets[id]">
+  <select
+      size="{{ vm.getFacetSize(facet.state.values) }}"
+      id="{{ facet.name + '_select' }}"
+      class="selector form-control"
+      ng-options="value as (value.text + ' (' + value.count + ')') for value in facet.state.values track by value.value"
+      ng-model="vm.selectedFacets[id]">
   <option value="">-- Choose value --</option>
   </select>
 </div>
