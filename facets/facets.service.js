@@ -70,7 +70,7 @@
                     },
                     {
                         placeHolder: '<GRAPH_START>',
-                        value: (config.graph ? '     GRAPH ' + config.graph + ' { ' : '')
+                        value: (config.graph ? ' GRAPH ' + config.graph + ' { ' : '')
                     },
                     {
                         placeHolder: '<CLASS>',

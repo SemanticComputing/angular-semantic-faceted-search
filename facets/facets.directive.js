@@ -1,6 +1,3 @@
-/*
-* Facet handler service.
-*/
 (function() {
     'use strict';
 

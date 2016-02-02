@@ -41,7 +41,7 @@
     /*
      * Casualty service
      */
-    .service( 'casualtyService', function( $q, SparqlService, Results, facetSelectionFormatter ) {
+    .service( 'casualtyService', function( $q, SparqlService, Results ) {
         var endpointUrl = 'http://ldf.fi/warsa/sparql';
         var resultHandler = new Results(endpointUrl);
 
@@ -57,6 +57,7 @@
         };
 
         var properties = {
+            '?name': '',
             '?occupation': '<http://ldf.fi/schema/narc-menehtyneet1939-45/ammatti>',
             '?marital_status': '',
             '?death_municipality': '',
@@ -83,8 +84,7 @@
             ' PREFIX m: <http://ldf.fi/sotasampo/narc/menehtyneet/>' +
             ' PREFIX m_schema: <http://ldf.fi/schema/narc-menehtyneet1939-45/>' +
 
-            ' SELECT ?s ?name ' +
-            Object.keys( properties ).join(' ') +
+            ' SELECT ?s <PROPERTIES> ' +
 
             ' WHERE {' +
             ' GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> {' +
@@ -135,10 +135,9 @@
             ' }' +
                 ' BIND(COALESCE(?kuolinkunta_warsa, ?kuolinkunta_narc) as ?death_municipality)' +
             ' }' +
-            ' GROUP BY ?s ?name ' +
-            Object.keys( properties ).join(' ') +
-
+            ' GROUP BY ?s <PROPERTIES> ' +
             ' ORDER BY ?name';
+        query = query.replace('<PROPERTIES>', Object.keys( properties ).join(' '))
 
         this.getResults = getResults;
         this.getFacets = getFacets;
