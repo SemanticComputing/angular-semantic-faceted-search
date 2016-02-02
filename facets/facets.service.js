@@ -24,27 +24,42 @@
                 ' PREFIX sf: <http://ldf.fi/functions#>' +
 
                 ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
-                '   {' +
-                '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value' +
-                '     WHERE {' +
-                '       VALUES ?id {' +
-                '         <FACETS> ' +
-                '       } ' +
-                '       <GRAPH_START> ' +
-                '         <CLASS> ' +
-                '         <SELECTIONS> ' +
-                '         ?s ?id ?value .' +
-                '       <GRAPH_END> ' +
-                '     } GROUP BY ?id ?value' +
+                '   { ' +
+                '     {' +
+                '       SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value' +
+                '       WHERE {' +
+                '         VALUES ?id {' +
+                '           <FACETS> ' +
+                '         } ' +
+                '         <GRAPH_START> ' +
+                '           <CLASS> ' +
+                '           <SELECTIONS> ' +
+                '           ?s ?id ?value .' +
+                '         <GRAPH_END> ' +
+                '       } GROUP BY ?id ?value' +
+                '     }' +
+                '     OPTIONAL {' +
+                '       ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
+                '     }' +
+                '     BIND(COALESCE(?lbl, ?value) as ?facet_text)' +
                 '   }' +
-                '   OPTIONAL {' +
-                '     ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
-                '   }' +
-                '   BIND(COALESCE(?lbl, ?value) as ?facet_text)' +
-                ' }' +
+                '   <DESELECTIONS> ' +
+                ' } ' +
                 ' ORDER BY ?id ?facet_text';
             queryTemplate = buildQueryTemplate(queryTemplate);
 
+            var deselectUnionTemplate = '' +
+           '     UNION { ' +
+           '     { SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
+           '     WHERE { ' +
+           '         GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> { ' +
+           '             <OTHER_SELECTIONS> ' +
+           '         } ' +
+           '     } ' +
+           '     } ' +
+           '     BIND("-- No Selection --" AS ?facet_text) ' +
+           '     BIND(<DESELECTION> AS ?id) ' +
+           ' }';
 
             function getStates(facetSelections) {
                 var query = buildQuery(facetSelections);
@@ -55,12 +70,19 @@
 
             function parseResults( sparqlResults ) {
                 facetStates = facetMapperService.makeObjectList(sparqlResults);
+               // var total = _.find(facetStates, ['id', '<TOTAL>']);
+               // if (total) {
+               //     facetStates = _.reject(facetStates, total);
+               //     facetStates.forEach(function(state) {
+               //         state.state.values.push({
+               //             count: total.
                 return facetStates;
             }
 
             function buildQuery(facetSelections) {
                 return queryTemplate.replace('<SELECTIONS>',
-                        formatter.parseFacetSelections(facetSelections));
+                        formatter.parseFacetSelections(facetSelections))
+                        .replace('<DESELECTIONS>', buildDeselectionUnions(facetSelections));
             }
 
             function buildQueryTemplate(template) {
@@ -101,6 +123,34 @@
                 });
                 return res.join(' ');
             }
+
+            function buildDeselectionUnions(facetSelections) {
+              //  if (_(facetSelections).values().compact().value().length < 2) {
+              //      var only = _.findKey(facetSelections, 'value');
+              //      return deselectUnionTemplate.replace('<DESELECTION>', only || '<TOTAL>')
+              //          .replace('<OTHER_SELECTIONS>', ' ?s ?p ?o ');
+              //  }
+                var deselections = [];
+                _.forOwn( facets, function( val, key ) {
+                    var s = deselectUnionTemplate.replace('<DESELECTION>', key);
+                    var others = {};
+                    _.forOwn( facets, function( v, k ) {
+                        if (k !== key) {
+                            var selected = facetSelections[k];
+                            console.log(selected);
+                            if (selected && selected.value) {
+                                others[k] = facetSelections[k];
+                            } else {
+                                others[k] = v;
+                            }
+                        }
+                    });
+                    deselections.push(s.replace('<OTHER_SELECTIONS>',
+                            formatter.parseFacetSelections(others) + ' ?s ?p ?o . '));
+                });
+                return deselections.join(' ');
+            }
+
         };
     }
 })();

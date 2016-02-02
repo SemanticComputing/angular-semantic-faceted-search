@@ -31,6 +31,7 @@
 
         vm.facets = $scope.facets;
         vm.selectedFacets = {};
+        console.log(vm.facets);
 
         vm.facetHandler = new Facets(vm.facets, $scope.options);
 
@@ -42,6 +43,7 @@
         };
 
         $scope.$watch(function() { return vm.selectedFacets; }, function(val) {
+            console.log(val);
             vm.facetHandler.getStates( val ).then( function ( states ) {
                 _.forOwn(vm.facets, function (facet, key) {
                     facet.state = _.find(states, ['id', key]);

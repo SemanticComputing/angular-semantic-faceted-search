@@ -44,6 +44,9 @@
         }
 
         function parseValue(value) {
+            if (!value) {
+                return null;
+            }
             if (value.type === 'uri') {
                 return '<' + value.value + '>';
             }

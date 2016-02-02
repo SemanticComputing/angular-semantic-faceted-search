@@ -33,7 +33,6 @@
             }
 
             function parseResults( sparqlResults ) {
-                console.log(sparqlResults);
                 return objectMapperService.makeObjectListNoGrouping(sparqlResults);
             }
 
