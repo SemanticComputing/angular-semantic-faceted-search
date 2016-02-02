@@ -169,16 +169,21 @@
         vm.facetOptions = casualtyService.getFacetOptions();
 
         vm.updateResults = function ( facetSelections ) {
-            var numResults = null;
+            vm.isLoadingResults = true;
+            var numResults;
             _.forOwn( facetSelections, function( val ) {
-                if (val && (numResults || val.count > numResults)) {
+                if (val && (!numResults || val.count > numResults)) {
                     numResults = val.count;
                 }
             });
             if (numResults && numResults <= 25000) {
                 casualtyService.getResults( facetSelections ).then( function ( res ) {
                     vm.tableParams = new NgTableParams({}, { dataset: res, count: 50 });
+                    vm.isLoadingResults = false;
                 });
+            } else {
+                vm.tableParams = new NgTableParams({}, { dataset: [], count: 50 });
+                vm.isLoadingResults = false;
             }
         };
     });

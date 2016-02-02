@@ -1,6 +1,7 @@
 <div class="facet" ng-repeat="(id, facet) in vm.facets">
   <div class="facet-name">
     {{ facet.name }}
+    <img src="loading-sm.gif" ng-if="vm.isLoadingFacets">
   </div>
   <select ng-if="facet.type !== 'text'"
       size="{{ vm.getFacetSize(facet.state.values) }}"

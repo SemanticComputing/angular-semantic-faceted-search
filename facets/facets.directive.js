@@ -42,10 +42,12 @@
         };
 
         $scope.$watch(function() { return vm.selectedFacets; }, function(val) {
+            vm.isLoadingFacets = true;
             vm.facetHandler.getStates( val ).then( function ( states ) {
                 _.forOwn(vm.facets, function (facet, key) {
                     facet.state = _.find(states, ['id', key]);
                 });
+                vm.isLoadingFacets = false;
             });
 
             $scope.updateResults(vm.selectedFacets);

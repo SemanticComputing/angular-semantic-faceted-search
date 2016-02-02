@@ -1,4 +1,9 @@
 .facet-name {
-	padding-top:10px;
-	font-weight:bold;
+	padding-top: 10px;
+	font-weight: bold;
+}
+
+.loading-img {
+  display: block;
+  margin: auto;
 }
