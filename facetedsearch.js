@@ -18,20 +18,22 @@
     /*
     * Result handler service.
     */
-    .factory( 'Results', function( SparqlService, objectMapperService, facetSelectionFormatter ) {
-        return function( endpointUrl ) {
+    .factory( 'Results', function( SparqlService, objectMapperService, FacetSelectionFormatter ) {
+        return function( endpointUrl, facets ) {
 
+            var formatter = new FacetSelectionFormatter(facets);
             var endpoint = new SparqlService(endpointUrl);
 
             this.getResults = getResults;
 
             function getResults(query, facetSelections) {
                 return endpoint.getObjects(query.replace('<FACET_SELECTIONS>',
-                        facetSelectionFormatter.parseFacetSelections(facetSelections)))
+                        formatter.parseFacetSelections(facetSelections)))
                 .then(parseResults);
             }
 
             function parseResults( sparqlResults ) {
+                console.log(sparqlResults);
                 return objectMapperService.makeObjectListNoGrouping(sparqlResults);
             }
 
@@ -43,9 +45,9 @@
      */
     .service( 'casualtyService', function( $q, SparqlService, Results ) {
         var endpointUrl = 'http://ldf.fi/warsa/sparql';
-        var resultHandler = new Results(endpointUrl);
 
         var facets = {
+            '<http://www.w3.org/2004/02/skos/core#prefLabel>': { name: 'Nimi', type: 'text' },
             '<http://ldf.fi/schema/narc-menehtyneet1939-45/ammatti>': { name: 'Ammatti' },
             '<http://ldf.fi/schema/narc-menehtyneet1939-45/asuinkunta>': { name: 'Asuinkunta' },
             '<http://ldf.fi/schema/narc-menehtyneet1939-45/kansalaisuus>': { name: 'Kansalaisuus' },
@@ -55,6 +57,8 @@
             '<http://ldf.fi/schema/narc-menehtyneet1939-45/sukupuoli>': { name: 'Sukupuoli' },
             '<http://ldf.fi/schema/narc-menehtyneet1939-45/siviilisaeaety>': { name: 'Siviilisääty' }
         };
+
+        var resultHandler = new Results(endpointUrl, facets);
 
         var properties = {
             '?name': '',
@@ -137,7 +141,7 @@
             ' }' +
             ' GROUP BY ?s <PROPERTIES> ' +
             ' ORDER BY ?name';
-        query = query.replace('<PROPERTIES>', Object.keys( properties ).join(' '))
+        query = query.replace(/<PROPERTIES>/g, Object.keys( properties ).join(' '));
 
         this.getResults = getResults;
         this.getFacets = getFacets;
@@ -168,7 +172,7 @@
         vm.updateResults = function ( facetSelections ) {
             var numResults = null;
             _.forOwn( facetSelections, function( val ) {
-                if (val && (numResults===null || val.count < numResults)) {
+                if (val && (numResults || val.count > numResults)) {
                     numResults = val.count;
                 }
             });

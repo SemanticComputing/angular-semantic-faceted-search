@@ -7,11 +7,12 @@
     /* eslint-disable angular/no-service-method */
     angular.module('facets')
 
-    .factory( 'Facets', Facets ); 
+    .factory( 'Facets', Facets );
 
     /* ngInject */
-    function Facets( $rootScope, $q, SparqlService, facetMapperService, facetSelectionFormatter ) {
+    function Facets( $rootScope, $q, _, SparqlService, facetMapperService, FacetSelectionFormatter ) {
         return function( facets, config ) {
+            var formatter = new FacetSelectionFormatter(facets);
 
             this.getStates = getStates;
 
@@ -59,14 +60,14 @@
 
             function buildQuery(facetSelections) {
                 return queryTemplate.replace('<SELECTIONS>',
-                        facetSelectionFormatter.parseFacetSelections(facetSelections));
+                        formatter.parseFacetSelections(facetSelections));
             }
 
             function buildQueryTemplate(template) {
                 var templateSubs = [
                     {
                         placeHolder: '<FACETS>',
-                        value: Object.keys( facets ).join(' ')
+                        value: getTemplateFacets()
                     },
                     {
                         placeHolder: '<GRAPH_START>',
@@ -89,6 +90,16 @@
                     template = template.replace(s.placeHolder, s.value);
                 });
                 return template;
+            }
+
+            function getTemplateFacets() {
+                var res = [];
+                _.forOwn(facets, function(facet, uri) {
+                    if (facet.type != 'text') {
+                        res.push(uri);
+                    }
+                });
+                return res.join(' ');
             }
         };
     }
