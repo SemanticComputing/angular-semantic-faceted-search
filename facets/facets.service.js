@@ -70,12 +70,6 @@
 
             function parseResults( sparqlResults ) {
                 facetStates = facetMapperService.makeObjectList(sparqlResults);
-               // var total = _.find(facetStates, ['id', '<TOTAL>']);
-               // if (total) {
-               //     facetStates = _.reject(facetStates, total);
-               //     facetStates.forEach(function(state) {
-               //         state.state.values.push({
-               //             count: total.
                 return facetStates;
             }
 
@@ -125,11 +119,6 @@
             }
 
             function buildDeselectionUnions(facetSelections) {
-              //  if (_(facetSelections).values().compact().value().length < 2) {
-              //      var only = _.findKey(facetSelections, 'value');
-              //      return deselectUnionTemplate.replace('<DESELECTION>', only || '<TOTAL>')
-              //          .replace('<OTHER_SELECTIONS>', ' ?s ?p ?o ');
-              //  }
                 var deselections = [];
                 _.forOwn( facets, function( val, key ) {
                     var s = deselectUnionTemplate.replace('<DESELECTION>', key);
@@ -137,7 +126,6 @@
                     _.forOwn( facets, function( v, k ) {
                         if (k !== key) {
                             var selected = facetSelections[k];
-                            console.log(selected);
                             if (selected && selected.value) {
                                 others[k] = facetSelections[k];
                             } else {
