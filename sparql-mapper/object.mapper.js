@@ -6,6 +6,7 @@
     *
     * Author Erkki Heino.
     */
+    /* eslint-disable angular/no-service-method */
     angular.module('sparqlMapper', [])
 
     .constant('_', _) // eslint-disable-line no-undef

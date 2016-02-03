@@ -8,14 +8,12 @@
     'use strict';
 
     /* eslint-disable angular/no-service-method */
-    angular.module('facetApp', ['sparql', 'facets', 'ngTable'])
-
-    .constant('_', _) // eslint-disable-line no-undef
+    angular.module('facetApp')
 
     /*
     * Result handler service.
     */
-    .factory( 'Results', function( SparqlService, objectMapperService, FacetSelectionFormatter ) {
+    .factory( 'Results', function( SparqlService, personMapperService, FacetSelectionFormatter ) {
         return function( endpointUrl, facets ) {
 
             var formatter = new FacetSelectionFormatter(facets);
@@ -30,7 +28,7 @@
             }
 
             function parseResults( sparqlResults ) {
-                return objectMapperService.makeObjectListNoGrouping(sparqlResults);
+                return personMapperService.makeObjectList(sparqlResults);
             }
 
         };
@@ -62,6 +60,7 @@
             '?marital_status': '',
             '?death_municipality': '',
             '?tod': '',
+            '?unit': '',
             '?casualty_class': ''
         };
 
@@ -85,12 +84,13 @@
             ' PREFIX m: <http://ldf.fi/sotasampo/narc/menehtyneet/>' +
             ' PREFIX m_schema: <http://ldf.fi/schema/narc-menehtyneet1939-45/>' +
 
-            ' SELECT ?s <PROPERTIES> ' +
+            ' SELECT ?id ?s <PROPERTIES> ' +
 
             ' WHERE {' +
             ' GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> {' +
             ' ?s a foaf:Person .' +
             ' ?s skos:prefLabel ?name .' +
+            ' BIND(?s AS ?id) ' +
 
             ' <FACET_SELECTIONS> ' +
 
@@ -126,18 +126,18 @@
 //                    ' ?arvouri skos:prefLabel ?sotilasarvo  .' +
 //                    ' }' +
 //                    ' }' +
-//                    ' OPTIONAL { ?s m_schema:osasto ?osastouri .' +
-//                    ' GRAPH <http://ldf.fi/warsa/actors> {' +
-//                    ' ?osastouri skos:prefLabel ?osasto  .' +
+            ' OPTIONAL { ?s m_schema:osasto ?osastouri .' +
+            ' GRAPH <http://ldf.fi/warsa/actors> {' +
+            ' ?osastouri skos:prefLabel ?unit  .' +
 //                    ' BIND(CONCAT("<a href=\"http://www.sotasampo.fi/page?uri=",STR(?osastouri),"\">",?osasto,"</a>") AS ?joukkoosastoHTML) .' +
-//                    ' }' +
-//                    ' }' +
+            ' }' +
+            ' }' +
 
             ' }' +
                 ' BIND(COALESCE(?kuolinkunta_warsa, ?kuolinkunta_narc) as ?death_municipality)' +
             ' }' +
-            ' GROUP BY ?s <PROPERTIES> ' +
-            ' ORDER BY ?name';
+            ' GROUP BY ?id ?s <PROPERTIES> ' +
+            ' ORDER BY ?id ';
         query = query.replace(/<PROPERTIES>/g, Object.keys( properties ).join(' '));
 
         this.getResults = getResults;
@@ -174,7 +174,7 @@
                     numResults = val.count;
                 }
             });
-            if (numResults && numResults <= 25000) {
+            if (numResults && numResults <= 2500000) {
                 casualtyService.getResults( facetSelections ).then( function ( res ) {
                     vm.tableParams = new NgTableParams({}, { dataset: res, count: 50 });
                     vm.isLoadingResults = false;
