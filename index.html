@@ -25,27 +25,27 @@
 
       <div class="col-md-10">
         <table class="table" ng-table="vm.tableParams">
-          <tr ng-repeat="person in $data">
+          <tr ng-show="!vm.isLoadingResults" ng-repeat="person in $data">
               <td title="'Name'" filter="{ name: 'text'}" sortable="'name'">
-                  {{person.name}}
+                  {{::person.name}}
               </td>
               <td title="'Occupation'" sortable="'occupation'">
-                  {{person.occupation}}
+                  {{::person.occupation}}
               </td>
               <td title="'Joukko-osasto'" sortable="'unit'">
-                  {{person.unit}}
+                  {{::person.unit}}
               </td>
               <td title="'Marital Status'" sortable="'marital_status'">
-                  {{person.marital_status}}
+                  {{::person.marital_status}}
               </td>
               <td title="'Time of Death'" sortable="'tod'">
-                  {{person.tod}}
+                  {{::person.tod}}
               </td>
               <td title="'Municipality'" sortable="'municipality'">
-                  {{person.death_municipality}}
+                  {{::person.death_municipality}}
               </td>
               <td title="'Casualty Class'" sortable="'casualty_class'">
-                  {{person.casualty_class}}
+                  {{::person.casualty_class}}
               </td>
           </tr>
         </table>

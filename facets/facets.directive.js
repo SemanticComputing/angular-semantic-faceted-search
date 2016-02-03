@@ -41,9 +41,17 @@
             return '10';
         };
 
-        $scope.$watch(function() { return vm.selectedFacets; }, function(val) {
+        $scope.$watchCollection(getSelectionValues, update);
+
+        function getSelectionValues() {
+            return _(vm.selectedFacets).values().map('value').value();
+        }
+
+        update();
+
+        function update() {
             vm.isLoadingFacets = true;
-            vm.facetHandler.getStates( val ).then( function ( states ) {
+            vm.facetHandler.getStates( vm.selectedFacets ).then( function ( states ) {
                 _.forOwn(vm.facets, function (facet, key) {
                     facet.state = _.find(states, ['id', key]);
                 });
@@ -51,6 +59,7 @@
             });
 
             $scope.updateResults(vm.selectedFacets);
-        }, true);
+        }
+
     }
 })();

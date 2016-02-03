@@ -168,21 +168,15 @@
 
         vm.updateResults = function ( facetSelections ) {
             vm.isLoadingResults = true;
-            var numResults;
-            _.forOwn( facetSelections, function( val ) {
-                if (val && (!numResults || val.count > numResults)) {
-                    numResults = val.count;
-                }
-            });
-            if (numResults && numResults <= 2500000) {
-                casualtyService.getResults( facetSelections ).then( function ( res ) {
-                    vm.tableParams = new NgTableParams({}, { dataset: res, count: 50 });
-                    vm.isLoadingResults = false;
+            casualtyService.getResults( facetSelections ).then( function ( res ) {
+                vm.tableParams = new NgTableParams({
+                    count: 25,
+                    sorting: { name: 'asc' }
+                }, {
+                    dataset: res
                 });
-            } else {
-                vm.tableParams = new NgTableParams({}, { dataset: [], count: 50 });
                 vm.isLoadingResults = false;
-            }
+            });
         };
     });
 })();
