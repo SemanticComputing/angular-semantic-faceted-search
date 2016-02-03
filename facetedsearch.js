@@ -68,6 +68,7 @@
         var facetOptions = {
             endpointUrl: endpointUrl,
             graph : '<http://ldf.fi/narc-menehtyneet1939-45/>',
+            rdfClass: '<http://xmlns.com/foaf/0.1/Person>',
             preferredLang : 'fi'
         };
 
@@ -88,7 +89,7 @@
 
             ' WHERE {' +
             ' GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> {' +
-            //' ?s a foaf:Person .' +
+            ' ?s a foaf:Person .' +
             ' ?s skos:prefLabel ?name .' +
 
             ' <FACET_SELECTIONS> ' +
