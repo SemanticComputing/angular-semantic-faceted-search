@@ -16,7 +16,11 @@
                     if (val && val.value && facets[key].type === 'text') {
                         var textVar = '?text' + i++;
                         result = result + '?s ' + key + ' ' + textVar;
-                        result = result + ' FILTER(REGEX(' + textVar + ', "' + val.value + '", "i")) ';
+                        var words = val.value.replace(/[,.-_*'\\/]/g, '');
+
+                        words.split(' ').forEach(function(word) {
+                            result = result + ' FILTER(REGEX(' + textVar + ', "' + word + '", "i")) ';
+                        });
                     }
                     else if (val && val.value) {
                         result = result + '?s ' + key + ' ' + val.value + ' . ';
