@@ -145,9 +145,8 @@
 
             ' }' +
                 ' BIND(COALESCE(?kuolinkunta_warsa, ?kuolinkunta_narc) as ?death_municipality)' +
-            ' }' +
-            ' GROUP BY ?id ?s <PROPERTIES> ' +
-            ' ORDER BY ?id ';
+            ' } ORDER BY ?name ';
+
         query = query.replace(/<RESULTSET>/g, resultSet);
         query = query.replace(/<PROPERTIES>/g, Object.keys( properties ).join(' '));
 
@@ -171,7 +170,7 @@
     /*
     * Controller for the results view.
     */
-    .controller( 'MainController', function ( $scope, _, RESULTS_PER_PAGE,
+    .controller( 'MainController', function ( $q, _, RESULTS_PER_PAGE,
                 casualtyService, NgTableParams ) {
         var vm = this;
 
@@ -180,35 +179,27 @@
 
         vm.updateResults = updateResults;
 
-        function setup(pager) {
-            return pager.getTotalCount()
-            .then( function( count ) {
-                vm.totalPageCount = count;
-            })
-            .then( function() {
-                vm.tableParams = new NgTableParams(
-                    {
-                        count: RESULTS_PER_PAGE,
-                        sorting: { name: 'asc' }
-                    },
-                    {
-                        getData: getData
-                    }
-                );
-            });
+        function setup() {
+            vm.tableParams = new NgTableParams(
+                {
+                    count: RESULTS_PER_PAGE,
+                    sorting: { name: 'asc' }
+                },
+                {
+                    getData: getData
+                }
+            );
         }
 
         function getData($defer, params) {
             vm.isLoadingResults = true;
-            vm.pager.getTotalCount()
-            .then(function(count) {
-                vm.tableParams.total(count);
-            })
-            .then(function() {
-                return vm.pager.getPage(params.page() - 1);
-            })
-            .then( function( page ) {
-                $defer.resolve( page );
+
+            var countPromise = vm.pager.getTotalCount();
+            var pagePromise = vm.pager.getPage(params.page() - 1);
+            $q.all([countPromise, pagePromise])
+            .then( function( results ) {
+                vm.tableParams.total( results[0] );
+                $defer.resolve( results[1] );
                 vm.isLoadingResults = false;
             });
         }
@@ -222,7 +213,7 @@
                 if (vm.tableParams) {
                     vm.tableParams.reload();
                 } else {
-                    setup(pager);
+                    setup();
                 }
             });
         }

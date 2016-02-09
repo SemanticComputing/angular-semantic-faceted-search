@@ -37,8 +37,8 @@
                 obj = self.makeObject(obj);
                 // Check if this object has been constructed earlier.
                 // Assume the results are sorted by id.
-                var old = _.last(result);
-                if (old && old.id === obj.id) {
+                var old = _.find(result, { id: obj.id });
+                if (old) {
                     // Merge this triple into the object constructed earlier
                     self.mergeObjects(old, obj);
                 }
