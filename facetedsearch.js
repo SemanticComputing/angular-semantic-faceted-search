@@ -84,12 +84,14 @@
 
         var resultSet = '' +
             '     SELECT ?s ?id ?name { ' +
-            '       ?s a foaf:Person .' +
-            '       ?s skos:prefLabel ?name .' +
-            '       BIND(?s AS ?id) ' +
+            '       GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> {' +
+            '         ?s a foaf:Person .' +
+            '         ?s skos:prefLabel ?name .' +
+            '         BIND(?s AS ?id) ' +
 
-            '       <FACET_SELECTIONS> ' +
-            '     } ' +
+            '         <FACET_SELECTIONS> ' +
+            '       } ' +
+            '     } ORDER BY ?name ' +
             '     <PAGE> ';
 
         var resultSetQry = prefixes + resultSet;
@@ -97,10 +99,10 @@
         var query = prefixes +
             ' SELECT ?id ?s <PROPERTIES> ' +
             ' WHERE {' +
-            ' GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> {' +
             '   { ' +
-            ' <RESULTSET> ' +
+            '     <RESULTSET> ' +
             '   } ' +
+            ' GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> {' +
 
             ' OPTIONAL {' +
             ' ?s m_schema:siviilisaeaety ?siviilisaeaetyuri .' +
@@ -169,7 +171,8 @@
     /*
     * Controller for the results view.
     */
-    .controller( 'MainController', function ( $scope, _, casualtyService, NgTableParams ) {
+    .controller( 'MainController', function ( $scope, _, RESULTS_PER_PAGE,
+                casualtyService, NgTableParams ) {
         var vm = this;
 
         vm.facets = casualtyService.getFacets();
@@ -185,7 +188,7 @@
             .then( function() {
                 vm.tableParams = new NgTableParams(
                     {
-                        count: 25,
+                        count: RESULTS_PER_PAGE,
                         sorting: { name: 'asc' }
                     },
                     {
@@ -196,13 +199,19 @@
         }
 
         function getData($defer, params) {
-            console.log(params);
-            vm.pager.getPage(params.page())
+            vm.isLoadingResults = true;
+            vm.pager.getTotalCount()
+            .then(function(count) {
+                vm.tableParams.total(count);
+            })
+            .then(function() {
+                return vm.pager.getPage(params.page() - 1);
+            })
             .then( function( page ) {
                 $defer.resolve( page );
+                vm.isLoadingResults = false;
             });
         }
-
 
         function updateResults( facetSelections ) {
             vm.isLoadingResults = true;
@@ -212,7 +221,6 @@
                 vm.pager = pager;
                 if (vm.tableParams) {
                     vm.tableParams.reload();
-                    vm.isLoadingResults = false;
                 } else {
                     setup(pager);
                 }
