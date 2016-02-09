@@ -49,17 +49,21 @@
             queryTemplate = buildQueryTemplate(queryTemplate);
 
             var deselectUnionTemplate = '' +
-           '     UNION { ' +
-           '     { SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
-           '     WHERE { ' +
-           '         GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> { ' +
-           '             <OTHER_SELECTIONS> ' +
-           '         } ' +
-           '     } ' +
-           '     } ' +
-           '     BIND("-- No Selection --" AS ?facet_text) ' +
-           '     BIND(<DESELECTION> AS ?id) ' +
-           ' }';
+            ' UNION { ' +
+            '   { ' +
+            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
+            '     WHERE { ' +
+            '       <GRAPH_START> ' +
+            '          <CLASS> ' +
+            '          <OTHER_SELECTIONS> ' +
+            '       <GRAPH_END> ' +
+            '     } ' +
+            '   } ' +
+            '   BIND("-- No Selection --" AS ?facet_text) ' +
+            '   BIND(<DESELECTION> AS ?id) ' +
+            ' }';
+            deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate);
+
 
             function getStates(facetSelections) {
                 var query = buildQuery(facetSelections);
@@ -134,7 +138,7 @@
                         }
                     });
                     deselections.push(s.replace('<OTHER_SELECTIONS>',
-                            formatter.parseFacetSelections(others) + ' ?s ?p ?o . '));
+                            formatter.parseFacetSelections(others)));
                 });
                 return deselections.join(' ');
             }

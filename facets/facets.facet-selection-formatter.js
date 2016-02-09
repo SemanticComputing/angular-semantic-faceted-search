@@ -14,6 +14,7 @@
                 var i = 0;
                 _.forOwn( facetSelections, function( val, key ) {
                     if (val && val.value && facets[key].type === 'text') {
+                        // Free-text facet
                         var textVar = '?text' + i++;
                         result = result + '?s ' + key + ' ' + textVar;
                         var words = val.value.replace(/[,.-_*'\\/]/g, '');
@@ -21,8 +22,8 @@
                         words.split(' ').forEach(function(word) {
                             result = result + ' FILTER(REGEX(' + textVar + ', "' + word + '", "i")) ';
                         });
-                    }
-                    else if (val && val.value) {
+                    } else if (val && val.value) {
+                        // Basic facet
                         result = result + '?s ' + key + ' ' + val.value + ' . ';
                     }
                 });
