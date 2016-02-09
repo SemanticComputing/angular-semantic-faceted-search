@@ -13,24 +13,22 @@
     /*
     * Result handler service.
     */
-    .factory( 'Results', function( SparqlService, personMapperService, FacetSelectionFormatter ) {
+    .factory( 'Results', function( RESULTS_PER_PAGE, PAGES_PER_QUERY, AdvancedSparqlService,
+                personMapperService, FacetSelectionFormatter ) {
         return function( endpointUrl, facets ) {
 
             var formatter = new FacetSelectionFormatter(facets);
-            var endpoint = new SparqlService(endpointUrl);
+            var endpoint = new AdvancedSparqlService(endpointUrl, personMapperService);
 
             this.getResults = getResults;
 
-            function getResults(query, facetSelections) {
-                return endpoint.getObjects(query.replace('<FACET_SELECTIONS>',
-                        formatter.parseFacetSelections(facetSelections)))
-                .then(parseResults);
+            function getResults(facetSelections, query, resultSetQry) {
+                return endpoint.getObjects(
+                    query.replace('<FACET_SELECTIONS>', formatter.parseFacetSelections(facetSelections)),
+                    RESULTS_PER_PAGE,
+                    resultSetQry.replace('<FACET_SELECTIONS>', formatter.parseFacetSelections(facetSelections)),
+                    PAGES_PER_QUERY);
             }
-
-            function parseResults( sparqlResults ) {
-                return personMapperService.makeObjectList(sparqlResults);
-            }
-
         };
     })
 
@@ -71,7 +69,7 @@
             preferredLang : 'fi'
         };
 
-        var query =
+        var prefixes = '' +
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#>' +
             ' PREFIX wgs84: <http://www.w3.org/2003/01/geo/wgs84_pos#>' +
             ' PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>' +
@@ -82,17 +80,27 @@
             ' PREFIX georss: <http://www.georss.org/georss/>' +
             ' PREFIX text: <http://jena.apache.org/text#>' +
             ' PREFIX m: <http://ldf.fi/sotasampo/narc/menehtyneet/>' +
-            ' PREFIX m_schema: <http://ldf.fi/schema/narc-menehtyneet1939-45/>' +
+            ' PREFIX m_schema: <http://ldf.fi/schema/narc-menehtyneet1939-45/>';
 
+        var resultSet = '' +
+            '     SELECT ?s ?id ?name { ' +
+            '       ?s a foaf:Person .' +
+            '       ?s skos:prefLabel ?name .' +
+            '       BIND(?s AS ?id) ' +
+
+            '       <FACET_SELECTIONS> ' +
+            '     } ' +
+            '     <PAGE> ';
+
+        var resultSetQry = prefixes + resultSet;
+
+        var query = prefixes +
             ' SELECT ?id ?s <PROPERTIES> ' +
-
             ' WHERE {' +
             ' GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> {' +
-            ' ?s a foaf:Person .' +
-            ' ?s skos:prefLabel ?name .' +
-            ' BIND(?s AS ?id) ' +
-
-            ' <FACET_SELECTIONS> ' +
+            '   { ' +
+            ' <RESULTSET> ' +
+            '   } ' +
 
             ' OPTIONAL {' +
             ' ?s m_schema:siviilisaeaety ?siviilisaeaetyuri .' +
@@ -138,6 +146,7 @@
             ' }' +
             ' GROUP BY ?id ?s <PROPERTIES> ' +
             ' ORDER BY ?id ';
+        query = query.replace(/<RESULTSET>/g, resultSet);
         query = query.replace(/<PROPERTIES>/g, Object.keys( properties ).join(' '));
 
         this.getResults = getResults;
@@ -145,7 +154,7 @@
         this.getFacetOptions = getFacetOptions;
 
         function getResults(facetSelections) {
-            return resultHandler.getResults(query, facetSelections);
+            return resultHandler.getResults(facetSelections, query, resultSetQry);
         }
 
         function getFacets() {
@@ -166,17 +175,48 @@
         vm.facets = casualtyService.getFacets();
         vm.facetOptions = casualtyService.getFacetOptions();
 
-        vm.updateResults = function ( facetSelections ) {
-            vm.isLoadingResults = true;
-            casualtyService.getResults( facetSelections ).then( function ( res ) {
-                vm.tableParams = new NgTableParams({
-                    count: 25,
-                    sorting: { name: 'asc' }
-                }, {
-                    dataset: res
-                });
-                vm.isLoadingResults = false;
+        vm.updateResults = updateResults;
+
+        function setup(pager) {
+            return pager.getTotalCount()
+            .then( function( count ) {
+                vm.totalPageCount = count;
+            })
+            .then( function() {
+                vm.tableParams = new NgTableParams(
+                    {
+                        count: 25,
+                        sorting: { name: 'asc' }
+                    },
+                    {
+                        getData: getData
+                    }
+                );
             });
-        };
+        }
+
+        function getData($defer, params) {
+            console.log(params);
+            vm.pager.getPage(params.page())
+            .then( function( page ) {
+                $defer.resolve( page );
+            });
+        }
+
+
+        function updateResults( facetSelections ) {
+            vm.isLoadingResults = true;
+
+            casualtyService.getResults( facetSelections )
+            .then( function ( pager ) {
+                vm.pager = pager;
+                if (vm.tableParams) {
+                    vm.tableParams.reload();
+                    vm.isLoadingResults = false;
+                } else {
+                    setup(pager);
+                }
+            });
+        }
     });
 })();
