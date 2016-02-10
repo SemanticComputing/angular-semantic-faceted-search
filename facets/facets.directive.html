@@ -4,6 +4,7 @@
     <img src="images/loading-sm.gif" ng-if="vm.isLoadingFacets"></img>
   </div>
   <select ng-if="facet.type !== 'text'"
+    ng-change="vm.changed(id)"
     ng-disabled="vm.isDisabled()"
     size="{{ vm.getFacetSize(facet.state.values) }}"
     id="{{ facet.name + '_select' }}"
@@ -12,6 +13,7 @@
     ng-model="vm.selectedFacets[id]">
   </select>
   <input type="text"
+    ng-change="vm.changed(id)"
     ng-disabled="vm.isDisabled()"
     ng-if="facet.type === 'text'"
     ng-model="vm.selectedFacets[id].value"

@@ -32,8 +32,11 @@
 
         vm.facets = $scope.facets;
         vm.selectedFacets = {};
+        vm.previousSelections = _.clone(vm.facets);
 
         vm.isDisabled = isDisabled;
+
+        vm.changed = facetChanged;
 
         vm.facetHandler = new Facets(vm.facets, $scope.options);
 
@@ -44,12 +47,23 @@
             return '10';
         };
 
-        $scope.$watchCollection(getSelectionValues, update);
-
         update();
 
-        function getSelectionValues() {
-            return _(vm.selectedFacets).values().map('value').value();
+        function facetChanged(id) {
+            var selectedFacet = vm.selectedFacets[id];
+            if (selectedFacet) {
+                if (vm.previousSelections[id].value !== selectedFacet.value) {
+                    vm.previousSelections[id] = _.clone(selectedFacet);
+                    update();
+                }
+            } else {
+                var prev = {
+                    id: id,
+                    values: [_.clone(vm.previousSelections[id])]
+                };
+                vm.facets[id].state = prev;
+                vm.selectedFacets[id] = _.clone(vm.previousSelections[id]);
+            }
         }
 
         function isDisabled() {

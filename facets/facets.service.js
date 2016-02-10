@@ -32,8 +32,8 @@
                 '           <FACETS> ' +
                 '         } ' +
                 '         <GRAPH_START> ' +
-                '           <CLASS> ' +
                 '           <SELECTIONS> ' +
+                '           <CLASS> ' +
                 '           ?s ?id ?value .' +
                 '         <GRAPH_END> ' +
                 '       } GROUP BY ?id ?value' +
@@ -41,7 +41,7 @@
                 '     OPTIONAL {' +
                 '       ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
                 '     }' +
-                '     BIND(COALESCE(?lbl, ?value) as ?facet_text)' +
+                '     BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
                 '   }' +
                 '   <DESELECTIONS> ' +
                 ' } ' +
@@ -54,8 +54,8 @@
             '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
             '     WHERE { ' +
             '       <GRAPH_START> ' +
-            '          <CLASS> ' +
             '          <OTHER_SELECTIONS> ' +
+            '          <CLASS> ' +
             '       <GRAPH_END> ' +
             '     } ' +
             '   } ' +

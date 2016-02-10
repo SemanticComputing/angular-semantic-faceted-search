@@ -27,8 +27,11 @@
       <div class="col-md-10">
         <table class="table" ng-table="vm.tableParams">
           <tr ng-show="!vm.isLoadingResults" ng-repeat="person in $data">
-              <td title="'Name'" filter="{ name: 'text'}" sortable="'name'">
+              <td title="'Name'" sortable="'name'">
                   {{::person.name}}
+              </td>
+              <td title="'Rank'" sortable="'rank'">
+                  {{::person.rank}}
               </td>
               <td title="'Occupation'" sortable="'occupation'">
                   {{::person.occupation}}

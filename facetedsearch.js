@@ -58,6 +58,7 @@
             '?marital_status': '',
             '?death_municipality': '',
             '?tod': '',
+            '?rank': '',
             '?unit': '',
             '?casualty_class': ''
         };
@@ -85,11 +86,10 @@
         var resultSet = '' +
             '     SELECT ?s ?id ?name { ' +
             '       GRAPH <http://ldf.fi/narc-menehtyneet1939-45/> {' +
+            '         <FACET_SELECTIONS> ' +
             '         ?s a foaf:Person .' +
             '         ?s skos:prefLabel ?name .' +
             '         BIND(?s AS ?id) ' +
-
-            '         <FACET_SELECTIONS> ' +
             '       } ' +
             '     } ORDER BY ?name ' +
             '     <PAGE> ';
@@ -131,16 +131,15 @@
             ' }' +
             ' OPTIONAL { ?s m_schema:ammatti ?occupation . }' +
 //                    ' OPTIONAL { ?s m_schema:kuolinpaikka ?kuolinpaikka . }' +
-//                    ' OPTIONAL { ?s m_schema:sotilasarvo ?arvouri .' +
-//                    ' GRAPH <http://ldf.fi/warsa/actors/actor_types> {' +
-//                    ' ?arvouri skos:prefLabel ?sotilasarvo  .' +
-//                    ' }' +
-//                    ' }' +
-            ' OPTIONAL { ?s m_schema:osasto ?osastouri .' +
-            ' GRAPH <http://ldf.fi/warsa/actors> {' +
-            ' ?osastouri skos:prefLabel ?unit  .' +
-//                    ' BIND(CONCAT("<a href=\"http://www.sotasampo.fi/page?uri=",STR(?osastouri),"\">",?osasto,"</a>") AS ?joukkoosastoHTML) .' +
+            ' OPTIONAL { ?s m_schema:sotilasarvo ?arvouri .' +
+            '   GRAPH <http://ldf.fi/warsa/actors/actor_types> {' +
+            '     ?arvouri skos:prefLabel ?rank  .' +
+            '   }' +
             ' }' +
+            ' OPTIONAL { ?s m_schema:osasto ?osastouri .' +
+            '   GRAPH <http://ldf.fi/warsa/actors> {' +
+            '     ?osastouri skos:prefLabel ?unit  .' +
+            '   }' +
             ' }' +
 
             ' }' +
@@ -180,7 +179,11 @@
         vm.updateResults = updateResults;
         vm.disableFacets = disableFacets;
 
-        function setup() {
+        function disableFacets() {
+            return vm.isLoadingResults;
+        }
+
+        function initializeTable() {
             vm.tableParams = new NgTableParams(
                 {
                     count: RESULTS_PER_PAGE,
@@ -190,10 +193,6 @@
                     getData: getData
                 }
             );
-        }
-
-        function disableFacets() {
-            return vm.isLoadingResults;
         }
 
         function getData($defer, params) {
@@ -220,7 +219,7 @@
                     vm.tableParams.page(1);
                     vm.tableParams.reload();
                 } else {
-                    setup();
+                    initializeTable();
                 }
             });
         }
