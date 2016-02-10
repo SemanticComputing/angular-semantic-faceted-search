@@ -199,13 +199,14 @@
         function getData($defer, params) {
             vm.isLoadingResults = true;
 
-            var countPromise = vm.pager.getTotalCount();
-            var pagePromise = vm.pager.getPage(params.page() - 1);
-            $q.all([countPromise, pagePromise])
-            .then( function( results ) {
-                vm.tableParams.total( results[0] );
-                $defer.resolve( results[1] );
-                vm.isLoadingResults = false;
+            vm.pager.getPage(params.page() - 1)
+            .then( function( page ) {
+                $defer.resolve( page );
+                vm.pager.getTotalCount().then(function(count) {
+                    vm.tableParams.total( count );
+                }).then(function() {
+                    vm.isLoadingResults = false;
+                });
             });
         }
 
@@ -216,6 +217,7 @@
             .then( function ( pager ) {
                 vm.pager = pager;
                 if (vm.tableParams) {
+                    vm.tableParams.page(1);
                     vm.tableParams.reload();
                 } else {
                     setup();
