@@ -14,7 +14,8 @@
             scope: {
                 facets: '=',
                 updateResults: '=',
-                options: '='
+                options: '=',
+                disable: '='
             },
             controller: FacetListController,
             controllerAs: 'vm',
@@ -32,6 +33,8 @@
         vm.facets = $scope.facets;
         vm.selectedFacets = {};
 
+        vm.isDisabled = isDisabled;
+
         vm.facetHandler = new Facets(vm.facets, $scope.options);
 
         vm.getFacetSize = function( facetStates ) {
@@ -43,11 +46,15 @@
 
         $scope.$watchCollection(getSelectionValues, update);
 
+        update();
+
         function getSelectionValues() {
             return _(vm.selectedFacets).values().map('value').value();
         }
 
-        update();
+        function isDisabled() {
+            return vm.isLoadingFacets || $scope.disable();
+        }
 
         function update() {
             vm.isLoadingFacets = true;

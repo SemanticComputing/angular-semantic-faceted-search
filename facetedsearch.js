@@ -178,6 +178,7 @@
         vm.facetOptions = casualtyService.getFacetOptions();
 
         vm.updateResults = updateResults;
+        vm.disableFacets = disableFacets;
 
         function setup() {
             vm.tableParams = new NgTableParams(
@@ -189,6 +190,10 @@
                     getData: getData
                 }
             );
+        }
+
+        function disableFacets() {
+            return vm.isLoadingResults;
         }
 
         function getData($defer, params) {
