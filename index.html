@@ -26,29 +26,38 @@
 
       <div class="col-md-10">
         <table class="table" ng-table="vm.tableParams">
+          <colgroup>
+            <col width="15%" />
+            <col width="7%" />
+            <col width="8%" />
+            <col width="20%" />
+            <col width="5%" />
+            <col width="7%" />
+            <col width="10%" />
+            <col width="28%" />
           <tr ng-show="!vm.isLoadingResults" ng-repeat="person in $data">
-              <td title="'Name'" sortable="'name'">
+              <td title="'Name'">
                   {{::person.name}}
               </td>
-              <td title="'Rank'" sortable="'rank'">
+              <td title="'Rank'">
                   {{::person.rank}}
               </td>
-              <td title="'Occupation'" sortable="'occupation'">
+              <td title="'Occupation'">
                   {{::person.occupation}}
               </td>
-              <td title="'Joukko-osasto'" sortable="'unit'">
+              <td title="'Joukko-osasto'">
                   {{::person.unit}}
               </td>
-              <td title="'Marital Status'" sortable="'marital_status'">
+              <td title="'Marital Status'">
                   {{::person.marital_status}}
               </td>
-              <td title="'Time of Death'" sortable="'tod'">
+              <td title="'Time of Death'">
                   {{::person.tod}}
               </td>
-              <td title="'Municipality'" sortable="'municipality'">
+              <td title="'Municipality'">
                   {{::person.death_municipality}}
               </td>
-              <td title="'Casualty Class'" sortable="'casualty_class'">
+              <td title="'Casualty Class'">
                   {{::person.casualty_class}}
               </td>
           </tr>

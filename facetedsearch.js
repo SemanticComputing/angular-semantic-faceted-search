@@ -175,8 +175,8 @@
 
         vm.facets = casualtyService.getFacets();
         vm.facetOptions = casualtyService.getFacetOptions();
+        vm.facetOptions.updateResults = updateResults;
 
-        vm.updateResults = updateResults;
         vm.disableFacets = disableFacets;
 
         function disableFacets() {
@@ -186,8 +186,7 @@
         function initializeTable() {
             vm.tableParams = new NgTableParams(
                 {
-                    count: RESULTS_PER_PAGE,
-                    sorting: { name: 'asc' }
+                    count: RESULTS_PER_PAGE
                 },
                 {
                     getData: getData

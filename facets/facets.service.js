@@ -12,12 +12,21 @@
     /* ngInject */
     function Facets( $rootScope, $q, _, SparqlService, facetMapperService, FacetSelectionFormatter ) {
         return function( facets, config ) {
+
+            var self = this;
+
             var formatter = new FacetSelectionFormatter(facets);
 
-            this.getStates = getStates;
+            self.getStates = getStates;
+            self.facetChanged = facetChanged;
+            self.update = update;
+            self.selectedFacets = {};
 
-            var facetStates = [];
+            var facetStates;
             var endpoint = new SparqlService(config.endpointUrl);
+
+            var previousSelections = _.clone(facets);
+
             var queryTemplate = '' +
                 ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#>' +
                 ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>' +
@@ -64,6 +73,39 @@
             ' }';
             deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate);
 
+            function facetChanged(id) {
+                var selectedFacet = self.selectedFacets[id];
+                if (selectedFacet) {
+                    // As this function gets called every time a facet state is changed,
+                    // check that the actual selection is changed before calling update.
+                    if (previousSelections[id].value !== selectedFacet.value) {
+                        previousSelections[id] = _.clone(selectedFacet);
+                        return update();
+                    }
+                } else {
+                    // Another facet selection (text search) has resulted in this
+                    // facet not having a value even though it has a selection.
+                    // Fix it by adding its previous state to the facet state list
+                    // with count = 0.
+                    var prev = {
+                        id: id,
+                        values: [_.clone(previousSelections[id])]
+                    };
+                    prev.values[0].count = 0;
+                    facets[id].state = prev;
+                    self.selectedFacets[id] = _.clone(previousSelections[id]);
+                }
+                return $q.when();
+            }
+
+            function update() {
+                config.updateResults(self.selectedFacets);
+                return getStates(self.selectedFacets).then(function(states) {
+                    _.forOwn(facets, function (facet, key) {
+                        facet.state = _.find(states, ['id', key]);
+                    });
+                });
+            }
 
             function getStates(facetSelections) {
                 var query = buildQuery(facetSelections);
