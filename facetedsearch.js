@@ -198,7 +198,7 @@
         function getData($defer, params) {
             vm.isLoadingResults = true;
 
-            vm.pager.getPage(params.page() - 1)
+            vm.pager.getPage(params.page() - 1, params.count())
             .then( function( page ) {
                 $defer.resolve( page );
                 vm.pager.getTotalCount().then(function(count) {
