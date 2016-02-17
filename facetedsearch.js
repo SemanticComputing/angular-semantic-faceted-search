@@ -40,6 +40,12 @@
 
         var facets = {
             '<http://www.w3.org/2004/02/skos/core#prefLabel>': { name: 'Nimi', type: 'text' },
+            '<kuolinaika>' : {
+                name: 'Kuolinaikarange',
+                type: 'timespan',
+                start: '<http://ldf.fi/schema/narc-menehtyneet1939-45/kuolinaika>',
+                end: '<http://ldf.fi/schema/narc-menehtyneet1939-45/kuolinaika>'
+            },
             '<http://ldf.fi/schema/narc-menehtyneet1939-45/ammatti>': { name: 'Ammatti' },
             '<http://ldf.fi/schema/narc-menehtyneet1939-45/asuinkunta>': { name: 'Asuinkunta' },
             '<http://ldf.fi/schema/narc-menehtyneet1939-45/kansalaisuus>': { name: 'Kansalaisuus' },

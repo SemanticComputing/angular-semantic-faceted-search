@@ -28,33 +28,33 @@
             var previousSelections = _.clone(facets);
 
             var queryTemplate = '' +
-                ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#>' +
-                ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>' +
-                ' PREFIX sf: <http://ldf.fi/functions#>' +
+            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#>' +
+            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>' +
+            ' PREFIX sf: <http://ldf.fi/functions#>' +
 
-                ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
-                '   { ' +
-                '     {' +
-                '       SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value' +
-                '       WHERE {' +
-                '         VALUES ?id {' +
-                '           <FACETS> ' +
-                '         } ' +
-                '         <GRAPH_START> ' +
-                '           <SELECTIONS> ' +
-                '           <CLASS> ' +
-                '           ?s ?id ?value .' +
-                '         <GRAPH_END> ' +
-                '       } GROUP BY ?id ?value' +
-                '     }' +
-                '     OPTIONAL {' +
-                '       ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
-                '     }' +
-                '     BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
-                '   }' +
-                '   <DESELECTIONS> ' +
-                ' } ' +
-                ' ORDER BY ?id ?facet_text';
+            ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
+            '   { ' +
+            '     {' +
+            '       SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value' +
+            '       WHERE {' +
+            '         VALUES ?id {' +
+            '           <FACETS> ' +
+            '         } ' +
+            '         <GRAPH_START> ' +
+            '           <SELECTIONS> ' +
+            '           <CLASS> ' +
+            '           ?s ?id ?value .' +
+            '         <GRAPH_END> ' +
+            '       } GROUP BY ?id ?value' +
+            '     }' +
+            '     OPTIONAL {' +
+            '       ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
+            '     }' +
+            '     BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
+            '   }' +
+            '   <DESELECTIONS> ' +
+            ' } ' +
+            ' ORDER BY ?id ?facet_text';
             queryTemplate = buildQueryTemplate(queryTemplate);
 
             var deselectUnionTemplate = '' +
@@ -76,10 +76,14 @@
             function facetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
                 if (selectedFacet) {
+                    if (selectedFacet.type === 'timespan' &&
+                            !((selectedFacet.value || {}).start && (selectedFacet || {}).value.end)) {
+                        return $q.when();
+                    }
                     // As this function gets called every time a facet state is changed,
                     // check that the actual selection is changed before calling update.
-                    if (previousSelections[id].value !== selectedFacet.value) {
-                        previousSelections[id] = _.clone(selectedFacet);
+                    if (!_.isEqual(previousSelections[id].value, selectedFacet.value)) {
+                        previousSelections[id] = _.cloneDeep(selectedFacet);
                         return update();
                     }
                 } else {
@@ -157,7 +161,7 @@
             function getTemplateFacets() {
                 var res = [];
                 _.forOwn(facets, function(facet, uri) {
-                    if (facet.type != 'text') {
+                    if (facet.type !== 'text' && facet.type !== 'timespan') {
                         res.push(uri);
                     }
                 });
