@@ -10,7 +10,8 @@
     .factory( 'Facets', Facets );
 
     /* ngInject */
-    function Facets( $rootScope, $q, _, SparqlService, facetMapperService, FacetSelectionFormatter ) {
+    function Facets( $rootScope, $q, _, SparqlService, facetMapperService, FacetSelectionFormatter,
+                    NO_SELECTION_STRING) {
         return function( facets, config ) {
 
             var self = this;
@@ -25,7 +26,16 @@
             var facetStates;
             var endpoint = new SparqlService(config.endpointUrl);
 
-            var previousSelections = _.clone(facets);
+            var freeFacetTypes = ['text', 'timespan'];
+
+            var previousSelections = {};
+            _.forOwn(facets, function(val, id) {
+                previousSelections[id] = { value: undefined };
+            });
+
+            var defaultCountKey = _.findKey(facets, function(facet) {
+                return !facet.type;
+            });
 
             var queryTemplate = '' +
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#>' +
@@ -75,8 +85,9 @@
 
             function facetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
+
                 if (selectedFacet) {
-                    if (selectedFacet.type === 'timespan' &&
+                    if (facets[id].type === 'timespan' &&
                             !((selectedFacet.value || {}).start && (selectedFacet || {}).value.end)) {
                         return $q.when();
                     }
@@ -84,7 +95,7 @@
                     // check that the actual selection is changed before calling update.
                     if (!_.isEqual(previousSelections[id].value, selectedFacet.value)) {
                         previousSelections[id] = _.cloneDeep(selectedFacet);
-                        return update();
+                        return update(id);
                     }
                 } else {
                     // Another facet selection (text search) has resulted in this
@@ -102,31 +113,70 @@
                 return $q.when();
             }
 
-            function update() {
+            function update(id) {
                 config.updateResults(self.selectedFacets);
-                return getStates(self.selectedFacets).then(function(states) {
-                    _.forOwn(facets, function (facet, key) {
+                return getStates(self.selectedFacets, id).then(function(states) {
+                    _.forOwn(facets, function(facet, key) {
                         facet.state = _.find(states, ['id', key]);
                     });
                 });
             }
 
-            function getStates(facetSelections) {
-                var query = buildQuery(facetSelections);
+            function getStates(facetSelections, id) {
+                var query = buildQuery(facetSelections, id);
 
                 var promise = endpoint.getObjects(query);
-                return promise.then(parseResults);
+                return promise.then(function(results) {
+                    return parseResults(results, facetSelections, id);
+                });
             }
 
-            function parseResults( sparqlResults ) {
-                facetStates = facetMapperService.makeObjectList(sparqlResults);
+            function parseResults( sparqlResults, facetSelections, selectionId ) {
+                var results = facetMapperService.makeObjectList(sparqlResults);
+
+                var countKey = selectionId || defaultCountKey;
+                // count is the current result count.
+                var count;
+                // Due to optimization, no redundant "no selection" values are queried.
+                // Because of this, they need to be set for each facet for which
+                // the value was not queried.
+                if (!selectionId) {
+                    // No facets selected, get the count from the results.
+                    count = (_.find((_.find(results, ['id', countKey]) || {}).values,
+                            ['value', undefined]) || {}).count || 0;
+                } else if (_.includes(facets[selectionId].type, freeFacetTypes)) {
+                    // Get the count from the current selection.
+                    count = (facetSelections[countKey] || {}).count || 0;
+                } else {
+                    var v = (_.find(results, ['id', countKey]) || {}).values;
+                    console.log(v);
+                    count = (_.find(v,
+                            ['value', facetSelections[selectionId].value]) || {}).count || 0;
+                }
+
+                _.forOwn(facets, function(v, id) {
+                    if (!(countKey === defaultCountKey && countKey === id) && !(facetSelections[id] && facetSelections[id].value)) {
+                        var result = _.find(results, ['id', id]);
+                        if (!result) {
+                            result = { id: id, values: [] };
+                            results.push(result);
+                        }
+                        result.values = [{
+                            value: undefined,
+                            text: NO_SELECTION_STRING,
+                            count: count
+                        }].concat(result.values);
+                    }
+                });
+                facetStates = results;
+
                 return facetStates;
             }
 
-            function buildQuery(facetSelections) {
+            function buildQuery(facetSelections, id) {
                 return queryTemplate.replace('<SELECTIONS>',
                         formatter.parseFacetSelections(facetSelections))
-                        .replace('<DESELECTIONS>', buildDeselectionUnions(facetSelections));
+                        .replace('<DESELECTIONS>', buildDeselectionUnions(facetSelections, id));
             }
 
             function buildQueryTemplate(template) {
@@ -161,25 +211,52 @@
             function getTemplateFacets() {
                 var res = [];
                 _.forOwn(facets, function(facet, uri) {
-                    if (facet.type !== 'text' && facet.type !== 'timespan') {
+                    if (!_.includes(freeFacetTypes, facet.type)) {
                         res.push(uri);
                     }
                 });
                 return res.join(' ');
             }
 
-            function buildDeselectionUnions(facetSelections) {
+            function buildDeselectionUnions(facetSelections, id) {
                 var deselections = [];
-                _.forOwn( facets, function( val, key ) {
+
+                var actualSelections = [];
+                _.forOwn(facetSelections, function(val, key) {
+                    if (val && val.value) {
+                        actualSelections.push({ id: key, value: val });
+                    }
+                });
+                var actualSelectionCount = actualSelections.length;
+
+                var selections = facetSelections;
+                var countKey = (facetSelections[id] || {}).value ? id : defaultCountKey;
+
+                if (!actualSelectionCount) {
+                    selections = [];
+                    selections[countKey] = { value: undefined };
+                } else {
+                    var found = _.reject(actualSelections, function(selection) {
+                        return selection.id === countKey;
+                    });
+                    if (!found) {
+                        // Default is not in selection, do not build a union for it.
+                        countKey = undefined;
+                    }
+                }
+
+                _.forOwn( selections, function( val, key ) {
+                    //console.log(key, countKey, val);
+                    if (!val || (angular.isUndefined(val.value) && key !== countKey)) {
+                        return;
+                    }
                     var s = deselectUnionTemplate.replace('<DESELECTION>', key);
                     var others = {};
-                    _.forOwn( facets, function( v, k ) {
+                    _.forOwn( selections, function( v, k ) {
                         if (k !== key) {
-                            var selected = facetSelections[k];
+                            var selected = selections[k];
                             if (selected && selected.value) {
-                                others[k] = facetSelections[k];
-                            } else {
-                                others[k] = v;
+                                others[k] = selections[k];
                             }
                         }
                     });
