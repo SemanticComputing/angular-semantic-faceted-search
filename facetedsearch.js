@@ -44,7 +44,9 @@
                 name: 'Kuolinaikarange',
                 type: 'timespan',
                 start: '<http://ldf.fi/schema/narc-menehtyneet1939-45/kuolinaika>',
-                end: '<http://ldf.fi/schema/narc-menehtyneet1939-45/kuolinaika>'
+                end: '<http://ldf.fi/schema/narc-menehtyneet1939-45/kuolinaika>',
+                min: '1939-10-01',
+                max: '1989-12-31'
             },
             '<http://ldf.fi/schema/narc-menehtyneet1939-45/ammatti>': { name: 'Ammatti' },
             '<http://ldf.fi/schema/narc-menehtyneet1939-45/asuinkunta>': { name: 'Asuinkunta' },

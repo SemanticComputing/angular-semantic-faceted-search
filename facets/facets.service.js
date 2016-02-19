@@ -52,8 +52,10 @@
             '           <FACETS> ' +
             '         } ' +
             '         <GRAPH_START> ' +
-            '           <SELECTIONS> ' +
-            '           <CLASS> ' +
+            '           { ' +
+            '             <SELECTIONS> ' +
+            '             <CLASS> ' +
+            '           } ' +
             '           ?s ?id ?value .' +
             '         <GRAPH_END> ' +
             '       } GROUP BY ?id ?value' +

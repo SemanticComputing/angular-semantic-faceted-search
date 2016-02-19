@@ -23,17 +23,45 @@
     </input>
   </div>
   <div ng-if="::facet.type === 'timespan'">
-    <input type="text"
-      ng-change="vm.changed(id)"
-      ng-disabled="vm.isDisabled()"
-      ng-model="vm.selectedFacets[id].value.start"
-      ng-model-options="{ debounce: 1000 }">
-    </input>
-    <input type="text"
-      ng-change="vm.changed(id)"
-      ng-disabled="vm.isDisabled()"
-      ng-model="vm.selectedFacets[id].value.end"
-      ng-model-options="{ debounce: 1000 }">
-    </input>
+    <p class="input-group">
+      <input type="text" class="form-control"
+        uib-datepicker-popup=""
+        ng-disabled="vm.isDisabled()"
+        ng-change="vm.changed(id)"
+        ng-readonly="true"
+        ng-model="vm.selectedFacets[id].value.start"
+        is-open="startDate.opened"
+        min-date="facet.min"
+        max-date="facet.max"
+        init-date="facet.min"
+        starting-day="1"
+        ng-required="true"
+        close-text="Close" />
+      <span class="input-group-btn">
+        <button type="button" class="btn btn-default"
+            ng-click="startDate.opened = !startDate.opened">
+          <i class="glyphicon glyphicon-calendar"></i>
+        </button>
+      </span>
+      <input type="text" class="form-control"
+        uib-datepicker-popup=""
+        ng-disabled="vm.isDisabled()"
+        ng-readonly="true"
+        ng-change="vm.changed(id)"
+        ng-model="vm.selectedFacets[id].value.end"
+        is-open="endDate.opened"
+        min-date="vm.selectedFacets[id].value.start || facet.min"
+        max-date="facet.max"
+        init-date="vm.selectedFacets[id].value.start || facet.min"
+        starting-day="1"
+        ng-required="true"
+        close-text="Close" />
+      <span class="input-group-btn">
+        <button type="button" class="btn btn-default"
+            ng-click="endDate.opened = !endDate.opened">
+          <i class="glyphicon glyphicon-calendar"></i>
+        </button>
+      </span>
+    </p>
   </div>
 </div>

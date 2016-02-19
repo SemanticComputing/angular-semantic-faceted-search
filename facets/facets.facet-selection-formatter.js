@@ -26,6 +26,9 @@
             ' <TIME_SPAN_URI> <END_PROPERTY> ?end . ' +
             ' FILTER(?end <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
 
+            var timeSpanEndFilterSimple =
+            ' FILTER(?start <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
+
             var simpleTimeSpanUri = '?s';
             var resourceTimeSpanUri = '?time_span_uri';
 
@@ -86,13 +89,22 @@
                 var result = isResource ?
                         resourceTimeSpanFilterTemplate :
                         simpleTimeSpanFilterTemplate;
+
                 var start = (val.value || {}).start;
                 var end = (val.value || {}).end;
+
+                var endFilter = timeSpanEndFilter;
+                var facet = facets[key];
+
+                if (facet.start === facet.end) {
+                    endFilter = timeSpanEndFilterSimple;
+                }
                 if (start) {
+                    start = dateToISOString(start);
                     result = result
                         .replace('<START_FILTER>',
                             timeSpanStartFilter.replace('<START_PROPERTY>',
-                                facets[key].start))
+                                facet.start))
                         .replace('<TIME_SPAN_URI>',
                                 isResource ? resourceTimeSpanUri : simpleTimeSpanUri)
                         .replace('<START_VALUE>', start);
@@ -100,9 +112,10 @@
                     result = result.replace('<START_FILTER>', '');
                 }
                 if (end) {
+                    end = dateToISOString(end);
                     result = result.replace('<END_FILTER>',
-                            timeSpanEndFilter.replace('<END_PROPERTY>',
-                                facets[key].end))
+                            endFilter.replace('<END_PROPERTY>',
+                                facet.end))
                         .replace('<TIME_SPAN_URI>',
                                 isResource ? resourceTimeSpanUri : simpleTimeSpanUri)
                         .replace('<END_VALUE>', end);
@@ -110,6 +123,10 @@
                     result = result.replace('<END_FILTER>', '');
                 }
                 return result.replace('<TIME_SPAN_PROPERTY>', key);
+            }
+
+            function dateToISOString(date) {
+                return date.toISOString().slice(0, 10);
             }
         };
     });
