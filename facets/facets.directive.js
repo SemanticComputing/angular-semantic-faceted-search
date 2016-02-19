@@ -36,6 +36,7 @@
         vm.selectedFacets = vm.facetHandler.selectedFacets;
         vm.isDisabled = isDisabled;
         vm.changed = facetChanged;
+        vm.clearTextFacet = clearTextFacet;
 
         vm.getFacetSize = getFacetSize;
 
@@ -43,6 +44,11 @@
 
         function isDisabled() {
             return vm.isLoadingFacets || $scope.disable();
+        }
+
+        function clearTextFacet(id) {
+            vm.selectedFacets[id].value = undefined;
+            return facetChanged(id);
         }
 
         function facetChanged(id) {
