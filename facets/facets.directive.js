@@ -47,8 +47,13 @@
 
         function facetChanged(id) {
             vm.isLoadingFacets = true;
-            return vm.facetHandler.facetChanged(id)
-                .then(handleUpdateSuccess, handleError);
+            var promise;
+            if (vm.facets[id].type === 'timespan') {
+                promise = vm.facetHandler.timeSpanFacetChanged(id);
+            } else {
+                promise = vm.facetHandler.facetChanged(id);
+            }
+            return promise.then(handleUpdateSuccess, handleError);
         }
 
         function update() {

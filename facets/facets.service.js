@@ -20,6 +20,7 @@
 
             self.getStates = getStates;
             self.facetChanged = facetChanged;
+            self.timeSpanFacetChanged = timeSpanFacetChanged;
             self.update = update;
             self.selectedFacets = {};
 
@@ -86,14 +87,24 @@
             ' }';
             deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate);
 
+            function timeSpanFacetChanged(id) {
+                var selectedFacet = self.selectedFacets[id];
+                if (selectedFacet) {
+                    var start = (selectedFacet.value || {}).start;
+                    var end = (selectedFacet.value || {}).end;
+
+                    if ((start || end) && !(start && end)) {
+                        return $q.when();
+                    }
+                    return facetChanged(id);
+                }
+                return $q.when();
+            }
+
             function facetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
 
                 if (selectedFacet) {
-                    if (facets[id].type === 'timespan' &&
-                            !((selectedFacet.value || {}).start && (selectedFacet || {}).value.end)) {
-                        return $q.when();
-                    }
                     // As this function gets called every time a facet state is changed,
                     // check that the actual selection is changed before calling update.
                     if (!_.isEqual(previousSelections[id].value, selectedFacet.value)) {
@@ -167,7 +178,9 @@
                 }
 
                 _.forOwn(facets, function(v, id) {
-                    if (!(countKey === defaultCountKey && countKey === id) && !(facetSelections[id] && facetSelections[id].value)) {
+                    if ((selectionId === defaultCountKey && facetSelections[id] && !facetSelections[id].value)
+                            || !(countKey === defaultCountKey && countKey === id)
+                            && !(facetSelections[id] && facetSelections[id].value)) {
                         var result = _.find(results, ['id', id]);
                         if (!result) {
                             result = { id: id, values: [] };
