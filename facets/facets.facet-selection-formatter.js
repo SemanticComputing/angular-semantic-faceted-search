@@ -30,24 +30,35 @@
             var resourceTimeSpanUri = '?time_span_uri';
 
             function parseFacetSelections( facetSelections ) {
+                var otherFacets = [];
+                var textFacets = [];
+                _.forOwn(facetSelections, function(facet, id) {
+                    if (facets[id].type === 'text') {
+                        textFacets.push({ id: id, val: facet });
+                    } else {
+                        otherFacets.push({ id: id, val: facet });
+                    }
+                });
+                var selections = textFacets.concat(otherFacets);
+
                 var result = '';
                 var i = 0;
-                _.forOwn( facetSelections, function( val, key ) {
-                    if (!(val && val.value)) {
+                _.forEach( selections, function( facet ) {
+                    if (!(facet.val && facet.val.value)) {
                         return;
                     }
 
-                    var facetType = facets[key].type;
+                    var facetType = facets[facet.id].type;
 
                     switch (facetType) {
                         case 'timespan':
-                            result = result + parseTimeSpanFacet(val, key);
+                            result = result + parseTimeSpanFacet(facet.val, facet.id);
                             break;
                         case 'text':
-                            result = result + parseTextFacet(val, key, i++);
+                            result = result + parseTextFacet(facet.val, facet.id, i++);
                             break;
                         default:
-                            result = result + parseBasicFacet(val, key);
+                            result = result + parseBasicFacet(facet.val, facet.id);
                     }
                 });
                 return result;
@@ -58,9 +69,9 @@
             }
 
             function parseTextFacet(val, key, i) {
-                //var q = ' ?s text:query 
-                var textVar = '?text' + i;
-                var result = ' ?s ' + key + ' ' + textVar;
+                var result = ' ?s text:query "' + val.value + '" . ';
+                var textVar = ' ?text' + i;
+                result = result + ' ?s ' + key + ' ' + textVar + ' . ';
                 var words = val.value.replace(/[,.-_*'\\/]/g, '');
 
                 words.split(' ').forEach(function(word) {

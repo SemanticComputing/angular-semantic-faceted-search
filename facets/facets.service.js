@@ -38,9 +38,10 @@
             });
 
             var queryTemplate = '' +
-            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#>' +
-            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>' +
-            ' PREFIX sf: <http://ldf.fi/functions#>' +
+            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
+            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
+            ' PREFIX sf: <http://ldf.fi/functions#> ' +
+            ' PREFIX text: <http://jena.apache.org/text#> ' +
 
             ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
             '   { ' +
@@ -144,14 +145,23 @@
                     // No facets selected, get the count from the results.
                     count = (_.find((_.find(results, ['id', countKey]) || {}).values,
                             ['value', undefined]) || {}).count || 0;
-                } else if (_.includes(facets[selectionId].type, freeFacetTypes)) {
-                    // Get the count from the current selection.
-                    count = (facetSelections[countKey] || {}).count || 0;
+                } else if (_.includes(freeFacetTypes, facets[selectionId].type)) {
+                    // This is a facet without an explicit value, search the results
+                    // for the highest defined value.
+                    var max = 0;
+                    _.forEach(results, function(result) {
+                        var maxVal = _.maxBy(result.values, function(val) {
+                            return val.value ? val.count : 0;
+                        });
+                        maxVal = maxVal && maxVal.value ? maxVal.count : 0;
+                        if (maxVal > max) {
+                            max = maxVal;
+                        }
+                    });
+                    count = max;
                 } else {
-                    var v = (_.find(results, ['id', countKey]) || {}).values;
-                    console.log(v);
-                    count = (_.find(v,
-                            ['value', facetSelections[selectionId].value]) || {}).count || 0;
+                    // Get the count from the current selection.
+                    count = facetSelections[countKey].count;
                 }
 
                 _.forOwn(facets, function(v, id) {
@@ -229,14 +239,16 @@
                 });
                 var actualSelectionCount = actualSelections.length;
 
-                var selections = facetSelections;
-                var countKey = (facetSelections[id] || {}).value ? id : defaultCountKey;
+                var currentSelection = facetSelections[id] || {};
+                var selections = actualSelections;
+                var countKey = currentSelection.value ? id : defaultCountKey;
 
                 if (!actualSelectionCount) {
-                    selections = [];
-                    selections[countKey] = { value: undefined };
+                    if (!currentSelection.count) {
+                        selections.push({ id: defaultCountKey, value: undefined });
+                    }
                 } else {
-                    var found = _.reject(actualSelections, function(selection) {
+                    var found = _.reject(selections, function(selection) {
                         return selection.id === countKey;
                     });
                     if (!found) {
@@ -245,18 +257,13 @@
                     }
                 }
 
-                _.forOwn( selections, function( val, key ) {
-                    //console.log(key, countKey, val);
-                    if (!val || (angular.isUndefined(val.value) && key !== countKey)) {
-                        return;
-                    }
-                    var s = deselectUnionTemplate.replace('<DESELECTION>', key);
+                _.forEach( selections, function( selection ) {
+                    var s = deselectUnionTemplate.replace('<DESELECTION>', selection.id);
                     var others = {};
-                    _.forOwn( selections, function( v, k ) {
-                        if (k !== key) {
-                            var selected = selections[k];
-                            if (selected && selected.value) {
-                                others[k] = selections[k];
+                    _.forEach( selections, function( s ) {
+                        if (s.id !== selection.id) {
+                            if (s && s.value) {
+                                others[s.id] = s.value;
                             }
                         }
                     });
