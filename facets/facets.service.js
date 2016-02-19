@@ -82,7 +82,7 @@
             '       <GRAPH_END> ' +
             '     } ' +
             '   } ' +
-            '   BIND("-- No Selection --" AS ?facet_text) ' +
+            '   BIND("' + NO_SELECTION_STRING + '" AS ?facet_text) ' +
             '   BIND(<DESELECTION> AS ?id) ' +
             ' }';
             deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate);
@@ -148,17 +148,22 @@
             function parseResults( sparqlResults, facetSelections, selectionId ) {
                 var results = facetMapperService.makeObjectList(sparqlResults);
 
-                var countKey = selectionId || defaultCountKey;
+                var isFreeFacet;
+                if (selectionId && _.includes(freeFacetTypes, facets[selectionId].type)) {
+                    isFreeFacet = true;
+                }
+                var isEmptyFreeFacet = isFreeFacet && !facetSelections[selectionId].value;
+
                 // count is the current result count.
                 var count;
                 // Due to optimization, no redundant "no selection" values are queried.
                 // Because of this, they need to be set for each facet for which
                 // the value was not queried.
-                if (!selectionId) {
-                    // No facets selected, get the count from the results.
-                    count = (_.find((_.find(results, ['id', countKey]) || {}).values,
+                if (!selectionId || isEmptyFreeFacet) {
+                    // No facets selected (or emptied free facet), get the count from the results.
+                    count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
                             ['value', undefined]) || {}).count || 0;
-                } else if (_.includes(freeFacetTypes, facets[selectionId].type)) {
+                } else if (isFreeFacet) {
                     // This is a facet without an explicit value, search the results
                     // for the highest defined value.
                     var max = 0;
@@ -174,18 +179,17 @@
                     count = max;
                 } else {
                     // Get the count from the current selection.
-                    count = facetSelections[countKey].count;
+                    count = facetSelections[selectionId].count;
                 }
 
+                // Add the "no selection" values to facets without them.
                 _.forOwn(facets, function(v, id) {
-                    if ((selectionId === defaultCountKey && facetSelections[id] && !facetSelections[id].value)
-                            || !(countKey === defaultCountKey && countKey === id)
-                            && !(facetSelections[id] && facetSelections[id].value)) {
-                        var result = _.find(results, ['id', id]);
-                        if (!result) {
-                            result = { id: id, values: [] };
-                            results.push(result);
-                        }
+                    var result = _.find(results, ['id', id]);
+                    if (!result) {
+                        result = { id: id, values: [] };
+                        results.push(result);
+                    }
+                    if (!_.find(result.values, ['value', undefined])) {
                         result.values = [{
                             value: undefined,
                             text: NO_SELECTION_STRING,
@@ -256,22 +260,12 @@
 
                 var currentSelection = facetSelections[id] || {};
                 var selections = actualSelections;
-                var countKey = currentSelection.value ? id : defaultCountKey;
 
                 if (!actualSelectionCount) {
                     if (!currentSelection.count) {
                         selections.push({ id: defaultCountKey, value: undefined });
                     }
-                } else {
-                    var found = _.reject(selections, function(selection) {
-                        return selection.id === countKey;
-                    });
-                    if (!found) {
-                        // Default is not in selection, do not build a union for it.
-                        countKey = undefined;
-                    }
                 }
-
                 _.forEach( selections, function( selection ) {
                     var s = deselectUnionTemplate.replace('<DESELECTION>', selection.id);
                     var others = {};
