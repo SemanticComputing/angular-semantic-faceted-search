@@ -111,7 +111,6 @@
             ' }' +
             ' OPTIONAL { ?s m_schema:kuolinaika ?tod .' +
 
-//                    ' BIND(CONCAT("<a href=\"http://www.sotasampo.fi/times/page?uri=http://ldf.fi/warsa/events/times/time_",STR(?kuolinaika),"-",STR(?kuolinaika),"\">",STR(?kuolinaika),"</a>") AS ?kuolinpaiva) .' +
             ' }' +
             ' OPTIONAL { ?s m_schema:ammatti ?occupation . }' +
 //                    ' OPTIONAL { ?s m_schema:kuolinpaikka ?kuolinpaikka . }' +

@@ -47,7 +47,13 @@
                 var result = '';
                 var i = 0;
                 _.forEach( selections, function( facet ) {
-                    if (!(facet.val && facet.val.value)) {
+                    if (facet.val && facet.val.length) {
+                        for (var j = 0; j < facet.val.length; j++) {
+                            if (!facet.val[j].value) {
+                                return;
+                            }
+                        }
+                    } else if (!(facet.val && facet.val.value)) {
                         return;
                     }
 
@@ -68,6 +74,13 @@
             }
 
             function parseBasicFacet(val, key) {
+                var result = '';
+                if (val.forEach) {
+                    val.forEach(function(value) {
+                        result = result + ' ?s ' + key + ' ' + value.value + ' . ';
+                    });
+                    return result;
+                }
                 return ' ?s ' + key + ' ' + val.value + ' . ';
             }
 

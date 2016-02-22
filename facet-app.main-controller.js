@@ -14,11 +14,11 @@
     * Controller for the results view.
     */
     .controller( 'MainController', function ( _, RESULTS_PER_PAGE,
-                casualtyService, NgTableParams ) {
+                photoService, NgTableParams ) {
         var vm = this;
 
-        vm.facets = casualtyService.getFacets();
-        vm.facetOptions = casualtyService.getFacetOptions();
+        vm.facets = photoService.getFacets();
+        vm.facetOptions = photoService.getFacetOptions();
         vm.facetOptions.updateResults = updateResults;
 
         vm.disableFacets = disableFacets;
@@ -55,7 +55,7 @@
         function updateResults( facetSelections ) {
             vm.isLoadingResults = true;
 
-            casualtyService.getResults( facetSelections )
+            photoService.getResults( facetSelections )
             .then( function ( pager ) {
                 vm.pager = pager;
                 if (vm.tableParams) {

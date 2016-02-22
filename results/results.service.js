@@ -11,17 +11,19 @@
 
     /* @ngInject */
     function Results( RESULTS_PER_PAGE, PAGES_PER_QUERY, AdvancedSparqlService,
-                personMapperService, FacetSelectionFormatter ) {
-        return function( endpointUrl, facets ) {
+                FacetSelectionFormatter, objectMapperService ) {
+        return function( endpointUrl, facets, mapper ) {
+            mapper = mapper || objectMapperService;
 
             var formatter = new FacetSelectionFormatter(facets);
-            var endpoint = new AdvancedSparqlService(endpointUrl, personMapperService);
+            var endpoint = new AdvancedSparqlService(endpointUrl, mapper);
 
             this.getResults = getResults;
 
             function getResults(facetSelections, query, resultSetQry) {
-                return endpoint.getObjects(
-                    query.replace('<FACET_SELECTIONS>', formatter.parseFacetSelections(facetSelections)),
+                query = query.replace('<FACET_SELECTIONS>',
+                        formatter.parseFacetSelections(facetSelections));
+                return endpoint.getObjects(query,
                     RESULTS_PER_PAGE,
                     resultSetQry.replace('<FACET_SELECTIONS>', formatter.parseFacetSelections(facetSelections)),
                     PAGES_PER_QUERY);

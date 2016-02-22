@@ -1,0 +1,39 @@
+<table class="table" ng-table="vm.tableParams">
+  <colgroup>
+    <col width="15%" />
+    <col width="7%" />
+    <col width="8%" />
+    <col width="20%" />
+    <col width="5%" />
+    <col width="7%" />
+    <col width="10%" />
+    <col width="28%" />
+  </colgroup>
+  <tr ng-show="!vm.isLoadingResults" ng-repeat="person in $data">
+    <td title="'Name'">
+      {{::person.name}}
+    </td>
+    <td title="'Rank'">
+      {{::person.rank}}
+    </td>
+    <td title="'Occupation'">
+      {{::person.occupation}}
+    </td>
+    <td title="'Joukko-osasto'">
+      {{::person.unit}}
+    </td>
+    <td title="'Marital Status'">
+      {{::person.marital_status}}
+    </td>
+    <td title="'Time of Death'">
+      {{::person.tod}}
+    </td>
+    <td title="'Municipality'">
+      {{::person.death_municipality}}
+    </td>
+    <td title="'Casualty Class'">
+      {{::person.casualty_class}}
+    </td>
+  </tr>
+</table>
+<img class="loading-img" src="images/loading-lg.gif" ng-if="vm.isLoadingResults"></img>

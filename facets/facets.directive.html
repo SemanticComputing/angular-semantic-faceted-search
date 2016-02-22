@@ -6,6 +6,7 @@
   <div ng-if="::!facet.type">
     <select
       ng-change="vm.changed(id)"
+      multiple="true"
       ng-disabled="vm.isDisabled()"
       size="{{ vm.getFacetSize(facet.state.values) }}"
       id="{{ ::facet.name + '_select' }}"

@@ -25,45 +25,9 @@
       </div>
 
       <div class="col-md-10">
-        <table class="table" ng-table="vm.tableParams">
-          <colgroup>
-            <col width="15%" />
-            <col width="7%" />
-            <col width="8%" />
-            <col width="20%" />
-            <col width="5%" />
-            <col width="7%" />
-            <col width="10%" />
-            <col width="28%" />
-          <tr ng-show="!vm.isLoadingResults" ng-repeat="person in $data">
-              <td title="'Name'">
-                  {{::person.name}}
-              </td>
-              <td title="'Rank'">
-                  {{::person.rank}}
-              </td>
-              <td title="'Occupation'">
-                  {{::person.occupation}}
-              </td>
-              <td title="'Joukko-osasto'">
-                  {{::person.unit}}
-              </td>
-              <td title="'Marital Status'">
-                  {{::person.marital_status}}
-              </td>
-              <td title="'Time of Death'">
-                  {{::person.tod}}
-              </td>
-              <td title="'Municipality'">
-                  {{::person.death_municipality}}
-              </td>
-              <td title="'Casualty Class'">
-                  {{::person.casualty_class}}
-              </td>
-          </tr>
-        </table>
-        <img class="loading-img" src="images/loading-lg.gif" ng-if="vm.isLoadingResults"></img>
+        <div ng-include="'photos.html'"></div>
       </div>
+
     </div>
   </div>
 
@@ -89,7 +53,9 @@
   <script src="results/results.service.js"></script>
   <script src="facet-app.module.js"></script>
   <script src="person.mapper.js"></script>
+  <script src="photo.mapper.js"></script>
   <script src="casualty.service.js"></script>
+  <script src="photo.service.js"></script>
   <script src="facet-app.main-controller.js"></script>
 </body>
 

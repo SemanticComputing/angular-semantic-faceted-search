@@ -11,18 +11,18 @@
 
     .constant('_', _) // eslint-disable-line no-undef
 
-    .service('photoMapperService', photoMapperService);
+    .service('personMapperService', personMapperService);
 
     /* ngInject */
-    function photoMapperService(_, objectMapperService) {
-        PhotoMapper.prototype.makeObjectList = makeObjectList;
+    function personMapperService(_, objectMapperService) {
+        PersonMapper.prototype.makeObjectList = makeObjectList;
 
         var proto = Object.getPrototypeOf(objectMapperService);
-        PhotoMapper.prototype = angular.extend({}, proto, PhotoMapper.prototype);
+        PersonMapper.prototype = angular.extend({}, proto, PersonMapper.prototype);
 
-        return new PhotoMapper();
+        return new PersonMapper();
 
-        function PhotoMapper() {
+        function PersonMapper() {
             this.objectClass = Object;
         }
 

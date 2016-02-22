@@ -22,7 +22,6 @@
             self.facetChanged = facetChanged;
             self.timeSpanFacetChanged = timeSpanFacetChanged;
             self.update = update;
-            self.selectedFacets = {};
 
             var facetStates;
             var endpoint = new SparqlService(config.endpointUrl);
@@ -31,8 +30,13 @@
 
             var previousSelections = {};
             _.forOwn(facets, function(val, id) {
-                previousSelections[id] = { value: undefined };
+                if (!val.type) {
+                    previousSelections[id] = [{ value: undefined }];
+                } else {
+                    previousSelections[id] = { value: undefined };
+                }
             });
+            self.selectedFacets = _.cloneDeep(previousSelections);
 
             var defaultCountKey = _.findKey(facets, function(facet) {
                 return !facet.type;
@@ -103,11 +107,15 @@
 
             function facetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
+                if (!facets[id].type && selectedFacet.length === 0) {
+                    self.selectedFacets[id] = _.clone(previousSelections[id]);
+                    return update(id);
+                }
 
                 if (selectedFacet) {
                     // As this function gets called every time a facet state is changed,
                     // check that the actual selection is changed before calling update.
-                    if (!_.isEqual(previousSelections[id].value, selectedFacet.value)) {
+                    if (!_.isEqual(previousSelections[id], selectedFacet)) {
                         previousSelections[id] = _.cloneDeep(selectedFacet);
                         return update(id);
                     }
@@ -179,7 +187,7 @@
                     count = max;
                 } else {
                     // Get the count from the current selection.
-                    count = facetSelections[selectionId].count;
+                    count = facetSelections[selectionId][0].count;
                 }
 
                 // Add the "no selection" values to facets without them.
@@ -252,7 +260,7 @@
 
                 var actualSelections = [];
                 _.forOwn(facetSelections, function(val, key) {
-                    if (val && val.value) {
+                    if (val && (val.value || (val.forEach && val[0].value))) {
                         actualSelections.push({ id: key, value: val });
                     }
                 });
@@ -271,7 +279,7 @@
                     var others = {};
                     _.forEach( selections, function( s ) {
                         if (s.id !== selection.id) {
-                            if (s && s.value) {
+                            if (s.value) {
                                 others[s.id] = s.value;
                             }
                         }

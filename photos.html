@@ -1,0 +1,23 @@
+<table class="table" ng-table="vm.tableParams">
+  <tr ng-show="!vm.isLoadingResults" ng-repeat="photo in $data">
+    <td title="'Thumbnail'">
+      <img ng-src="{{::photo.thumbnail_url}}" />
+    </td>
+    <td title="'Description'">
+      {{::photo.description}}
+    </td>
+    <td title="'Created'">
+      {{::photo.created}}
+    </td>
+    <td title="'Place'">
+      {{::photo.place_string}}
+    </td>
+    <td title="'Place'">
+      {{::photo.place_label}}
+    </td>
+    <td title="'Subject'">
+      {{::photo.subject}}
+    </td>
+  </tr>
+</table>
+<img class="loading-img" src="images/loading-lg.gif" ng-if="vm.isLoadingResults"></img>
