@@ -1,8 +1,3 @@
-/*
- * Semantic faceted search
- *
- */
-
 (function() {
 
     'use strict';
@@ -11,31 +6,12 @@
     angular.module('facetApp')
 
     /*
-    * Result handler service.
-    */
-    .factory( 'Results', function( RESULTS_PER_PAGE, PAGES_PER_QUERY, AdvancedSparqlService,
-                personMapperService, FacetSelectionFormatter ) {
-        return function( endpointUrl, facets ) {
-
-            var formatter = new FacetSelectionFormatter(facets);
-            var endpoint = new AdvancedSparqlService(endpointUrl, personMapperService);
-
-            this.getResults = getResults;
-
-            function getResults(facetSelections, query, resultSetQry) {
-                return endpoint.getObjects(
-                    query.replace('<FACET_SELECTIONS>', formatter.parseFacetSelections(facetSelections)),
-                    RESULTS_PER_PAGE,
-                    resultSetQry.replace('<FACET_SELECTIONS>', formatter.parseFacetSelections(facetSelections)),
-                    PAGES_PER_QUERY);
-            }
-        };
-    })
-
-    /*
      * Casualty service
      */
-    .service( 'casualtyService', function( $q, SparqlService, Results ) {
+    .service( 'casualtyService', casualtyService );
+
+    /* @ngInject */
+    function casualtyService( $q, SparqlService, Results ) {
         var endpointUrl = 'http://ldf.fi/warsa/sparql';
 
         var facets = {
@@ -172,63 +148,5 @@
         function getFacetOptions() {
             return facetOptions;
         }
-    })
-
-    /*
-    * Controller for the results view.
-    */
-    .controller( 'MainController', function ( $q, _, RESULTS_PER_PAGE,
-                casualtyService, NgTableParams ) {
-        var vm = this;
-
-        vm.facets = casualtyService.getFacets();
-        vm.facetOptions = casualtyService.getFacetOptions();
-        vm.facetOptions.updateResults = updateResults;
-
-        vm.disableFacets = disableFacets;
-
-        function disableFacets() {
-            return vm.isLoadingResults;
-        }
-
-        function initializeTable() {
-            vm.tableParams = new NgTableParams(
-                {
-                    count: RESULTS_PER_PAGE
-                },
-                {
-                    getData: getData
-                }
-            );
-        }
-
-        function getData($defer, params) {
-            vm.isLoadingResults = true;
-
-            vm.pager.getPage(params.page() - 1, params.count())
-            .then( function( page ) {
-                $defer.resolve( page );
-                vm.pager.getTotalCount().then(function(count) {
-                    vm.tableParams.total( count );
-                }).then(function() {
-                    vm.isLoadingResults = false;
-                });
-            });
-        }
-
-        function updateResults( facetSelections ) {
-            vm.isLoadingResults = true;
-
-            casualtyService.getResults( facetSelections )
-            .then( function ( pager ) {
-                vm.pager = pager;
-                if (vm.tableParams) {
-                    vm.tableParams.page(1);
-                    vm.tableParams.reload();
-                } else {
-                    initializeTable();
-                }
-            });
-        }
-    });
+    }
 })();
