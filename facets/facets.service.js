@@ -115,7 +115,7 @@
                 if (selectedFacet) {
                     // As this function gets called every time a facet state is changed,
                     // check that the actual selection is changed before calling update.
-                    if (!_.isEqual(previousSelections[id], selectedFacet)) {
+                    if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
                         previousSelections[id] = _.cloneDeep(selectedFacet);
                         return update(id);
                     }
@@ -133,6 +133,15 @@
                     self.selectedFacets[id] = _.clone(previousSelections[id]);
                 }
                 return $q.when();
+            }
+
+            function hasSameValue(first, second) {
+                if (_.isArray(first)) {
+                    var firstVals = _.map(first, 'value');
+                    var secondVals = _.map(second, 'value');
+                    return _.isEqual(firstVals, secondVals);
+                }
+                return _.isEqual(first, second);
             }
 
             function update(id) {
