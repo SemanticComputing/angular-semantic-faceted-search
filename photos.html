@@ -1,23 +1,28 @@
-<table class="table" ng-table="vm.tableParams">
-  <tr ng-show="!vm.isLoadingResults" ng-repeat="photo in $data">
-    <td title="'Thumbnail'">
-      <img ng-src="{{::photo.thumbnail_url}}" />
-    </td>
-    <td title="'Description'">
+<div infinite-scroll='vm.nextPage()'
+    infinite-scroll-disabled='vm.isScrollDisabled()'
+    infinite-scroll-distance='0'>
+  <div ng-repeat="photo in vm.photos" class="photo-thumbnail-container">
+    <div class="clearfix" ng-if="$index % 3 == 0"></div>
+    <div class="col-sm-4">
+      <img ng-src="{{::photo.url}}" title="{{::photo.description}} | SA-kuva {{::photo.created}}" />
+    </div>
+      <!--
+    <div>
       {{::photo.description}}
-    </td>
-    <td title="'Created'">
+    </div>
+    <div>
       {{::photo.created}}
-    </td>
-    <td title="'Place'">
+    </div>
+    <div>
       {{::photo.place_string}}
-    </td>
-    <td title="'Place'">
+    </div>
+    <div>
       {{::photo.place_label}}
-    </td>
-    <td title="'Subject'">
+    </div>
+    <div>
       {{::photo.subject}}
-    </td>
-  </tr>
-</table>
+    </div>
+  </div>
+  -->
+</div>
 <img class="loading-img" src="images/loading-lg.gif" ng-if="vm.isLoadingResults"></img>

@@ -13,7 +13,7 @@
 
 
 <body ng-app="facetApp">
-  <div class="container-fluid" ng-controller="MainController as vm" class="left">
+  <div class="container-fluid" ng-controller="PhotoController as vm" class="left">
     <div class="row">
       <div class="col-md-2">
         <facet-selector
@@ -40,6 +40,7 @@
           crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ng-table/1.0.0-beta.9/ng-table.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/1.1.2/ui-bootstrap-tpls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ngInfiniteScroll/1.2.2/ng-infinite-scroll.js"></script>
 
   <script src="sparql/sparql.service.js"></script>
   <script src="sparql/sparql.pager.js"></script>
@@ -56,6 +57,7 @@
   <script src="photo.mapper.js"></script>
   <script src="casualty.service.js"></script>
   <script src="photo.service.js"></script>
+  <script src="photo.controller.js"></script>
   <script src="facet-app.main-controller.js"></script>
 </body>
 

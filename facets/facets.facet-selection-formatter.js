@@ -85,7 +85,7 @@
             }
 
             function parseTextFacet(val, key, i) {
-                var result = ' ?s text:query "' + val.value + '" . ';
+                var result = ' ?s text:query "' + val.value + '*" . ';
                 var textVar = ' ?text' + i;
                 result = result + ' ?s ' + key + ' ' + textVar + ' . ';
                 var words = val.value.replace(/[,.-_*'\\/]/g, '');
