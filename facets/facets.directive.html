@@ -4,7 +4,7 @@
     <img src="images/loading-sm.gif" ng-if="vm.isLoadingFacets"></img>
   </div>
   <div ng-if="::!facet.type">
-    <input type="text" class="form-control" ng-model="textFilters[id]" />
+    <input type="text" class="form-control" ng-model="textFilter" />
     <select
       ng-change="vm.changed(id)"
       multiple="true"
@@ -12,7 +12,7 @@
       size="{{ vm.getFacetSize(facet.state.values) }}"
       id="{{ ::facet.name + '_select' }}"
       class="selector form-control"
-      ng-options="value as (value.text + ' (' + value.count + ')') for value in facet.state.values | filter:{text: textFilters[id]} track by value.value"
+      ng-options="value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value"
       ng-model="vm.selectedFacets[id]">
     </select>
   </div>

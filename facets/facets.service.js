@@ -20,7 +20,6 @@
 
             self.getStates = getStates;
             self.facetChanged = facetChanged;
-            self.timeSpanFacetChanged = timeSpanFacetChanged;
             self.update = update;
 
             var facetStates;
@@ -91,6 +90,20 @@
             ' }';
             deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate);
 
+            function facetChanged(id) {
+                if (self.selectedFacets[id]) {
+                    switch(facets[id].type) {
+                        case 'timespan':
+                            return timeSpanFacetChanged(id);
+                        case 'text':
+                            return textFacetChanged(id);
+                        default:
+                            return basicFacetChanged(id);
+                    }
+                }
+                return $q.when();
+            }
+
             function timeSpanFacetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
                 if (selectedFacet) {
@@ -100,26 +113,28 @@
                     if ((start || end) && !(start && end)) {
                         return $q.when();
                     }
-                    return facetChanged(id);
+                    return update(id);
                 }
                 return $q.when();
             }
 
-            function facetChanged(id) {
+            function textFacetChanged(id) {
+                if (hasChanged(id)) {
+                    return update(id);
+                }
+                return $q.when();
+            }
+
+            function basicFacetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
-                if (!facets[id].type && selectedFacet.length === 0) {
+                if (selectedFacet.length === 0) {
                     self.selectedFacets[id] = _.clone(previousSelections[id]);
                     return update(id);
                 }
-
-                if (selectedFacet) {
-                    // As this function gets called every time a facet state is changed,
-                    // check that the actual selection is changed before calling update.
-                    if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
-                        previousSelections[id] = _.cloneDeep(selectedFacet);
-                        return update(id);
-                    }
-                } else {
+                if (hasChanged(id)) {
+                    return update(id);
+                }
+                if (!selectedFacet[0]) {
                     // Another facet selection (text search) has resulted in this
                     // facet not having a value even though it has a selection.
                     // Fix it by adding its previous state to the facet state list
@@ -133,6 +148,15 @@
                     self.selectedFacets[id] = _.clone(previousSelections[id]);
                 }
                 return $q.when();
+            }
+
+            function hasChanged(id) {
+                var selectedFacet = self.selectedFacets[id];
+                if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
+                    previousSelections[id] = _.cloneDeep(selectedFacet);
+                    return true;
+                }
+                return false;
             }
 
             function hasSameValue(first, second) {
@@ -269,7 +293,7 @@
 
                 var actualSelections = [];
                 _.forOwn(facetSelections, function(val, key) {
-                    if (val && (val.value || (val.forEach && val[0].value))) {
+                    if (val && (val.value || (_.isArray(val) && (val[0] || {}).value))) {
                         actualSelections.push({ id: key, value: val });
                     }
                 });
