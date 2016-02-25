@@ -16,12 +16,11 @@
     .controller( 'PhotoController', PhotoController );
 
     /* @ngInject */
-    function PhotoController( _, RESULTS_PER_PAGE, photoService ) {
+    function PhotoController( _, RESULTS_PER_PAGE, photoService, urlStateHandlerService ) {
         var vm = this;
 
         vm.facets = photoService.getFacets();
-        vm.facetOptions = photoService.getFacetOptions();
-        vm.facetOptions.updateResults = updateResults;
+        vm.facetOptions = getFacetOptions();
 
         vm.disableFacets = disableFacets;
         vm.isScrollDisabled = isScrollDisabled;
@@ -32,6 +31,13 @@
 
         var nextPageNo;
         var maxPage;
+
+        function getFacetOptions() {
+            var options = photoService.getFacetOptions();
+            options.updateResults = updateResults;
+            options.initialValues = urlStateHandlerService.getFacetValuesFromUrlParams();
+            return options;
+        }
 
         function disableFacets() {
             return vm.isLoadingResults;
@@ -55,6 +61,7 @@
         }
 
         function updateResults( facetSelections ) {
+            urlStateHandlerService.updateUrlParams(facetSelections);
             vm.isLoadingResults = true;
             vm.photos = [];
             nextPageNo = 0;

@@ -27,12 +27,13 @@
 
             var freeFacetTypes = ['text', 'timespan'];
 
+            var initialValues = parseInitialValues(config.initialValues);
             var previousSelections = {};
             _.forOwn(facets, function(val, id) {
                 if (!val.type) {
-                    previousSelections[id] = [{ value: undefined }];
+                    previousSelections[id] = [{ value: initialValues[id] }];
                 } else {
-                    previousSelections[id] = { value: undefined };
+                    previousSelections[id] = { value: initialValues[id] };
                 }
             });
             self.selectedFacets = _.cloneDeep(previousSelections);
@@ -150,6 +151,24 @@
                 return $q.when();
             }
 
+            function update(id) {
+                config.updateResults(self.selectedFacets);
+                return getStates(self.selectedFacets, id).then(function(states) {
+                    _.forOwn(facets, function(facet, key) {
+                        facet.state = _.find(states, ['id', key]);
+                    });
+                });
+            }
+
+            function getStates(facetSelections, id) {
+                var query = buildQuery(facetSelections, id);
+
+                var promise = endpoint.getObjects(query);
+                return promise.then(function(results) {
+                    return parseResults(results, facetSelections, id);
+                });
+            }
+
             function hasChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
                 if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
@@ -168,22 +187,23 @@
                 return _.isEqual(first, second);
             }
 
-            function update(id) {
-                config.updateResults(self.selectedFacets);
-                return getStates(self.selectedFacets, id).then(function(states) {
-                    _.forOwn(facets, function(facet, key) {
-                        facet.state = _.find(states, ['id', key]);
-                    });
+            function parseInitialValues(values) {
+                var result = {};
+                _.forOwn(values, function(val, id) {
+                    if (!facets[id]) {
+                        return;
+                    }
+                    if (facets[id].type === 'timespan') {
+                        var obj = angular.fromJson(val);
+                        result[id] = {
+                            start: new Date(obj.start),
+                            end: new Date(obj.end)
+                        };
+                    } else {
+                        result[id] = val;
+                    }
                 });
-            }
-
-            function getStates(facetSelections, id) {
-                var query = buildQuery(facetSelections, id);
-
-                var promise = endpoint.getObjects(query);
-                return promise.then(function(results) {
-                    return parseResults(results, facetSelections, id);
-                });
+                return result;
             }
 
             function parseResults( sparqlResults, facetSelections, selectionId ) {
