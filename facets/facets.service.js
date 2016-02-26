@@ -278,7 +278,7 @@
                         unions = unions +
                         ' OPTIONAL { ' +
                         '  FILTER(?id = ' + id + ') ' +
-                        '  ?ss ?id ?value . ' +
+                        '  BIND(?id AS ?throwaway) ' +
                         '  SERVICE ' + facet.service + ' { ' +
                         '   ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
                         '  } ' +

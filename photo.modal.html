@@ -1,0 +1,30 @@
+<div class="modal-body">
+  <div class="row">
+    <div class="col-md-8">
+      <div>
+      <img ng-src="{{::vm.photo.url}}" title="{{::vm.photo.description}} | SA-kuva {{::vm.photo.created}}" />
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div>
+        {{::vm.photo.created}}
+      </div>
+      <div>
+        {{::vm.photo.place_string}}
+      </div>
+      <div>
+        {{::vm.photo.place_label}}
+      </div>
+      <div>
+        {{::vm.photo.subject}}
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <p>
+      {{::vm.photo.description}}
+      </p>
+    </div>
+  </div>
+</div>

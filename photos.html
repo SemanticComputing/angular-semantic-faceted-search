@@ -4,25 +4,9 @@
   <div ng-repeat="photo in vm.photos" class="photo-thumbnail-container">
     <div class="clearfix" ng-if="$index % 3 == 0"></div>
     <div class="col-sm-4">
-      <img ng-src="{{::photo.url}}" title="{{::photo.description}} | SA-kuva {{::photo.created}}" />
+      <a href="" ng-click="vm.openModal(photo)">
+        <img ng-src="{{::photo.url}}" title="{{::photo.description}} | SA-kuva {{::photo.created}}" />
+      </a>
     </div>
-      <!--
-    <div>
-      {{::photo.description}}
-    </div>
-    <div>
-      {{::photo.created}}
-    </div>
-    <div>
-      {{::photo.place_string}}
-    </div>
-    <div>
-      {{::photo.place_label}}
-    </div>
-    <div>
-      {{::photo.subject}}
-    </div>
-  </div>
-  -->
 </div>
 <img class="loading-img" src="images/loading-lg.gif" ng-if="vm.isLoadingResults"></img>

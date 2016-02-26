@@ -33,15 +33,15 @@
 
         var resultHandler = new Results(endpointUrl, facets, photoMapperService);
 
-        var properties = {
-            '?description': '',
-            '?created': '',
-            '?place_label': '',
-            '?place_string': '',
-            '?subject': '',
-            '?url': '',
-            '?thumbnail_url': ''
-        };
+        var properties = [
+            '?description',
+            '?created',
+            '?place_label',
+            '?place_string',
+            '?subject',
+            '?url',
+            '?thumbnail_url'
+        ];
 
         var facetOptions = {
             endpointUrl: endpointUrl,
@@ -60,7 +60,7 @@
         ' PREFIX dc: <http://purl.org/dc/terms/> ';
 
         var resultSet =
-        ' SELECT ?s ?id { ' +
+        ' SELECT DISTINCT ?id { ' +
         '   <FACET_SELECTIONS> ' +
         '   ?s a dctype:Image .' +
         '   BIND(?s AS ?id) ' +
@@ -70,7 +70,7 @@
         var resultSetQry = prefixes + resultSet;
 
         var query = prefixes +
-        ' SELECT ?s ?id <PROPERTIES> ' +
+        ' SELECT DISTINCT ?id <PROPERTIES> ' +
         ' WHERE { ' +
         '   { ' +
         '     <RESULTSET> ' +
@@ -93,7 +93,7 @@
         ' }  ';
 
         query = query.replace(/<RESULTSET>/g, resultSet);
-        query = query.replace(/<PROPERTIES>/g, Object.keys( properties ).join(' '));
+        query = query.replace(/<PROPERTIES>/g, properties.join(' '));
 
         this.getResults = getResults;
         this.getFacets = getFacets;

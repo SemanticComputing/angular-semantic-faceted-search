@@ -13,10 +13,11 @@
     /*
     * Controller for the results view.
     */
-    .controller( 'PhotoController', PhotoController );
+    .controller( 'PhotoController', PhotoController )
+    .controller( 'PhotoModalController', PhotoModalController )
 
     /* @ngInject */
-    function PhotoController( _, RESULTS_PER_PAGE, photoService, urlStateHandlerService ) {
+    function PhotoController( $uibModal, _, RESULTS_PER_PAGE, photoService, urlStateHandlerService ) {
         var vm = this;
 
         vm.facets = photoService.getFacets();
@@ -26,11 +27,24 @@
         vm.isScrollDisabled = isScrollDisabled;
 
         vm.nextPage = nextPage;
+        vm.openModal = openModal;
 
         vm.photos = [];
 
         var nextPageNo;
         var maxPage;
+
+        function openModal(photo) {
+            $uibModal.open({
+                templateUrl: 'photo.modal.html',
+                controller: 'PhotoModalController',
+                controllerAs: 'vm',
+                size: 'lg',
+                resolve: {
+                    photo: function() { return photo; }
+                }
+            });
+        }
 
         function getFacetOptions() {
             var options = photoService.getFacetOptions();
@@ -76,5 +90,11 @@
                 return nextPage();
             });
         }
+    }
+
+    /* @ngInject */
+    function PhotoModalController(photo) {
+        var vm = this;
+        vm.photo = photo;
     }
 })();
