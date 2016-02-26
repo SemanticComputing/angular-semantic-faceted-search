@@ -24,7 +24,10 @@
                 max: '1945-12-31'
             },
             '<http://purl.org/dc/terms/description>': { name: 'Kuvaus', type: 'text' },
-            '<http://purl.org/dc/terms/spatial>': { name: 'Paikka' },
+            '<http://purl.org/dc/terms/spatial>': {
+                name: 'Paikka',
+                service: '<http://ldf.fi/pnr/sparql>'
+            },
             '<http://purl.org/dc/terms/subject>': { name: 'Osallinen' }
         };
 

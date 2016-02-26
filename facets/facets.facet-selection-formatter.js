@@ -8,6 +8,7 @@
         return function( facets ) {
 
             this.parseFacetSelections = parseFacetSelections;
+            this.parseBasicFacet = parseBasicFacet;
 
             var resourceTimeSpanFilterTemplate =
             ' ?s <TIME_SPAN_PROPERTY> ?time_span_uri . ' +

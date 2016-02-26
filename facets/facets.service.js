@@ -51,7 +51,7 @@
             ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
             '   { ' +
             '     {' +
-            '       SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value' +
+            '       SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value' +
             '       WHERE {' +
             '         VALUES ?id {' +
             '           <FACETS> ' +
@@ -68,6 +68,7 @@
             '     OPTIONAL {' +
             '       ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
             '     }' +
+            '     <OTHER_SERVICES> ' +
             '     BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
             '   }' +
             '   <DESELECTIONS> ' +
@@ -264,9 +265,28 @@
             }
 
             function buildQuery(facetSelections, id) {
-                return queryTemplate.replace('<SELECTIONS>',
+                var query = queryTemplate.replace('<SELECTIONS>',
                         formatter.parseFacetSelections(facetSelections))
                         .replace('<DESELECTIONS>', buildDeselectionUnions(facetSelections, id));
+                return query;
+            }
+
+            function buildServiceUnions(query) {
+                var unions = '';
+                _.forOwn(facets, function(facet, id) {
+                    if (facet.service) {
+                        unions = unions +
+                        ' OPTIONAL { ' +
+                        '  FILTER(?id = ' + id + ') ' +
+                        '  ?ss ?id ?value . ' +
+                        '  SERVICE ' + facet.service + ' { ' +
+                        '   ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
+                        '  } ' +
+                        ' } ';
+                    }
+                });
+                query = query.replace('<OTHER_SERVICES>', unions);
+                return query;
             }
 
             function buildQueryTemplate(template) {
@@ -287,10 +307,12 @@
                         placeHolder: '<GRAPH_END>',
                         value: (config.graph ? ' } ' : '') },
                     {
-                        placeHolder: '<PREF_LANG>',
+                        placeHolder: /<PREF_LANG>/g,
                         value: (config.preferredLang ? config.preferredLang : 'fi')
                     }
                 ];
+
+                template = buildServiceUnions(template);
 
                 templateSubs.forEach(function(s) {
                     template = template.replace(s.placeHolder, s.value);
