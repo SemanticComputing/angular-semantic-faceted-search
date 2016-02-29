@@ -207,6 +207,25 @@
                 return result;
             }
 
+            function getFreeFacetCount(facetSelections, results, id) {
+                var isEmpty = !facetSelections[id].value;
+                if (isEmpty) {
+                    return getNoSelectionCountFromResults(results);
+                }
+
+                var facet = _.find(results, ['id', id]);
+                return _.sumBy(facet.values, function(val) {
+                    return val.value ? val.count : 0;
+                });
+            }
+
+            function getNoSelectionCountFromResults(results) {
+                var count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
+                            ['value', undefined]) || {}).count || 0;
+                console.log(count);
+                return count;
+            }
+
             function parseResults( sparqlResults, facetSelections, selectionId ) {
                 var results = facetMapperService.makeObjectList(sparqlResults);
 
@@ -214,30 +233,33 @@
                 if (selectionId && _.includes(freeFacetTypes, facets[selectionId].type)) {
                     isFreeFacet = true;
                 }
-                var isEmptyFreeFacet = isFreeFacet && !facetSelections[selectionId].value;
 
-                // count is the current result count.
-                var count;
                 // Due to optimization, no redundant "no selection" values are queried.
                 // Because of this, they need to be set for each facet for which
                 // the value was not queried.
-                if (!selectionId || isEmptyFreeFacet) {
+
+                // count is the current result count.
+                var count;
+
+                if (isFreeFacet) {
+                    count = getFreeFacetCount(facetSelections, results, selectionId);
+                } else if (!selectionId) {
                     // No facets selected (or emptied free facet), get the count from the results.
-                    count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
-                            ['value', undefined]) || {}).count || 0;
-                } else if (isFreeFacet) {
-                    // This is a facet without an explicit value, sum the counts
-                    // for the count.
-                    var facet = _.find(results, ['id', selectionId]);
-                    count = _.sumBy(facet.values, function(val) {
-                        return val.value ? val.count : 0;
-                    });
+                    count = getNoSelectionCountFromResults(results);
                 } else {
                     // Get the count from the current selection.
                     count = facetSelections[selectionId][0].count;
                 }
 
+                results = setNotSelectionValues(results, count);
+
                 // Add the "no selection" values to facets without them.
+                facetStates = results;
+
+                return facetStates;
+            }
+
+            function setNotSelectionValues(results, count) {
                 _.forOwn(facets, function(v, id) {
                     var result = _.find(results, ['id', id]);
                     if (!result) {
@@ -252,9 +274,6 @@
                         }].concat(result.values);
                     }
                 });
-                facetStates = results;
-
-                return facetStates;
             }
 
             function buildQuery(facetSelections, id) {
