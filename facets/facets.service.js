@@ -22,20 +22,30 @@
             self.facetChanged = facetChanged;
             self.update = update;
 
-            var facetStates;
             var endpoint = new SparqlService(config.endpointUrl);
 
             var freeFacetTypes = ['text', 'timespan'];
 
+            var initialId;
             var initialValues = parseInitialValues(config.initialValues);
-            var previousSelections = {};
-            _.forOwn(facets, function(val, id) {
-                if (!val.type) {
-                    previousSelections[id] = [{ value: initialValues[id] }];
-                } else {
-                    previousSelections[id] = { value: initialValues[id] };
-                }
-            });
+            var previousSelections = initPreviousSelections(initialValues);
+
+            function initPreviousSelections(initialValues) {
+                var selections = {};
+                _.forOwn(facets, function(val, id) {
+                    var initialVal = initialValues[id];
+                    if (!val.type) {
+                        selections[id] = [{ value: initialVal }];
+                    } else {
+                        selections[id] = { value: initialVal };
+                        if (facets[id].type === 'text' && initialVal) {
+                            initialId = id;
+                        }
+                    }
+                });
+                return selections;
+            }
+
             self.selectedFacets = _.cloneDeep(previousSelections);
 
             var defaultCountKey = _.findKey(facets, function(facet) {
@@ -162,6 +172,7 @@
             }
 
             function getStates(facetSelections, id) {
+                id = id ? id : initialId;
                 var query = buildQuery(facetSelections, id);
 
                 var promise = endpoint.getObjects(query);
@@ -222,7 +233,6 @@
             function getNoSelectionCountFromResults(results) {
                 var count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
                             ['value', undefined]) || {}).count || 0;
-                console.log(count);
                 return count;
             }
 
@@ -253,10 +263,7 @@
 
                 results = setNotSelectionValues(results, count);
 
-                // Add the "no selection" values to facets without them.
-                facetStates = results;
-
-                return facetStates;
+                return results;
             }
 
             function setNotSelectionValues(results, count) {
@@ -274,6 +281,7 @@
                         }].concat(result.values);
                     }
                 });
+                return results;
             }
 
             function buildQuery(facetSelections, id) {
@@ -285,12 +293,14 @@
 
             function buildServiceUnions(query) {
                 var unions = '';
+                var c = 0;
                 _.forOwn(facets, function(facet, id) {
                     if (facet.service) {
+                        var restrVar = '?p' + c++;
                         unions = unions +
                         ' OPTIONAL { ' +
-                        '  FILTER(?id = ' + id + ') ' +
-                        '  BIND(?id AS ?throwaway) ' +
+                        '  BIND(' + id + ' AS ' + restrVar + ') ' +
+                        '  FILTER(?id = ' + restrVar + ') ' +
                         '  SERVICE ' + facet.service + ' { ' +
                         '   ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
                         '  } ' +
