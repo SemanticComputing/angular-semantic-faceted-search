@@ -51,7 +51,7 @@
             ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
             '   { ' +
             '     {' +
-            '       SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value' +
+            '       SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value' +
             '       WHERE {' +
             '         VALUES ?id {' +
             '           <FACETS> ' +
@@ -226,19 +226,12 @@
                     count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
                             ['value', undefined]) || {}).count || 0;
                 } else if (isFreeFacet) {
-                    // This is a facet without an explicit value, search the results
-                    // for the highest defined value.
-                    var max = 0;
-                    _.forEach(results, function(result) {
-                        var maxVal = _.maxBy(result.values, function(val) {
-                            return val.value ? val.count : 0;
-                        });
-                        maxVal = maxVal && maxVal.value ? maxVal.count : 0;
-                        if (maxVal > max) {
-                            max = maxVal;
-                        }
+                    // This is a facet without an explicit value, sum the counts
+                    // for the count.
+                    var facet = _.find(results, ['id', selectionId]);
+                    count = _.sumBy(facet.values, function(val) {
+                        return val.value ? val.count : 0;
                     });
-                    count = max;
                 } else {
                     // Get the count from the current selection.
                     count = facetSelections[selectionId][0].count;
@@ -323,9 +316,7 @@
             function getTemplateFacets() {
                 var res = [];
                 _.forOwn(facets, function(facet, uri) {
-                    if (!_.includes(freeFacetTypes, facet.type)) {
-                        res.push(uri);
-                    }
+                    res.push(uri);
                 });
                 return res.join(' ');
             }
