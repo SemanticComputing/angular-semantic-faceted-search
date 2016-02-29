@@ -102,6 +102,23 @@
             ' }';
             deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate);
 
+            var countUnionTemplate = '' +
+            ' UNION { ' +
+            '   { ' +
+            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
+            '     WHERE { ' +
+            '       <GRAPH_START> ' +
+            '          <SELECTIONS> ' +
+            '          <CLASS> ' +
+            '       <GRAPH_END> ' +
+            '     } ' +
+            '   } ' +
+            '   BIND("TEXT" AS ?facet_text) ' +
+            '   BIND(<VALUE> AS ?value) ' +
+            '   BIND(<SELECTION> AS ?id) ' +
+            ' }';
+            countUnionTemplate = buildQueryTemplate(countUnionTemplate);
+
             function facetChanged(id) {
                 if (self.selectedFacets[id]) {
                     switch(facets[id].type) {
@@ -369,20 +386,32 @@
                         selections.push({ id: defaultCountKey, value: undefined });
                     }
                 }
+                var timeSpanSelections = [];
                 _.forEach( selections, function( selection ) {
                     var s = deselectUnionTemplate.replace('<DESELECTION>', selection.id);
                     var others = {};
+                    var select;
                     _.forEach( selections, function( s ) {
                         if (s.id !== selection.id) {
                             if (s.value) {
                                 others[s.id] = s.value;
                             }
+                        } else if (facets[s.id].type === 'timespan') {
+                            select = {};
+                            select[s.id] = s.value;
                         }
                     });
                     deselections.push(s.replace('<OTHER_SELECTIONS>',
                             formatter.parseFacetSelections(others)));
+                    if (select) {
+                        var cq = countUnionTemplate.replace('<VALUE>', '"whatever"');
+                        cq = cq.replace('<SELECTION>', selection.id);
+                        timeSpanSelections.push(cq.replace('<SELECTIONS>',
+                                formatter.parseFacetSelections(others) +
+                                formatter.parseFacetSelections(select)));
+                    }
                 });
-                return deselections.join(' ');
+                return deselections.join(' ') + ' ' + timeSpanSelections.join(' ');
             }
 
         };
