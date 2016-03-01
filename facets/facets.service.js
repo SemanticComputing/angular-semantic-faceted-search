@@ -191,7 +191,7 @@
 
             function getStates(facetSelections, id) {
                 id = id ? id : initialId;
-                var query = buildQuery(facetSelections, id);
+                var query = buildQuery(facetSelections);
 
                 var promise = endpoint.getObjects(query);
                 return promise.then(function(results) {
@@ -272,7 +272,7 @@
                 if (isFreeFacet) {
                     count = getFreeFacetCount(facetSelections, results, selectionId);
                 } else if (!selectionId) {
-                    // No facets selected (or emptied free facet), get the count from the results.
+                    // No facets selected, get the count from the results.
                     count = getNoSelectionCountFromResults(results);
                 } else {
                     // Get the count from the current selection.
@@ -302,7 +302,7 @@
                 return results;
             }
 
-            function buildQuery(facetSelections, id) {
+            function buildQuery(facetSelections) {
                 var query = queryTemplate;
                 var textFacets = '';
                 _.forOwn(facetSelections, function(facet, fId) {
@@ -313,7 +313,7 @@
                 query = query.replace('<TEXT_FACETS>', textFacets);
                 query = query.replace('<SELECTIONS>',
                         formatter.parseFacetSelections(facetSelections))
-                        .replace('<DESELECTIONS>', buildDeselectionUnions(facetSelections, id));
+                        .replace('<DESELECTIONS>', buildCountUnions(facetSelections));
                 return query;
             }
 
@@ -377,24 +377,23 @@
                 return res.join(' ');
             }
 
-            function buildDeselectionUnions(facetSelections, id) {
+            function buildCountUnions(facetSelections) {
                 var deselections = [];
 
                 var actualSelections = [];
+                var defaultSelected = false;
                 _.forOwn(facetSelections, function(val, key) {
                     if (val && (val.value || (_.isArray(val) && (val[0] || {}).value))) {
                         actualSelections.push({ id: key, value: val });
+                        if (key === defaultCountKey) {
+                            defaultSelected = true;
+                        }
                     }
                 });
-                var actualSelectionCount = actualSelections.length;
-
-                var currentSelection = facetSelections[id] || {};
                 var selections = actualSelections;
 
-                if (!actualSelectionCount) {
-                    if (!currentSelection.count) {
-                        selections.push({ id: defaultCountKey, value: undefined });
-                    }
+                if (!defaultSelected) {
+                    selections.push({ id: defaultCountKey, value: undefined });
                 }
                 var timeSpanSelections = [];
                 _.forEach( selections, function( selection ) {
@@ -406,7 +405,7 @@
                             if (s.value) {
                                 others[s.id] = s.value;
                             }
-                        } else if (facets[s.id].type === 'timespan') {
+                        } else if (facets[s.id].type === 'timespan' && s.value) {
                             select = {};
                             select[s.id] = s.value;
                         }
