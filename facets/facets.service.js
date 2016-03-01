@@ -38,7 +38,7 @@
                         selections[id] = [{ value: initialVal }];
                     } else {
                         selections[id] = { value: initialVal };
-                        if (facets[id].type === 'text' && initialVal) {
+                        if (_.includes(freeFacetTypes, facets[id].type) && initialVal) {
                             initialId = id;
                         }
                     }
@@ -61,9 +61,10 @@
             ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
             '   { ' +
             '     {' +
-            '       SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value' +
+            '       SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value' +
             '       WHERE {' +
             '         VALUES ?id {' +
+            '           <TEXT_FACETS> ' +
             '           <FACETS> ' +
             '         } ' +
             '         <GRAPH_START> ' +
@@ -302,7 +303,15 @@
             }
 
             function buildQuery(facetSelections, id) {
-                var query = queryTemplate.replace('<SELECTIONS>',
+                var query = queryTemplate;
+                var textFacets = '';
+                _.forOwn(facetSelections, function(facet, fId) {
+                    if (facets[fId].type === 'text' && facet.value) {
+                        textFacets = textFacets + ' ' + fId;
+                    }
+                });
+                query = query.replace('<TEXT_FACETS>', textFacets);
+                query = query.replace('<SELECTIONS>',
                         formatter.parseFacetSelections(facetSelections))
                         .replace('<DESELECTIONS>', buildDeselectionUnions(facetSelections, id));
                 return query;
@@ -310,14 +319,13 @@
 
             function buildServiceUnions(query) {
                 var unions = '';
-                var c = 0;
                 _.forOwn(facets, function(facet, id) {
                     if (facet.service) {
-                        var restrVar = '?p' + c++;
                         unions = unions +
                         ' OPTIONAL { ' +
-                        '  BIND(' + id + ' AS ' + restrVar + ') ' +
-                        '  FILTER(?id = ' + restrVar + ') ' +
+                        '  FILTER(?id = ' + id + ') ' +
+                        '  BIND(IF(BOUND(?ss), ?value, <>) AS ?gobbledigook) ' +
+                        '  ?ss ?id ?gobbledigook . ' +
                         '  SERVICE ' + facet.service + ' { ' +
                         '   ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
                         '  } ' +
@@ -362,7 +370,9 @@
             function getTemplateFacets() {
                 var res = [];
                 _.forOwn(facets, function(facet, uri) {
-                    res.push(uri);
+                    if (facet.type !== 'text') {
+                        res.push(uri);
+                    }
                 });
                 return res.join(' ');
             }

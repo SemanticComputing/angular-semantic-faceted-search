@@ -15,7 +15,7 @@
         var endpointUrl = 'http://ldf.fi/warsa/sparql';
 
         var facets = {
-            '<kuvanottoaika>' : {
+            '<http://ldf.fi/kuvanottoaika>' : {
                 name: 'Kuva otettu välillä',
                 type: 'timespan',
                 start: '<http://purl.org/dc/terms/created>',
