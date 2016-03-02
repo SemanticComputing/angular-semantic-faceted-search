@@ -1,88 +1,106 @@
-angular.module('app').run(['$templateCache', function($templateCache) {
-  'use strict';
+(function() {
+    'use strict';
 
-  $templateCache.put('src/facets/facets.directive.html',
-    "<div class=\"facet\" ng-repeat=\"(id, facet) in vm.facets\">\n" +
-    "  <div class=\"facet-name\">\n" +
-    "    {{ ::facet.name }}\n" +
-    "    <img src=\"images/loading-sm.gif\" ng-if=\"vm.isLoadingFacets\"></img>\n" +
-    "  </div>\n" +
-    "  <div ng-if=\"::!facet.type\">\n" +
-    "    <input type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
-    "    <select\n" +
-    "      ng-change=\"vm.changed(id)\"\n" +
-    "      multiple=\"true\"\n" +
-    "      ng-disabled=\"vm.isDisabled()\"\n" +
-    "      size=\"{{ vm.getFacetSize(facet.state.values) }}\"\n" +
-    "      id=\"{{ ::facet.name + '_select' }}\"\n" +
-    "      class=\"selector form-control\"\n" +
-    "      ng-options=\"value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value\"\n" +
-    "      ng-model=\"vm.selectedFacets[id]\">\n" +
-    "    </select>\n" +
-    "  </div>\n" +
-    "  <div ng-if=\"::facet.type === 'text'\">\n" +
-    "    <p class=\"input-group\">\n" +
-    "      <input type=\"text\" class=\"form-control\"\n" +
-    "        ng-change=\"vm.changed(id)\"\n" +
-    "        ng-disabled=\"vm.isDisabled()\"\n" +
-    "        ng-model=\"vm.selectedFacets[id].value\"\n" +
-    "        ng-model-options=\"{ debounce: 1000 }\">\n" +
-    "      </input>\n" +
-    "      <span class=\"input-group-btn\">\n" +
-    "        <button type=\"button\" class=\"btn btn-default\"\n" +
-    "            ng-disabled=\"vm.isDisabled()\"\n" +
-    "            ng-click=\"vm.clearTextFacet(id)\">\n" +
-    "          <i class=\"glyphicon glyphicon-remove\"></i>\n" +
-    "        </button>\n" +
-    "      </span>\n" +
-    "    </p>\n" +
-    "  </div>\n" +
-    "  <div ng-if=\"::facet.type === 'timespan'\">\n" +
-    "    <p class=\"input-group\">\n" +
-    "      <input type=\"text\" class=\"form-control\"\n" +
-    "        uib-datepicker-popup=\"\"\n" +
-    "        ng-disabled=\"vm.isDisabled()\"\n" +
-    "        ng-change=\"vm.changed(id)\"\n" +
-    "        ng-readonly=\"true\"\n" +
-    "        ng-model=\"vm.selectedFacets[id].value.start\"\n" +
-    "        is-open=\"startDate.opened\"\n" +
-    "        min-date=\"facet.min\"\n" +
-    "        max-date=\"facet.max\"\n" +
-    "        init-date=\"facet.min\"\n" +
-    "        starting-day=\"1\"\n" +
-    "        ng-required=\"true\"\n" +
-    "        close-text=\"Close\" />\n" +
-    "      <span class=\"input-group-btn\">\n" +
-    "        <button type=\"button\" class=\"btn btn-default\"\n" +
-    "            ng-click=\"startDate.opened = !startDate.opened\">\n" +
-    "          <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
-    "        </button>\n" +
-    "      </span>\n" +
-    "      <input type=\"text\" class=\"form-control\"\n" +
-    "        uib-datepicker-popup=\"\"\n" +
-    "        ng-disabled=\"vm.isDisabled()\"\n" +
-    "        ng-readonly=\"true\"\n" +
-    "        ng-change=\"vm.changed(id)\"\n" +
-    "        ng-model=\"vm.selectedFacets[id].value.end\"\n" +
-    "        is-open=\"endDate.opened\"\n" +
-    "        min-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
-    "        max-date=\"facet.max\"\n" +
-    "        init-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
-    "        starting-day=\"1\"\n" +
-    "        ng-required=\"true\"\n" +
-    "        close-text=\"Close\" />\n" +
-    "      <span class=\"input-group-btn\">\n" +
-    "        <button type=\"button\" class=\"btn btn-default\"\n" +
-    "            ng-click=\"endDate.opened = !endDate.opened\">\n" +
-    "          <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
-    "        </button>\n" +
-    "      </span>\n" +
-    "    </p>\n" +
-    "  </div>\n" +
-    "</div>\n"
-  );
+    angular.module('facetUrlState', [])
+    .constant('_', _); // eslint-disable-line no-undef
+})();
 
-}]);
+(function() {
+
+    'use strict';
+
+    /* eslint-disable angular/no-service-method */
+    angular.module('facetUrlState')
+
+    /*
+    * Service for updating the URL parameters based on facet selections.
+    */
+    .service( 'urlStateHandlerService', urlStateHandlerService );
+
+    /* @ngInject */
+    function urlStateHandlerService($location, _) {
+
+        this.updateUrlParams = updateUrlParams;
+        this.getFacetValuesFromUrlParams = getFacetValuesFromUrlParams;
+
+        function updateUrlParams(facetSelections) {
+            var values = getFacetValues(facetSelections);
+            $location.search(values);
+        }
+
+        function getFacetValuesFromUrlParams() {
+            return $location.search();
+        }
+
+        function getFacetValues(facetSelections) {
+            var values = {};
+            _.forOwn(facetSelections, function(val, id) {
+                if (_.isArray(val)) {
+                    // Basic facet (with multiselect)
+                    var vals = _(val).map('value').compact().value();
+                    if (vals.length) {
+                        values[id] = vals;
+                    }
+                } else if (_.isObject(val.value)) {
+                    // Timespan facet
+                    var span = val.value;
+                    if (span.start && span.end) {
+                        var timespan = {
+                            start: parseValue(val.value.start),
+                            end: parseValue(val.value.end)
+                        };
+                        values[id] = angular.toJson(timespan);
+                    }
+                } else if (val.value) {
+                    // Text facet
+                    values[id] = val.value;
+                }
+            });
+            return values;
+        }
+
+        function parseValue(value) {
+            if (Date.parse(value)) {
+                return value.toISOString().slice(0, 10);
+            }
+            return value;
+        }
+    }
+})();
+
+(function() {
+
+    'use strict';
+
+    angular.module('resultHandler', ['sparql'])
+
+    /*
+    * Result handler service.
+    */
+    .factory('Results', Results);
+
+    /* @ngInject */
+    function Results( RESULTS_PER_PAGE, PAGES_PER_QUERY, AdvancedSparqlService,
+                FacetSelectionFormatter, objectMapperService ) {
+        return function( endpointUrl, facets, mapper ) {
+            mapper = mapper || objectMapperService;
+
+            var formatter = new FacetSelectionFormatter(facets);
+            var endpoint = new AdvancedSparqlService(endpointUrl, mapper);
+
+            this.getResults = getResults;
+
+            function getResults(facetSelections, query, resultSetQry) {
+                query = query.replace('<FACET_SELECTIONS>',
+                        formatter.parseFacetSelections(facetSelections));
+                return endpoint.getObjects(query,
+                    RESULTS_PER_PAGE,
+                    resultSetQry.replace('<FACET_SELECTIONS>', formatter.parseFacetSelections(facetSelections)),
+                    PAGES_PER_QUERY);
+            }
+        };
+    }
+})();
 
 /*
  * facets module definition
@@ -158,6 +176,154 @@ angular.module('app').run(['$templateCache', function($templateCache) {
         }
 
     }
+})();
+
+(function() {
+
+    'use strict';
+
+    /* eslint-disable angular/no-service-method */
+    angular.module('facets')
+    .factory('FacetSelectionFormatter', function (_) {
+        return function( facets ) {
+
+            this.parseFacetSelections = parseFacetSelections;
+            this.parseBasicFacet = parseBasicFacet;
+
+            var resourceTimeSpanFilterTemplate =
+            ' ?s <TIME_SPAN_PROPERTY> ?time_span_uri . ' +
+            ' <START_FILTER> ' +
+            ' <END_FILTER> ';
+
+            var simpleTimeSpanFilterTemplate =
+            ' <START_FILTER> ' +
+            ' <END_FILTER> ';
+
+            var timeSpanStartFilter =
+            ' <TIME_SPAN_URI> <START_PROPERTY> ?start . ' +
+            ' FILTER(?start >= "<START_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
+
+            var timeSpanEndFilter =
+            ' <TIME_SPAN_URI> <END_PROPERTY> ?end . ' +
+            ' FILTER(?end <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
+
+            var timeSpanEndFilterSimple =
+            ' FILTER(?start <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
+
+            var simpleTimeSpanUri = '?s';
+            var resourceTimeSpanUri = '?time_span_uri';
+
+            function parseFacetSelections( facetSelections ) {
+                var otherFacets = [];
+                var textFacets = [];
+                _.forOwn(facetSelections, function(facet, id) {
+                    if (facets[id].type === 'text') {
+                        textFacets.push({ id: id, val: facet });
+                    } else {
+                        otherFacets.push({ id: id, val: facet });
+                    }
+                });
+                var selections = textFacets.concat(otherFacets);
+
+                var result = '';
+                var i = 0;
+                _.forEach( selections, function( facet ) {
+                    if (facet.val && facet.val.length) {
+                        for (var j = 0; j < facet.val.length; j++) {
+                            if (!facet.val[j].value) {
+                                return;
+                            }
+                        }
+                    } else if (!(facet.val && facet.val.value)) {
+                        return;
+                    }
+
+                    var facetType = facets[facet.id].type;
+
+                    switch (facetType) {
+                        case 'timespan':
+                            result = result + parseTimeSpanFacet(facet.val, facet.id);
+                            break;
+                        case 'text':
+                            result = result + parseTextFacet(facet.val, facet.id, i++);
+                            break;
+                        default:
+                            result = result + parseBasicFacet(facet.val, facet.id);
+                    }
+                });
+                return result;
+            }
+
+            function parseBasicFacet(val, key) {
+                var result = '';
+                if (val.forEach) {
+                    val.forEach(function(value) {
+                        result = result + ' ?s ' + key + ' ' + value.value + ' . ';
+                    });
+                    return result;
+                }
+                return ' ?s ' + key + ' ' + val.value + ' . ';
+            }
+
+            function parseTextFacet(val, key, i) {
+                var result = ' ?s text:query "' + val.value + '*" . ';
+                var textVar = ' ?text' + i;
+                result = result + ' ?s ' + key + ' ' + textVar + ' . ';
+                var words = val.value.replace(/[,.-_*'\\/]/g, '');
+
+                words.split(' ').forEach(function(word) {
+                    result = result + ' FILTER(REGEX(' + textVar + ', "' + word + '", "i")) ';
+                });
+
+                return result;
+            }
+
+            function parseTimeSpanFacet(val, key) {
+                var isResource = facets[key].isResource;
+                var result = isResource ?
+                        resourceTimeSpanFilterTemplate :
+                        simpleTimeSpanFilterTemplate;
+
+                var start = (val.value || {}).start;
+                var end = (val.value || {}).end;
+
+                var endFilter = timeSpanEndFilter;
+                var facet = facets[key];
+
+                if (facet.start === facet.end) {
+                    endFilter = timeSpanEndFilterSimple;
+                }
+                if (start) {
+                    start = dateToISOString(start);
+                    result = result
+                        .replace('<START_FILTER>',
+                            timeSpanStartFilter.replace('<START_PROPERTY>',
+                                facet.start))
+                        .replace('<TIME_SPAN_URI>',
+                                isResource ? resourceTimeSpanUri : simpleTimeSpanUri)
+                        .replace('<START_VALUE>', start);
+                } else {
+                    result = result.replace('<START_FILTER>', '');
+                }
+                if (end) {
+                    end = dateToISOString(end);
+                    result = result.replace('<END_FILTER>',
+                            endFilter.replace('<END_PROPERTY>',
+                                facet.end))
+                        .replace('<TIME_SPAN_URI>',
+                                isResource ? resourceTimeSpanUri : simpleTimeSpanUri)
+                        .replace('<END_VALUE>', end);
+                } else {
+                    result = result.replace('<END_FILTER>', '');
+                }
+                return result.replace('<TIME_SPAN_PROPERTY>', key);
+            }
+
+            function dateToISOString(date) {
+                return date.toISOString().slice(0, 10);
+            }
+        };
+    });
 })();
 
 /*
@@ -616,152 +782,113 @@ angular.module('app').run(['$templateCache', function($templateCache) {
 })();
 
 (function() {
-
     'use strict';
 
-    /* eslint-disable angular/no-service-method */
     angular.module('facets')
-    .factory('FacetSelectionFormatter', function (_) {
-        return function( facets ) {
-
-            this.parseFacetSelections = parseFacetSelections;
-            this.parseBasicFacet = parseBasicFacet;
-
-            var resourceTimeSpanFilterTemplate =
-            ' ?s <TIME_SPAN_PROPERTY> ?time_span_uri . ' +
-            ' <START_FILTER> ' +
-            ' <END_FILTER> ';
-
-            var simpleTimeSpanFilterTemplate =
-            ' <START_FILTER> ' +
-            ' <END_FILTER> ';
-
-            var timeSpanStartFilter =
-            ' <TIME_SPAN_URI> <START_PROPERTY> ?start . ' +
-            ' FILTER(?start >= "<START_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
-
-            var timeSpanEndFilter =
-            ' <TIME_SPAN_URI> <END_PROPERTY> ?end . ' +
-            ' FILTER(?end <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
-
-            var timeSpanEndFilterSimple =
-            ' FILTER(?start <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
-
-            var simpleTimeSpanUri = '?s';
-            var resourceTimeSpanUri = '?time_span_uri';
-
-            function parseFacetSelections( facetSelections ) {
-                var otherFacets = [];
-                var textFacets = [];
-                _.forOwn(facetSelections, function(facet, id) {
-                    if (facets[id].type === 'text') {
-                        textFacets.push({ id: id, val: facet });
-                    } else {
-                        otherFacets.push({ id: id, val: facet });
-                    }
-                });
-                var selections = textFacets.concat(otherFacets);
-
-                var result = '';
-                var i = 0;
-                _.forEach( selections, function( facet ) {
-                    if (facet.val && facet.val.length) {
-                        for (var j = 0; j < facet.val.length; j++) {
-                            if (!facet.val[j].value) {
-                                return;
-                            }
-                        }
-                    } else if (!(facet.val && facet.val.value)) {
-                        return;
-                    }
-
-                    var facetType = facets[facet.id].type;
-
-                    switch (facetType) {
-                        case 'timespan':
-                            result = result + parseTimeSpanFacet(facet.val, facet.id);
-                            break;
-                        case 'text':
-                            result = result + parseTextFacet(facet.val, facet.id, i++);
-                            break;
-                        default:
-                            result = result + parseBasicFacet(facet.val, facet.id);
-                    }
-                });
-                return result;
+    .filter( 'textWithSelection', function(_) {
+        return function(values, text, selection) {
+            if (!text) {
+                return values;
+            }
+            var selectedValues;
+            if (_.isArray(selection)) {
+                selectedValues = _.map(selection, 'value');
+            } else {
+                selectedValues = [selection];
             }
 
-            function parseBasicFacet(val, key) {
-                var result = '';
-                if (val.forEach) {
-                    val.forEach(function(value) {
-                        result = result + ' ?s ' + key + ' ' + value.value + ' . ';
-                    });
-                    return result;
-                }
-                return ' ?s ' + key + ' ' + val.value + ' . ';
-            }
-
-            function parseTextFacet(val, key, i) {
-                var result = ' ?s text:query "' + val.value + '*" . ';
-                var textVar = ' ?text' + i;
-                result = result + ' ?s ' + key + ' ' + textVar + ' . ';
-                var words = val.value.replace(/[,.-_*'\\/]/g, '');
-
-                words.split(' ').forEach(function(word) {
-                    result = result + ' FILTER(REGEX(' + textVar + ', "' + word + '", "i")) ';
-                });
-
-                return result;
-            }
-
-            function parseTimeSpanFacet(val, key) {
-                var isResource = facets[key].isResource;
-                var result = isResource ?
-                        resourceTimeSpanFilterTemplate :
-                        simpleTimeSpanFilterTemplate;
-
-                var start = (val.value || {}).start;
-                var end = (val.value || {}).end;
-
-                var endFilter = timeSpanEndFilter;
-                var facet = facets[key];
-
-                if (facet.start === facet.end) {
-                    endFilter = timeSpanEndFilterSimple;
-                }
-                if (start) {
-                    start = dateToISOString(start);
-                    result = result
-                        .replace('<START_FILTER>',
-                            timeSpanStartFilter.replace('<START_PROPERTY>',
-                                facet.start))
-                        .replace('<TIME_SPAN_URI>',
-                                isResource ? resourceTimeSpanUri : simpleTimeSpanUri)
-                        .replace('<START_VALUE>', start);
-                } else {
-                    result = result.replace('<START_FILTER>', '');
-                }
-                if (end) {
-                    end = dateToISOString(end);
-                    result = result.replace('<END_FILTER>',
-                            endFilter.replace('<END_PROPERTY>',
-                                facet.end))
-                        .replace('<TIME_SPAN_URI>',
-                                isResource ? resourceTimeSpanUri : simpleTimeSpanUri)
-                        .replace('<END_VALUE>', end);
-                } else {
-                    result = result.replace('<END_FILTER>', '');
-                }
-                return result.replace('<TIME_SPAN_PROPERTY>', key);
-            }
-
-            function dateToISOString(date) {
-                return date.toISOString().slice(0, 10);
-            }
+            return _.filter(values, function(val) {
+                return _.includes(val.text.toLowerCase(), text.toLowerCase()) || _.includes(selectedValues, val.value);
+            });
         };
     });
 })();
+
+angular.module('app').run(['$templateCache', function($templateCache) {
+  'use strict';
+
+  $templateCache.put('src/facets/facets.directive.html',
+    "<div class=\"facet\" ng-repeat=\"(id, facet) in vm.facets\">\n" +
+    "  <div class=\"facet-name\">\n" +
+    "    {{ ::facet.name }}\n" +
+    "    <img src=\"images/loading-sm.gif\" ng-if=\"vm.isLoadingFacets\"></img>\n" +
+    "  </div>\n" +
+    "  <div ng-if=\"::!facet.type\">\n" +
+    "    <input type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
+    "    <select\n" +
+    "      ng-change=\"vm.changed(id)\"\n" +
+    "      multiple=\"true\"\n" +
+    "      ng-disabled=\"vm.isDisabled()\"\n" +
+    "      size=\"{{ vm.getFacetSize(facet.state.values) }}\"\n" +
+    "      id=\"{{ ::facet.name + '_select' }}\"\n" +
+    "      class=\"selector form-control\"\n" +
+    "      ng-options=\"value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value\"\n" +
+    "      ng-model=\"vm.selectedFacets[id]\">\n" +
+    "    </select>\n" +
+    "  </div>\n" +
+    "  <div ng-if=\"::facet.type === 'text'\">\n" +
+    "    <p class=\"input-group\">\n" +
+    "      <input type=\"text\" class=\"form-control\"\n" +
+    "        ng-change=\"vm.changed(id)\"\n" +
+    "        ng-disabled=\"vm.isDisabled()\"\n" +
+    "        ng-model=\"vm.selectedFacets[id].value\"\n" +
+    "        ng-model-options=\"{ debounce: 1000 }\">\n" +
+    "      </input>\n" +
+    "      <span class=\"input-group-btn\">\n" +
+    "        <button type=\"button\" class=\"btn btn-default\"\n" +
+    "            ng-disabled=\"vm.isDisabled()\"\n" +
+    "            ng-click=\"vm.clearTextFacet(id)\">\n" +
+    "          <i class=\"glyphicon glyphicon-remove\"></i>\n" +
+    "        </button>\n" +
+    "      </span>\n" +
+    "    </p>\n" +
+    "  </div>\n" +
+    "  <div ng-if=\"::facet.type === 'timespan'\">\n" +
+    "    <p class=\"input-group\">\n" +
+    "      <input type=\"text\" class=\"form-control\"\n" +
+    "        uib-datepicker-popup=\"\"\n" +
+    "        ng-disabled=\"vm.isDisabled()\"\n" +
+    "        ng-change=\"vm.changed(id)\"\n" +
+    "        ng-readonly=\"true\"\n" +
+    "        ng-model=\"vm.selectedFacets[id].value.start\"\n" +
+    "        is-open=\"startDate.opened\"\n" +
+    "        min-date=\"facet.min\"\n" +
+    "        max-date=\"facet.max\"\n" +
+    "        init-date=\"facet.min\"\n" +
+    "        starting-day=\"1\"\n" +
+    "        ng-required=\"true\"\n" +
+    "        close-text=\"Close\" />\n" +
+    "      <span class=\"input-group-btn\">\n" +
+    "        <button type=\"button\" class=\"btn btn-default\"\n" +
+    "            ng-click=\"startDate.opened = !startDate.opened\">\n" +
+    "          <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
+    "        </button>\n" +
+    "      </span>\n" +
+    "      <input type=\"text\" class=\"form-control\"\n" +
+    "        uib-datepicker-popup=\"\"\n" +
+    "        ng-disabled=\"vm.isDisabled()\"\n" +
+    "        ng-readonly=\"true\"\n" +
+    "        ng-change=\"vm.changed(id)\"\n" +
+    "        ng-model=\"vm.selectedFacets[id].value.end\"\n" +
+    "        is-open=\"endDate.opened\"\n" +
+    "        min-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
+    "        max-date=\"facet.max\"\n" +
+    "        init-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
+    "        starting-day=\"1\"\n" +
+    "        ng-required=\"true\"\n" +
+    "        close-text=\"Close\" />\n" +
+    "      <span class=\"input-group-btn\">\n" +
+    "        <button type=\"button\" class=\"btn btn-default\"\n" +
+    "            ng-click=\"endDate.opened = !endDate.opened\">\n" +
+    "          <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
+    "        </button>\n" +
+    "      </span>\n" +
+    "    </p>\n" +
+    "  </div>\n" +
+    "</div>\n"
+  );
+
+}]);
 
 (function() {
     'use strict';
@@ -844,132 +971,5 @@ angular.module('app').run(['$templateCache', function($templateCache) {
             return '10';
         }
 
-    }
-})();
-
-(function() {
-    'use strict';
-
-    angular.module('facets')
-    .filter( 'textWithSelection', function(_) {
-        return function(values, text, selection) {
-            if (!text) {
-                return values;
-            }
-            var selectedValues;
-            if (_.isArray(selection)) {
-                selectedValues = _.map(selection, 'value');
-            } else {
-                selectedValues = [selection];
-            }
-
-            return _.filter(values, function(val) {
-                return _.includes(val.text.toLowerCase(), text.toLowerCase()) || _.includes(selectedValues, val.value);
-            });
-        };
-    });
-})();
-
-(function() {
-    'use strict';
-
-    angular.module('facetUrlState', [])
-    .constant('_', _); // eslint-disable-line no-undef
-})();
-
-(function() {
-
-    'use strict';
-
-    /* eslint-disable angular/no-service-method */
-    angular.module('facetUrlState')
-
-    /*
-    * Service for updating the URL parameters based on facet selections.
-    */
-    .service( 'urlStateHandlerService', urlStateHandlerService );
-
-    /* @ngInject */
-    function urlStateHandlerService($location, _) {
-
-        this.updateUrlParams = updateUrlParams;
-        this.getFacetValuesFromUrlParams = getFacetValuesFromUrlParams;
-
-        function updateUrlParams(facetSelections) {
-            var values = getFacetValues(facetSelections);
-            $location.search(values);
-        }
-
-        function getFacetValuesFromUrlParams() {
-            return $location.search();
-        }
-
-        function getFacetValues(facetSelections) {
-            var values = {};
-            _.forOwn(facetSelections, function(val, id) {
-                if (_.isArray(val)) {
-                    // Basic facet (with multiselect)
-                    var vals = _(val).map('value').compact().value();
-                    if (vals.length) {
-                        values[id] = vals;
-                    }
-                } else if (_.isObject(val.value)) {
-                    // Timespan facet
-                    var span = val.value;
-                    if (span.start && span.end) {
-                        var timespan = {
-                            start: parseValue(val.value.start),
-                            end: parseValue(val.value.end)
-                        };
-                        values[id] = angular.toJson(timespan);
-                    }
-                } else if (val.value) {
-                    // Text facet
-                    values[id] = val.value;
-                }
-            });
-            return values;
-        }
-
-        function parseValue(value) {
-            if (Date.parse(value)) {
-                return value.toISOString().slice(0, 10);
-            }
-            return value;
-        }
-    }
-})();
-
-(function() {
-
-    'use strict';
-
-    angular.module('resultHandler', ['sparql'])
-
-    /*
-    * Result handler service.
-    */
-    .factory('Results', Results);
-
-    /* @ngInject */
-    function Results( RESULTS_PER_PAGE, PAGES_PER_QUERY, AdvancedSparqlService,
-                FacetSelectionFormatter, objectMapperService ) {
-        return function( endpointUrl, facets, mapper ) {
-            mapper = mapper || objectMapperService;
-
-            var formatter = new FacetSelectionFormatter(facets);
-            var endpoint = new AdvancedSparqlService(endpointUrl, mapper);
-
-            this.getResults = getResults;
-
-            function getResults(facetSelections, query, resultSetQry) {
-                query = query.replace('<FACET_SELECTIONS>',
-                        formatter.parseFacetSelections(facetSelections));
-                return endpoint.getObjects(query,
-                    RESULTS_PER_PAGE,
-                    resultSetQry.replace('<FACET_SELECTIONS>', formatter.parseFacetSelections(facetSelections)),
-                    PAGES_PER_QUERY);
-            }
-        };
     }
 })();
