@@ -23,7 +23,7 @@ module.exports = function(grunt) {
                     'src/results/results.service.js',
                     'dist/templates.js'
                 ],
-                dest: 'dist/sparql-service.js'
+                dest: 'dist/semantic-faceted-search.js'
             }
         },
         clean: {
