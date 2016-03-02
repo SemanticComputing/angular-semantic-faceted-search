@@ -1,3 +1,89 @@
+angular.module('app').run(['$templateCache', function($templateCache) {
+  'use strict';
+
+  $templateCache.put('src/facets/facets.directive.html',
+    "<div class=\"facet\" ng-repeat=\"(id, facet) in vm.facets\">\n" +
+    "  <div class=\"facet-name\">\n" +
+    "    {{ ::facet.name }}\n" +
+    "    <img src=\"images/loading-sm.gif\" ng-if=\"vm.isLoadingFacets\"></img>\n" +
+    "  </div>\n" +
+    "  <div ng-if=\"::!facet.type\">\n" +
+    "    <input type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
+    "    <select\n" +
+    "      ng-change=\"vm.changed(id)\"\n" +
+    "      multiple=\"true\"\n" +
+    "      ng-disabled=\"vm.isDisabled()\"\n" +
+    "      size=\"{{ vm.getFacetSize(facet.state.values) }}\"\n" +
+    "      id=\"{{ ::facet.name + '_select' }}\"\n" +
+    "      class=\"selector form-control\"\n" +
+    "      ng-options=\"value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value\"\n" +
+    "      ng-model=\"vm.selectedFacets[id]\">\n" +
+    "    </select>\n" +
+    "  </div>\n" +
+    "  <div ng-if=\"::facet.type === 'text'\">\n" +
+    "    <p class=\"input-group\">\n" +
+    "      <input type=\"text\" class=\"form-control\"\n" +
+    "        ng-change=\"vm.changed(id)\"\n" +
+    "        ng-disabled=\"vm.isDisabled()\"\n" +
+    "        ng-model=\"vm.selectedFacets[id].value\"\n" +
+    "        ng-model-options=\"{ debounce: 1000 }\">\n" +
+    "      </input>\n" +
+    "      <span class=\"input-group-btn\">\n" +
+    "        <button type=\"button\" class=\"btn btn-default\"\n" +
+    "            ng-disabled=\"vm.isDisabled()\"\n" +
+    "            ng-click=\"vm.clearTextFacet(id)\">\n" +
+    "          <i class=\"glyphicon glyphicon-remove\"></i>\n" +
+    "        </button>\n" +
+    "      </span>\n" +
+    "    </p>\n" +
+    "  </div>\n" +
+    "  <div ng-if=\"::facet.type === 'timespan'\">\n" +
+    "    <p class=\"input-group\">\n" +
+    "      <input type=\"text\" class=\"form-control\"\n" +
+    "        uib-datepicker-popup=\"\"\n" +
+    "        ng-disabled=\"vm.isDisabled()\"\n" +
+    "        ng-change=\"vm.changed(id)\"\n" +
+    "        ng-readonly=\"true\"\n" +
+    "        ng-model=\"vm.selectedFacets[id].value.start\"\n" +
+    "        is-open=\"startDate.opened\"\n" +
+    "        min-date=\"facet.min\"\n" +
+    "        max-date=\"facet.max\"\n" +
+    "        init-date=\"facet.min\"\n" +
+    "        starting-day=\"1\"\n" +
+    "        ng-required=\"true\"\n" +
+    "        close-text=\"Close\" />\n" +
+    "      <span class=\"input-group-btn\">\n" +
+    "        <button type=\"button\" class=\"btn btn-default\"\n" +
+    "            ng-click=\"startDate.opened = !startDate.opened\">\n" +
+    "          <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
+    "        </button>\n" +
+    "      </span>\n" +
+    "      <input type=\"text\" class=\"form-control\"\n" +
+    "        uib-datepicker-popup=\"\"\n" +
+    "        ng-disabled=\"vm.isDisabled()\"\n" +
+    "        ng-readonly=\"true\"\n" +
+    "        ng-change=\"vm.changed(id)\"\n" +
+    "        ng-model=\"vm.selectedFacets[id].value.end\"\n" +
+    "        is-open=\"endDate.opened\"\n" +
+    "        min-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
+    "        max-date=\"facet.max\"\n" +
+    "        init-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
+    "        starting-day=\"1\"\n" +
+    "        ng-required=\"true\"\n" +
+    "        close-text=\"Close\" />\n" +
+    "      <span class=\"input-group-btn\">\n" +
+    "        <button type=\"button\" class=\"btn btn-default\"\n" +
+    "            ng-click=\"endDate.opened = !endDate.opened\">\n" +
+    "          <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
+    "        </button>\n" +
+    "      </span>\n" +
+    "    </p>\n" +
+    "  </div>\n" +
+    "</div>\n"
+  );
+
+}]);
+
 /*
  * facets module definition
  */
@@ -887,89 +973,3 @@
         };
     }
 })();
-
-angular.module('app').run(['$templateCache', function($templateCache) {
-  'use strict';
-
-  $templateCache.put('src/facets/facets.directive.html',
-    "<div class=\"facet\" ng-repeat=\"(id, facet) in vm.facets\">\n" +
-    "  <div class=\"facet-name\">\n" +
-    "    {{ ::facet.name }}\n" +
-    "    <img src=\"images/loading-sm.gif\" ng-if=\"vm.isLoadingFacets\"></img>\n" +
-    "  </div>\n" +
-    "  <div ng-if=\"::!facet.type\">\n" +
-    "    <input type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
-    "    <select\n" +
-    "      ng-change=\"vm.changed(id)\"\n" +
-    "      multiple=\"true\"\n" +
-    "      ng-disabled=\"vm.isDisabled()\"\n" +
-    "      size=\"{{ vm.getFacetSize(facet.state.values) }}\"\n" +
-    "      id=\"{{ ::facet.name + '_select' }}\"\n" +
-    "      class=\"selector form-control\"\n" +
-    "      ng-options=\"value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value\"\n" +
-    "      ng-model=\"vm.selectedFacets[id]\">\n" +
-    "    </select>\n" +
-    "  </div>\n" +
-    "  <div ng-if=\"::facet.type === 'text'\">\n" +
-    "    <p class=\"input-group\">\n" +
-    "      <input type=\"text\" class=\"form-control\"\n" +
-    "        ng-change=\"vm.changed(id)\"\n" +
-    "        ng-disabled=\"vm.isDisabled()\"\n" +
-    "        ng-model=\"vm.selectedFacets[id].value\"\n" +
-    "        ng-model-options=\"{ debounce: 1000 }\">\n" +
-    "      </input>\n" +
-    "      <span class=\"input-group-btn\">\n" +
-    "        <button type=\"button\" class=\"btn btn-default\"\n" +
-    "            ng-disabled=\"vm.isDisabled()\"\n" +
-    "            ng-click=\"vm.clearTextFacet(id)\">\n" +
-    "          <i class=\"glyphicon glyphicon-remove\"></i>\n" +
-    "        </button>\n" +
-    "      </span>\n" +
-    "    </p>\n" +
-    "  </div>\n" +
-    "  <div ng-if=\"::facet.type === 'timespan'\">\n" +
-    "    <p class=\"input-group\">\n" +
-    "      <input type=\"text\" class=\"form-control\"\n" +
-    "        uib-datepicker-popup=\"\"\n" +
-    "        ng-disabled=\"vm.isDisabled()\"\n" +
-    "        ng-change=\"vm.changed(id)\"\n" +
-    "        ng-readonly=\"true\"\n" +
-    "        ng-model=\"vm.selectedFacets[id].value.start\"\n" +
-    "        is-open=\"startDate.opened\"\n" +
-    "        min-date=\"facet.min\"\n" +
-    "        max-date=\"facet.max\"\n" +
-    "        init-date=\"facet.min\"\n" +
-    "        starting-day=\"1\"\n" +
-    "        ng-required=\"true\"\n" +
-    "        close-text=\"Close\" />\n" +
-    "      <span class=\"input-group-btn\">\n" +
-    "        <button type=\"button\" class=\"btn btn-default\"\n" +
-    "            ng-click=\"startDate.opened = !startDate.opened\">\n" +
-    "          <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
-    "        </button>\n" +
-    "      </span>\n" +
-    "      <input type=\"text\" class=\"form-control\"\n" +
-    "        uib-datepicker-popup=\"\"\n" +
-    "        ng-disabled=\"vm.isDisabled()\"\n" +
-    "        ng-readonly=\"true\"\n" +
-    "        ng-change=\"vm.changed(id)\"\n" +
-    "        ng-model=\"vm.selectedFacets[id].value.end\"\n" +
-    "        is-open=\"endDate.opened\"\n" +
-    "        min-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
-    "        max-date=\"facet.max\"\n" +
-    "        init-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
-    "        starting-day=\"1\"\n" +
-    "        ng-required=\"true\"\n" +
-    "        close-text=\"Close\" />\n" +
-    "      <span class=\"input-group-btn\">\n" +
-    "        <button type=\"button\" class=\"btn btn-default\"\n" +
-    "            ng-click=\"endDate.opened = !endDate.opened\">\n" +
-    "          <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
-    "        </button>\n" +
-    "      </span>\n" +
-    "    </p>\n" +
-    "  </div>\n" +
-    "</div>\n"
-  );
-
-}]);
