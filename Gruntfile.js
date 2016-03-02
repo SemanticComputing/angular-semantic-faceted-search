@@ -4,7 +4,7 @@ module.exports = function(grunt) {
 
     grunt.initConfig({
         ngtemplates: {
-            app: {
+            facets: {
                 src: ['src/facets/facets.directive.html'],
                 dest: 'dist/templates.js'
             }
