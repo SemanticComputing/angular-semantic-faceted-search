@@ -3,7 +3,7 @@
     'use strict';
 
     /* eslint-disable angular/no-service-method */
-    angular.module('facetApp')
+    angular.module('facetUrlState')
 
     /*
     * Service for updating the URL parameters based on facet selections.

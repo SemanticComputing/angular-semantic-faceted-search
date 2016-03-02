@@ -14,7 +14,7 @@
     * Controller for the results view.
     */
     .controller( 'PhotoController', PhotoController )
-    .controller( 'PhotoModalController', PhotoModalController )
+    .controller( 'PhotoModalController', PhotoModalController );
 
     /* @ngInject */
     function PhotoController( $uibModal, _, RESULTS_PER_PAGE, photoService, urlStateHandlerService ) {
