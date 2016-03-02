@@ -1,6 +1,6 @@
 <div class="facet" ng-repeat="(id, facet) in vm.facets">
   <div class="facet-name">
-    {{ ::facet.name }}
+    {{ facet.name }}
     <img src="images/loading-sm.gif" ng-if="vm.isLoadingFacets"></img>
   </div>
   <div ng-if="::!facet.type">
