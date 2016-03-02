@@ -15,7 +15,7 @@ module.exports = function(grunt) {
                     'src/facets/facets.module.js',
                     'src/facets/facets.facet-mapper-service.js',
                     'src/facets/facets.service.js',
-                    'src/facets/facets.selection-formatter.js',
+                    'src/facets/facets.facet-selection-formatter.js',
                     'src/facets/facets.directive.js',
                     'src/facets/facets.text-with-selection.filter.js',
                     'src/faceturlstate/faceturlstate.module.js',
