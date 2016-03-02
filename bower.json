@@ -13,7 +13,8 @@
     "angular": "~1.4.8",
     "lodash": "~4.0.0",
     "angular-paging-sparql-service": "https://github.com/SemanticComputing/angular-paging-sparql-service.git",
-    "angular-spinner": "~0.8.1"
+    "angular-spinner": "~0.8.1",
+    "angular-bootstrap": "~1.2.1"
   },
   "ignore": [
     "**/.*",
