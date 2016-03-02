@@ -12,45 +12,31 @@
     /* ngInject */
     function Facets( $rootScope, $q, _, SparqlService, facetMapperService, FacetSelectionFormatter,
                     NO_SELECTION_STRING) {
-        return function( facets, config ) {
 
+        return FacetHandler;
+
+        function FacetHandler( facets, config ) {
             var self = this;
-
-            var formatter = new FacetSelectionFormatter(facets);
-
-            self.getStates = getStates;
-            self.facetChanged = facetChanged;
-            self.update = update;
-
-            var endpoint = new SparqlService(config.endpointUrl);
 
             var freeFacetTypes = ['text', 'timespan'];
 
             var initialId;
             var initialValues = parseInitialValues(config.initialValues);
             var previousSelections = initPreviousSelections(initialValues);
+            var defaultCountKey = getDefaultCountKey(facets);
 
-            function initPreviousSelections(initialValues) {
-                var selections = {};
-                _.forOwn(facets, function(val, id) {
-                    var initialVal = initialValues[id];
-                    if (!val.type) {
-                        selections[id] = [{ value: initialVal }];
-                    } else {
-                        selections[id] = { value: initialVal };
-                        if (_.includes(freeFacetTypes, facets[id].type) && initialVal) {
-                            initialId = id;
-                        }
-                    }
-                });
-                return selections;
-            }
+            var formatter = new FacetSelectionFormatter(facets);
+            var endpoint = new SparqlService(config.endpointUrl);
+
+            /* Public API */
+
+            self.facetChanged = facetChanged;
+            self.update = update;
 
             self.selectedFacets = _.cloneDeep(previousSelections);
 
-            var defaultCountKey = _.findKey(facets, function(facet) {
-                return !facet.type;
-            });
+
+            /* Implementation */
 
             var queryTemplate = '' +
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
@@ -120,6 +106,20 @@
             ' }';
             countUnionTemplate = buildQueryTemplate(countUnionTemplate);
 
+            /* Public API functions */
+
+            // Update the facets and call the updateResults callback.
+            // id is the id of the facet that triggered the update.
+            function update(id) {
+                config.updateResults(self.selectedFacets);
+                return getStates(self.selectedFacets, id).then(function(states) {
+                    _.forOwn(facets, function(facet, key) {
+                        facet.state = _.find(states, ['id', key]);
+                    });
+                });
+            }
+
+            // Handle a facet state change.
             function facetChanged(id) {
                 if (self.selectedFacets[id]) {
                     switch(facets[id].type) {
@@ -133,6 +133,10 @@
                 }
                 return $q.when();
             }
+
+            /* Private functions */
+
+            /* Facet change handling */
 
             function timeSpanFacetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
@@ -180,14 +184,7 @@
                 return $q.when();
             }
 
-            function update(id) {
-                config.updateResults(self.selectedFacets);
-                return getStates(self.selectedFacets, id).then(function(states) {
-                    _.forOwn(facets, function(facet, key) {
-                        facet.state = _.find(states, ['id', key]);
-                    });
-                });
-            }
+            /* Result parsing */
 
             function getStates(facetSelections, id) {
                 id = id ? id : initialId;
@@ -197,61 +194,6 @@
                 return promise.then(function(results) {
                     return parseResults(results, facetSelections, id);
                 });
-            }
-
-            function hasChanged(id) {
-                var selectedFacet = self.selectedFacets[id];
-                if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
-                    previousSelections[id] = _.cloneDeep(selectedFacet);
-                    return true;
-                }
-                return false;
-            }
-
-            function hasSameValue(first, second) {
-                if (_.isArray(first)) {
-                    var firstVals = _.map(first, 'value');
-                    var secondVals = _.map(second, 'value');
-                    return _.isEqual(firstVals, secondVals);
-                }
-                return _.isEqual(first, second);
-            }
-
-            function parseInitialValues(values) {
-                var result = {};
-                _.forOwn(values, function(val, id) {
-                    if (!facets[id]) {
-                        return;
-                    }
-                    if (facets[id].type === 'timespan') {
-                        var obj = angular.fromJson(val);
-                        result[id] = {
-                            start: new Date(obj.start),
-                            end: new Date(obj.end)
-                        };
-                    } else {
-                        result[id] = val;
-                    }
-                });
-                return result;
-            }
-
-            function getFreeFacetCount(facetSelections, results, id) {
-                var isEmpty = !facetSelections[id].value;
-                if (isEmpty) {
-                    return getNoSelectionCountFromResults(results);
-                }
-
-                var facet = _.find(results, ['id', id]);
-                return _.sumBy(facet.values, function(val) {
-                    return val.value ? val.count : 0;
-                });
-            }
-
-            function getNoSelectionCountFromResults(results) {
-                var count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
-                            ['value', undefined]) || {}).count || 0;
-                return count;
             }
 
             function parseResults( sparqlResults, facetSelections, selectionId ) {
@@ -284,6 +226,13 @@
                 return results;
             }
 
+            function getNoSelectionCountFromResults(results) {
+                var count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
+                            ['value', undefined]) || {}).count || 0;
+                return count;
+            }
+
+            // Set the 'no selection' values for those facets that do not have it.
             function setNotSelectionValues(results, count) {
                 _.forOwn(facets, function(v, id) {
                     var result = _.find(results, ['id', id]);
@@ -301,6 +250,51 @@
                 });
                 return results;
             }
+
+            /* Initialization */
+
+            function initPreviousSelections(initialValues) {
+                var selections = {};
+                _.forOwn(facets, function(val, id) {
+                    var initialVal = initialValues[id];
+                    if (!val.type) {
+                        selections[id] = [{ value: initialVal }];
+                    } else {
+                        selections[id] = { value: initialVal };
+                        if (_.includes(freeFacetTypes, facets[id].type) && initialVal) {
+                            initialId = id;
+                        }
+                    }
+                });
+                return selections;
+            }
+
+            function parseInitialValues(values) {
+                var result = {};
+                _.forOwn(values, function(val, id) {
+                    if (!facets[id]) {
+                        return;
+                    }
+                    if (facets[id].type === 'timespan') {
+                        var obj = angular.fromJson(val);
+                        result[id] = {
+                            start: new Date(obj.start),
+                            end: new Date(obj.end)
+                        };
+                    } else {
+                        result[id] = val;
+                    }
+                });
+                return result;
+            }
+
+            function getDefaultCountKey(facets) {
+                return _.findKey(facets, function(facet) {
+                    return !facet.type;
+                });
+            }
+
+            /* Query builders */
 
             function buildQuery(facetSelections) {
                 var query = queryTemplate;
@@ -367,16 +361,7 @@
                 return template;
             }
 
-            function getTemplateFacets() {
-                var res = [];
-                _.forOwn(facets, function(facet, uri) {
-                    if (facet.type !== 'text') {
-                        res.push(uri);
-                    }
-                });
-                return res.join(' ');
-            }
-
+            // Build unions for deselection counts and time-span selection counts.
             function buildCountUnions(facetSelections) {
                 var deselections = [];
 
@@ -423,6 +408,47 @@
                 return deselections.join(' ') + ' ' + timeSpanSelections.join(' ');
             }
 
-        };
+            /* Utilities */
+
+            function hasChanged(id) {
+                var selectedFacet = self.selectedFacets[id];
+                if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
+                    previousSelections[id] = _.cloneDeep(selectedFacet);
+                    return true;
+                }
+                return false;
+            }
+
+            function hasSameValue(first, second) {
+                if (_.isArray(first)) {
+                    var firstVals = _.map(first, 'value');
+                    var secondVals = _.map(second, 'value');
+                    return _.isEqual(firstVals, secondVals);
+                }
+                return _.isEqual(first, second);
+            }
+
+            function getFreeFacetCount(facetSelections, results, id) {
+                var isEmpty = !facetSelections[id].value;
+                if (isEmpty) {
+                    return getNoSelectionCountFromResults(results);
+                }
+
+                var facet = _.find(results, ['id', id]);
+                return _.sumBy(facet.values, function(val) {
+                    return val.value ? val.count : 0;
+                });
+            }
+
+            function getTemplateFacets() {
+                var res = [];
+                _.forOwn(facets, function(facet, uri) {
+                    if (facet.type !== 'text') {
+                        res.push(uri);
+                    }
+                });
+                return res.join(' ');
+            }
+        }
     }
 })();
