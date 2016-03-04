@@ -490,24 +490,22 @@
             function basicFacetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
                 if (selectedFacet.length === 0) {
-                    self.selectedFacets[id] = _.clone(previousSelections[id]);
-                    return update(id);
-                }
-                if (hasChanged(id)) {
-                    return update(id);
-                }
-                if (!selectedFacet[0]) {
                     // Another facet selection (text search) has resulted in this
                     // facet not having a value even though it has a selection.
                     // Fix it by adding its previous state to the facet state list
                     // with count = 0.
                     var prev = {
                         id: id,
-                        values: [_.clone(previousSelections[id])]
+                        values: _.clone(previousSelections[id])
                     };
                     prev.values[0].count = 0;
                     facets[id].state = prev;
+                    console.log(facets, previousSelections[id]);
                     self.selectedFacets[id] = _.clone(previousSelections[id]);
+                    return $q.when();
+                }
+                if (hasChanged(id)) {
+                    return update(id);
                 }
                 return $q.when();
             }
@@ -555,12 +553,13 @@
             }
 
             function getNoSelectionCountFromResults(results, facetSelections) {
-                var countKeySelection = (facetSelections[defaultCountKey] || [])[0].value;
-                var val = countKeySelection ? countKeySelection : undefined;
-
+                var countKeySelection;
+                if (facetSelections) {
+                    ((facetSelections[defaultCountKey] || [])[0] || {}).value;
+                }
 
                 var count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
-                            ['value', val]) || {}).count || 0;
+                            ['value', countKeySelection]) || {}).count || 0;
                 return count;
             }
 
@@ -813,43 +812,45 @@ angular.module('facets').run(['$templateCache', function($templateCache) {
 
   $templateCache.put('src/facets/facets.directive.html',
     "<div class=\"facet\" ng-repeat=\"(id, facet) in vm.facets\">\n" +
-    "  <div class=\"facet-name\">\n" +
+    "  <div class=\"facet-name panel-heading panel-default panel\" ng-click=\"facet.isCollapsed = !facet.isCollapsed\">\n" +
     "    {{ facet.name }}\n" +
     "    <img src=\"images/loading-sm.gif\" ng-if=\"vm.isLoadingFacets\"></img>\n" +
     "  </div>\n" +
-    "  <div ng-if=\"::!facet.type\">\n" +
-    "    <input type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
-    "    <select\n" +
-    "      ng-change=\"vm.changed(id)\"\n" +
-    "      multiple=\"true\"\n" +
-    "      ng-disabled=\"vm.isDisabled()\"\n" +
-    "      size=\"{{ vm.getFacetSize(facet.state.values) }}\"\n" +
-    "      id=\"{{ ::facet.name + '_select' }}\"\n" +
-    "      class=\"selector form-control\"\n" +
-    "      ng-options=\"value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value\"\n" +
-    "      ng-model=\"vm.selectedFacets[id]\">\n" +
-    "    </select>\n" +
-    "  </div>\n" +
-    "  <div ng-if=\"::facet.type === 'text'\">\n" +
-    "    <p class=\"input-group\">\n" +
-    "      <input type=\"text\" class=\"form-control\"\n" +
+    "  <div uib-collapse=\"isCollapsed\">\n" +
+    "    <div class=\"facet-input-container\">\n" +
+    "      <div ng-if=\"::!facet.type\">\n" +
+    "        <input type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
+    "        <select\n" +
+    "          ng-change=\"vm.changed(id)\"\n" +
+    "          multiple=\"true\"\n" +
+    "          ng-disabled=\"vm.isDisabled()\"\n" +
+    "          size=\"{{ vm.getFacetSize(facet.state.values) }}\"\n" +
+    "          id=\"{{ ::facet.name + '_select' }}\"\n" +
+    "          class=\"selector form-control\"\n" +
+    "          ng-options=\"value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value\"\n" +
+    "          ng-model=\"vm.selectedFacets[id]\">\n" +
+    "        </select>\n" +
+    "      </div>\n" +
+    "      <div ng-if=\"::facet.type === 'text'\">\n" +
+    "        <p class=\"input-group\">\n" +
+    "        <input type=\"text\" class=\"form-control\"\n" +
     "        ng-change=\"vm.changed(id)\"\n" +
     "        ng-disabled=\"vm.isDisabled()\"\n" +
     "        ng-model=\"vm.selectedFacets[id].value\"\n" +
     "        ng-model-options=\"{ debounce: 1000 }\">\n" +
-    "      </input>\n" +
-    "      <span class=\"input-group-btn\">\n" +
-    "        <button type=\"button\" class=\"btn btn-default\"\n" +
+    "        </input>\n" +
+    "        <span class=\"input-group-btn\">\n" +
+    "          <button type=\"button\" class=\"btn btn-default\"\n" +
     "            ng-disabled=\"vm.isDisabled()\"\n" +
     "            ng-click=\"vm.clearTextFacet(id)\">\n" +
-    "          <i class=\"glyphicon glyphicon-remove\"></i>\n" +
-    "        </button>\n" +
-    "      </span>\n" +
-    "    </p>\n" +
-    "  </div>\n" +
-    "  <div ng-if=\"::facet.type === 'timespan'\">\n" +
-    "    <p class=\"input-group\">\n" +
-    "      <input type=\"text\" class=\"form-control\"\n" +
+    "            <i class=\"glyphicon glyphicon-remove\"></i>\n" +
+    "          </button>\n" +
+    "        </span>\n" +
+    "        </p>\n" +
+    "      </div>\n" +
+    "      <div ng-if=\"::facet.type === 'timespan'\">\n" +
+    "        <p class=\"input-group\">\n" +
+    "        <input type=\"text\" class=\"form-control\"\n" +
     "        uib-datepicker-popup=\"\"\n" +
     "        ng-disabled=\"vm.isDisabled()\"\n" +
     "        ng-change=\"vm.changed(id)\"\n" +
@@ -862,13 +863,13 @@ angular.module('facets').run(['$templateCache', function($templateCache) {
     "        starting-day=\"1\"\n" +
     "        ng-required=\"true\"\n" +
     "        close-text=\"Close\" />\n" +
-    "      <span class=\"input-group-btn\">\n" +
-    "        <button type=\"button\" class=\"btn btn-default\"\n" +
+    "        <span class=\"input-group-btn\">\n" +
+    "          <button type=\"button\" class=\"btn btn-default\"\n" +
     "            ng-click=\"startDate.opened = !startDate.opened\">\n" +
-    "          <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
-    "        </button>\n" +
-    "      </span>\n" +
-    "      <input type=\"text\" class=\"form-control\"\n" +
+    "            <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
+    "          </button>\n" +
+    "        </span>\n" +
+    "        <input type=\"text\" class=\"form-control\"\n" +
     "        uib-datepicker-popup=\"\"\n" +
     "        ng-disabled=\"vm.isDisabled()\"\n" +
     "        ng-readonly=\"true\"\n" +
@@ -881,13 +882,15 @@ angular.module('facets').run(['$templateCache', function($templateCache) {
     "        starting-day=\"1\"\n" +
     "        ng-required=\"true\"\n" +
     "        close-text=\"Close\" />\n" +
-    "      <span class=\"input-group-btn\">\n" +
-    "        <button type=\"button\" class=\"btn btn-default\"\n" +
+    "        <span class=\"input-group-btn\">\n" +
+    "          <button type=\"button\" class=\"btn btn-default\"\n" +
     "            ng-click=\"endDate.opened = !endDate.opened\">\n" +
-    "          <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
-    "        </button>\n" +
-    "      </span>\n" +
-    "    </p>\n" +
+    "            <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
+    "          </button>\n" +
+    "        </span>\n" +
+    "        </p>\n" +
+    "      </div>\n" +
+    "    </div>\n" +
     "  </div>\n" +
     "</div>\n"
   );

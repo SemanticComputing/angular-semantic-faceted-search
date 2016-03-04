@@ -162,24 +162,22 @@
             function basicFacetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
                 if (selectedFacet.length === 0) {
-                    self.selectedFacets[id] = _.clone(previousSelections[id]);
-                    return update(id);
-                }
-                if (hasChanged(id)) {
-                    return update(id);
-                }
-                if (!selectedFacet[0]) {
                     // Another facet selection (text search) has resulted in this
                     // facet not having a value even though it has a selection.
                     // Fix it by adding its previous state to the facet state list
                     // with count = 0.
                     var prev = {
                         id: id,
-                        values: [_.clone(previousSelections[id])]
+                        values: _.clone(previousSelections[id])
                     };
                     prev.values[0].count = 0;
                     facets[id].state = prev;
+                    console.log(facets, previousSelections[id]);
                     self.selectedFacets[id] = _.clone(previousSelections[id]);
+                    return $q.when();
+                }
+                if (hasChanged(id)) {
+                    return update(id);
                 }
                 return $q.when();
             }
@@ -227,12 +225,13 @@
             }
 
             function getNoSelectionCountFromResults(results, facetSelections) {
-                var countKeySelection = (facetSelections[defaultCountKey] || [])[0].value;
-                var val = countKeySelection ? countKeySelection : undefined;
-
+                var countKeySelection;
+                if (facetSelections) {
+                    ((facetSelections[defaultCountKey] || [])[0] || {}).value;
+                }
 
                 var count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
-                            ['value', val]) || {}).count || 0;
+                            ['value', countKeySelection]) || {}).count || 0;
                 return count;
             }
 
