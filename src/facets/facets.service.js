@@ -21,9 +21,9 @@
             var freeFacetTypes = ['text', 'timespan'];
 
             var initialId;
+            var defaultCountKey = getDefaultCountKey(facets);
             var initialValues = parseInitialValues(config.initialValues);
             var previousSelections = initPreviousSelections(initialValues);
-            var defaultCountKey = getDefaultCountKey(facets);
 
             var formatter = new FacetSelectionFormatter(facets);
             var endpoint = new SparqlService(config.endpointUrl);
@@ -215,7 +215,7 @@
                     count = getFreeFacetCount(facetSelections, results, selectionId);
                 } else if (!selectionId) {
                     // No facets selected, get the count from the results.
-                    count = getNoSelectionCountFromResults(results);
+                    count = getNoSelectionCountFromResults(results, facetSelections);
                 } else {
                     // Get the count from the current selection.
                     count = facetSelections[selectionId][0].count;
@@ -226,9 +226,13 @@
                 return results;
             }
 
-            function getNoSelectionCountFromResults(results) {
+            function getNoSelectionCountFromResults(results, facetSelections) {
+                var countKeySelection = (facetSelections[defaultCountKey] || [])[0].value;
+                var val = countKeySelection ? countKeySelection : undefined;
+
+
                 var count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
-                            ['value', undefined]) || {}).count || 0;
+                            ['value', val]) || {}).count || 0;
                 return count;
             }
 
