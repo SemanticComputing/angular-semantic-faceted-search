@@ -108,7 +108,7 @@
 (function() {
     'use strict';
 
-    angular.module('facets', ['sparql', 'ui.bootstrap'])
+    angular.module('facets', ['sparql', 'ui.bootstrap', 'angularSpinner'])
     .constant('_', _) // eslint-disable-line no-undef
     .constant('NO_SELECTION_STRING', '-- No Selection --');
 })();
@@ -482,6 +482,7 @@
 
             function textFacetChanged(id) {
                 if (hasChanged(id)) {
+                    previousSelections[id] = _.clone(self.selectedFacets[id]);
                     return update(id);
                 }
                 return $q.when();
@@ -489,22 +490,19 @@
 
             function basicFacetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
-                if (selectedFacet.length === 0) {
-                    // Another facet selection (text search) has resulted in this
-                    // facet not having a value even though it has a selection.
-                    // Fix it by adding its previous state to the facet state list
-                    // with count = 0.
-                    var prev = {
-                        id: id,
-                        values: _.clone(previousSelections[id])
-                    };
-                    prev.values[0].count = 0;
-                    facets[id].state = prev;
-                    console.log(facets, previousSelections[id]);
-                    self.selectedFacets[id] = _.clone(previousSelections[id]);
-                    return $q.when();
-                }
                 if (hasChanged(id)) {
+                    if (selectedFacet.length === 0) {
+                        // Another facet selection (text search) has resulted in this
+                        // facet not having a value even though it has a selection.
+                        // Fix it by adding its previous state to the facet state list
+                        // with count = 0.
+                        var prev = _.clone(previousSelections[id]);
+                        prev[0].count = 0;
+                        facets[id].state.values = facets[id].state.values.concat(prev);
+                        self.selectedFacets[id] = _.clone(previousSelections[id]);
+                        return $q.when();
+                    }
+                    previousSelections[id] = _.cloneDeep(selectedFacet);
                     return update(id);
                 }
                 return $q.when();
@@ -744,13 +742,13 @@
             function hasChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
                 if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
-                    previousSelections[id] = _.cloneDeep(selectedFacet);
                     return true;
                 }
                 return false;
             }
 
             function hasSameValue(first, second) {
+                console.log(first, second);
                 if (_.isArray(first)) {
                     var firstVals = _.map(first, 'value');
                     var secondVals = _.map(second, 'value');
@@ -811,84 +809,105 @@ angular.module('facets').run(['$templateCache', function($templateCache) {
   'use strict';
 
   $templateCache.put('src/facets/facets.directive.html',
-    "<div class=\"facet\" ng-repeat=\"(id, facet) in vm.facets\">\n" +
-    "  <div class=\"facet-name panel-heading panel-default panel\" ng-click=\"facet.isCollapsed = !facet.isCollapsed\">\n" +
-    "    {{ facet.name }}\n" +
-    "    <img src=\"images/loading-sm.gif\" ng-if=\"vm.isLoadingFacets\"></img>\n" +
-    "  </div>\n" +
-    "  <div uib-collapse=\"isCollapsed\">\n" +
-    "    <div class=\"facet-input-container\">\n" +
-    "      <div ng-if=\"::!facet.type\">\n" +
-    "        <input type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
-    "        <select\n" +
-    "          ng-change=\"vm.changed(id)\"\n" +
-    "          multiple=\"true\"\n" +
-    "          ng-disabled=\"vm.isDisabled()\"\n" +
-    "          size=\"{{ vm.getFacetSize(facet.state.values) }}\"\n" +
-    "          id=\"{{ ::facet.name + '_select' }}\"\n" +
-    "          class=\"selector form-control\"\n" +
-    "          ng-options=\"value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value\"\n" +
-    "          ng-model=\"vm.selectedFacets[id]\">\n" +
-    "        </select>\n" +
-    "      </div>\n" +
-    "      <div ng-if=\"::facet.type === 'text'\">\n" +
-    "        <p class=\"input-group\">\n" +
-    "        <input type=\"text\" class=\"form-control\"\n" +
-    "        ng-change=\"vm.changed(id)\"\n" +
-    "        ng-disabled=\"vm.isDisabled()\"\n" +
-    "        ng-model=\"vm.selectedFacets[id].value\"\n" +
-    "        ng-model-options=\"{ debounce: 1000 }\">\n" +
-    "        </input>\n" +
-    "        <span class=\"input-group-btn\">\n" +
-    "          <button type=\"button\" class=\"btn btn-default\"\n" +
+    "<style>\n" +
+    "  .facet-date-left {\n" +
+    "    padding-right: 0px;\n" +
+    "    font-size: small;\n" +
+    "  }\n" +
+    "  .facet-date-right {\n" +
+    "    padding-left: 0px;\n" +
+    "    font-size: small;\n" +
+    "  }\n" +
+    "</style>\n" +
+    "<div class=\"facets\">\n" +
+    "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoadingFacets\"></span>\n" +
+    "  <div class=\"facet\" ng-repeat=\"(id, facet) in vm.facets\">\n" +
+    "    <div class=\"well\" ng-click=\"facet.isCollapsed = !facet.isCollapsed\">\n" +
+    "      <h4>{{ facet.name }}</h4>\n" +
+    "      <div uib-collapse=\"isCollapsed\">\n" +
+    "        <div class=\"facet-input-container\">\n" +
+    "          <div ng-if=\"::!facet.type\">\n" +
+    "            <input type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
+    "            <select\n" +
+    "              ng-change=\"vm.changed(id)\"\n" +
+    "              multiple=\"true\"\n" +
+    "              ng-disabled=\"vm.isDisabled()\"\n" +
+    "              size=\"{{ vm.getFacetSize(facet.state.values) }}\"\n" +
+    "              id=\"{{ ::facet.name + '_select' }}\"\n" +
+    "              class=\"selector form-control\"\n" +
+    "              ng-options=\"value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value\"\n" +
+    "              ng-model=\"vm.selectedFacets[id]\">\n" +
+    "            </select>\n" +
+    "          </div>\n" +
+    "          <div ng-if=\"::facet.type === 'text'\">\n" +
+    "            <p class=\"input-group\">\n" +
+    "            <input type=\"text\" class=\"form-control\"\n" +
+    "            ng-change=\"vm.changed(id)\"\n" +
     "            ng-disabled=\"vm.isDisabled()\"\n" +
-    "            ng-click=\"vm.clearTextFacet(id)\">\n" +
-    "            <i class=\"glyphicon glyphicon-remove\"></i>\n" +
-    "          </button>\n" +
-    "        </span>\n" +
-    "        </p>\n" +
-    "      </div>\n" +
-    "      <div ng-if=\"::facet.type === 'timespan'\">\n" +
-    "        <p class=\"input-group\">\n" +
-    "        <input type=\"text\" class=\"form-control\"\n" +
-    "        uib-datepicker-popup=\"\"\n" +
-    "        ng-disabled=\"vm.isDisabled()\"\n" +
-    "        ng-change=\"vm.changed(id)\"\n" +
-    "        ng-readonly=\"true\"\n" +
-    "        ng-model=\"vm.selectedFacets[id].value.start\"\n" +
-    "        is-open=\"startDate.opened\"\n" +
-    "        min-date=\"facet.min\"\n" +
-    "        max-date=\"facet.max\"\n" +
-    "        init-date=\"facet.min\"\n" +
-    "        starting-day=\"1\"\n" +
-    "        ng-required=\"true\"\n" +
-    "        close-text=\"Close\" />\n" +
-    "        <span class=\"input-group-btn\">\n" +
-    "          <button type=\"button\" class=\"btn btn-default\"\n" +
-    "            ng-click=\"startDate.opened = !startDate.opened\">\n" +
-    "            <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
-    "          </button>\n" +
-    "        </span>\n" +
-    "        <input type=\"text\" class=\"form-control\"\n" +
-    "        uib-datepicker-popup=\"\"\n" +
-    "        ng-disabled=\"vm.isDisabled()\"\n" +
-    "        ng-readonly=\"true\"\n" +
-    "        ng-change=\"vm.changed(id)\"\n" +
-    "        ng-model=\"vm.selectedFacets[id].value.end\"\n" +
-    "        is-open=\"endDate.opened\"\n" +
-    "        min-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
-    "        max-date=\"facet.max\"\n" +
-    "        init-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
-    "        starting-day=\"1\"\n" +
-    "        ng-required=\"true\"\n" +
-    "        close-text=\"Close\" />\n" +
-    "        <span class=\"input-group-btn\">\n" +
-    "          <button type=\"button\" class=\"btn btn-default\"\n" +
-    "            ng-click=\"endDate.opened = !endDate.opened\">\n" +
-    "            <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
-    "          </button>\n" +
-    "        </span>\n" +
-    "        </p>\n" +
+    "            ng-model=\"vm.selectedFacets[id].value\"\n" +
+    "            ng-model-options=\"{ debounce: 1000 }\">\n" +
+    "            </input>\n" +
+    "            <span class=\"input-group-btn\">\n" +
+    "              <button type=\"button\" class=\"btn btn-default\"\n" +
+    "                ng-disabled=\"vm.isDisabled()\"\n" +
+    "                ng-click=\"vm.clearTextFacet(id)\">\n" +
+    "                <i class=\"glyphicon glyphicon-remove\"></i>\n" +
+    "              </button>\n" +
+    "            </span>\n" +
+    "            </p>\n" +
+    "          </div>\n" +
+    "          <div ng-if=\"::facet.type === 'timespan'\">\n" +
+    "            <div class=\"row\">\n" +
+    "              <div class=\"col-md-6 facet-date-left\">\n" +
+    "                <span class=\"input-group\">\n" +
+    "                  <span class=\"input-group-btn\">\n" +
+    "                    <button type=\"button\" class=\"btn btn-default\"\n" +
+    "                      ng-click=\"startDate.opened = !startDate.opened\">\n" +
+    "                      <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
+    "                    </button>\n" +
+    "                  </span>\n" +
+    "                  <input type=\"text\" class=\"form-control\"\n" +
+    "                  uib-datepicker-popup=\"\"\n" +
+    "                  ng-disabled=\"vm.isDisabled()\"\n" +
+    "                  ng-change=\"vm.changed(id)\"\n" +
+    "                  ng-readonly=\"true\"\n" +
+    "                  ng-model=\"vm.selectedFacets[id].value.start\"\n" +
+    "                  is-open=\"startDate.opened\"\n" +
+    "                  min-date=\"facet.min\"\n" +
+    "                  max-date=\"facet.max\"\n" +
+    "                  init-date=\"facet.min\"\n" +
+    "                  show-button-bar=\"true\"\n" +
+    "                  starting-day=\"1\"\n" +
+    "                  ng-required=\"true\"\n" +
+    "                  close-text=\"Close\" />\n" +
+    "                </span>\n" +
+    "              </div>\n" +
+    "              <div class=\"col-md-6 facet-date-right\">\n" +
+    "                <span class=\"input-group\">\n" +
+    "                  <span class=\"input-group-btn\">\n" +
+    "                    <button type=\"button\" class=\"btn btn-default\"\n" +
+    "                      ng-click=\"endDate.opened = !endDate.opened\">\n" +
+    "                      <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
+    "                    </button>\n" +
+    "                  </span>\n" +
+    "                  <input type=\"text\" class=\"form-control\"\n" +
+    "                  uib-datepicker-popup=\"\"\n" +
+    "                  ng-disabled=\"vm.isDisabled()\"\n" +
+    "                  ng-readonly=\"true\"\n" +
+    "                  ng-change=\"vm.changed(id)\"\n" +
+    "                  ng-model=\"vm.selectedFacets[id].value.end\"\n" +
+    "                  is-open=\"endDate.opened\"\n" +
+    "                  min-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
+    "                  max-date=\"facet.max\"\n" +
+    "                  init-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
+    "                  starting-day=\"1\"\n" +
+    "                  ng-required=\"true\"\n" +
+    "                  close-text=\"Close\" />\n" +
+    "                </span>\n" +
+    "              </div>\n" +
+    "            </div>\n" +
+    "          </div>\n" +
+    "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +

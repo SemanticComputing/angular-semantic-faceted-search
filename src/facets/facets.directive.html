@@ -1,81 +1,102 @@
-<div class="facet" ng-repeat="(id, facet) in vm.facets">
-  <div class="facet-name panel-heading panel-default panel" ng-click="facet.isCollapsed = !facet.isCollapsed">
-    {{ facet.name }}
-    <img src="images/loading-sm.gif" ng-if="vm.isLoadingFacets"></img>
-  </div>
-  <div uib-collapse="isCollapsed">
-    <div class="facet-input-container">
-      <div ng-if="::!facet.type">
-        <input type="text" class="form-control" ng-model="textFilter" />
-        <select
-          ng-change="vm.changed(id)"
-          multiple="true"
-          ng-disabled="vm.isDisabled()"
-          size="{{ vm.getFacetSize(facet.state.values) }}"
-          id="{{ ::facet.name + '_select' }}"
-          class="selector form-control"
-          ng-options="value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value"
-          ng-model="vm.selectedFacets[id]">
-        </select>
-      </div>
-      <div ng-if="::facet.type === 'text'">
-        <p class="input-group">
-        <input type="text" class="form-control"
-        ng-change="vm.changed(id)"
-        ng-disabled="vm.isDisabled()"
-        ng-model="vm.selectedFacets[id].value"
-        ng-model-options="{ debounce: 1000 }">
-        </input>
-        <span class="input-group-btn">
-          <button type="button" class="btn btn-default"
+<style>
+  .facet-date-left {
+    padding-right: 0px;
+    font-size: small;
+  }
+  .facet-date-right {
+    padding-left: 0px;
+    font-size: small;
+  }
+</style>
+<div class="facets">
+  <span us-spinner="{radius:30, width:8, length: 40}" ng-if="vm.isLoadingFacets"></span>
+  <div class="facet" ng-repeat="(id, facet) in vm.facets">
+    <div class="well" ng-click="facet.isCollapsed = !facet.isCollapsed">
+      <h4>{{ facet.name }}</h4>
+      <div uib-collapse="isCollapsed">
+        <div class="facet-input-container">
+          <div ng-if="::!facet.type">
+            <input type="text" class="form-control" ng-model="textFilter" />
+            <select
+              ng-change="vm.changed(id)"
+              multiple="true"
+              ng-disabled="vm.isDisabled()"
+              size="{{ vm.getFacetSize(facet.state.values) }}"
+              id="{{ ::facet.name + '_select' }}"
+              class="selector form-control"
+              ng-options="value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value"
+              ng-model="vm.selectedFacets[id]">
+            </select>
+          </div>
+          <div ng-if="::facet.type === 'text'">
+            <p class="input-group">
+            <input type="text" class="form-control"
+            ng-change="vm.changed(id)"
             ng-disabled="vm.isDisabled()"
-            ng-click="vm.clearTextFacet(id)">
-            <i class="glyphicon glyphicon-remove"></i>
-          </button>
-        </span>
-        </p>
-      </div>
-      <div ng-if="::facet.type === 'timespan'">
-        <p class="input-group">
-        <input type="text" class="form-control"
-        uib-datepicker-popup=""
-        ng-disabled="vm.isDisabled()"
-        ng-change="vm.changed(id)"
-        ng-readonly="true"
-        ng-model="vm.selectedFacets[id].value.start"
-        is-open="startDate.opened"
-        min-date="facet.min"
-        max-date="facet.max"
-        init-date="facet.min"
-        starting-day="1"
-        ng-required="true"
-        close-text="Close" />
-        <span class="input-group-btn">
-          <button type="button" class="btn btn-default"
-            ng-click="startDate.opened = !startDate.opened">
-            <i class="glyphicon glyphicon-calendar"></i>
-          </button>
-        </span>
-        <input type="text" class="form-control"
-        uib-datepicker-popup=""
-        ng-disabled="vm.isDisabled()"
-        ng-readonly="true"
-        ng-change="vm.changed(id)"
-        ng-model="vm.selectedFacets[id].value.end"
-        is-open="endDate.opened"
-        min-date="vm.selectedFacets[id].value.start || facet.min"
-        max-date="facet.max"
-        init-date="vm.selectedFacets[id].value.start || facet.min"
-        starting-day="1"
-        ng-required="true"
-        close-text="Close" />
-        <span class="input-group-btn">
-          <button type="button" class="btn btn-default"
-            ng-click="endDate.opened = !endDate.opened">
-            <i class="glyphicon glyphicon-calendar"></i>
-          </button>
-        </span>
-        </p>
+            ng-model="vm.selectedFacets[id].value"
+            ng-model-options="{ debounce: 1000 }">
+            </input>
+            <span class="input-group-btn">
+              <button type="button" class="btn btn-default"
+                ng-disabled="vm.isDisabled()"
+                ng-click="vm.clearTextFacet(id)">
+                <i class="glyphicon glyphicon-remove"></i>
+              </button>
+            </span>
+            </p>
+          </div>
+          <div ng-if="::facet.type === 'timespan'">
+            <div class="row">
+              <div class="col-md-6 facet-date-left">
+                <span class="input-group">
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default"
+                      ng-click="startDate.opened = !startDate.opened">
+                      <i class="glyphicon glyphicon-calendar"></i>
+                    </button>
+                  </span>
+                  <input type="text" class="form-control"
+                  uib-datepicker-popup=""
+                  ng-disabled="vm.isDisabled()"
+                  ng-change="vm.changed(id)"
+                  ng-readonly="true"
+                  ng-model="vm.selectedFacets[id].value.start"
+                  is-open="startDate.opened"
+                  min-date="facet.min"
+                  max-date="facet.max"
+                  init-date="facet.min"
+                  show-button-bar="true"
+                  starting-day="1"
+                  ng-required="true"
+                  close-text="Close" />
+                </span>
+              </div>
+              <div class="col-md-6 facet-date-right">
+                <span class="input-group">
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default"
+                      ng-click="endDate.opened = !endDate.opened">
+                      <i class="glyphicon glyphicon-calendar"></i>
+                    </button>
+                  </span>
+                  <input type="text" class="form-control"
+                  uib-datepicker-popup=""
+                  ng-disabled="vm.isDisabled()"
+                  ng-readonly="true"
+                  ng-change="vm.changed(id)"
+                  ng-model="vm.selectedFacets[id].value.end"
+                  is-open="endDate.opened"
+                  min-date="vm.selectedFacets[id].value.start || facet.min"
+                  max-date="facet.max"
+                  init-date="vm.selectedFacets[id].value.start || facet.min"
+                  starting-day="1"
+                  ng-required="true"
+                  close-text="Close" />
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

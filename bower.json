@@ -5,7 +5,7 @@
     "Mikko Koho <mikko.koho@aalto.fi>"
   ],
   "description": "Semantic faceted search using SPARQL",
-  "main": "",
+  "main": "dist/semantic-faceted-search.js",
   "moduleType": [],
   "license": "MIT",
   "homepage": "",

@@ -154,6 +154,7 @@
 
             function textFacetChanged(id) {
                 if (hasChanged(id)) {
+                    previousSelections[id] = _.clone(self.selectedFacets[id]);
                     return update(id);
                 }
                 return $q.when();
@@ -161,21 +162,19 @@
 
             function basicFacetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
-                if (selectedFacet.length === 0) {
-                    // Another facet selection (text search) has resulted in this
-                    // facet not having a value even though it has a selection.
-                    // Fix it by adding its previous state to the facet state list
-                    // with count = 0.
-                    var prev = {
-                        id: id,
-                        values: _.clone(previousSelections[id])
-                    };
-                    prev.values[0].count = 0;
-                    facets[id].state = prev;
-                    self.selectedFacets[id] = _.clone(previousSelections[id]);
-                    return $q.when();
-                }
                 if (hasChanged(id)) {
+                    if (selectedFacet.length === 0) {
+                        // Another facet selection (text search) has resulted in this
+                        // facet not having a value even though it has a selection.
+                        // Fix it by adding its previous state to the facet state list
+                        // with count = 0.
+                        var prev = _.clone(previousSelections[id]);
+                        prev[0].count = 0;
+                        facets[id].state.values = facets[id].state.values.concat(prev);
+                        self.selectedFacets[id] = _.clone(previousSelections[id]);
+                        return $q.when();
+                    }
+                    previousSelections[id] = _.cloneDeep(selectedFacet);
                     return update(id);
                 }
                 return $q.when();
@@ -415,7 +414,6 @@
             function hasChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
                 if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
-                    previousSelections[id] = _.cloneDeep(selectedFacet);
                     return true;
                 }
                 return false;
