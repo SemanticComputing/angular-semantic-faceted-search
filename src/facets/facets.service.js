@@ -172,7 +172,6 @@
                     };
                     prev.values[0].count = 0;
                     facets[id].state = prev;
-                    console.log(facets, previousSelections[id]);
                     self.selectedFacets[id] = _.clone(previousSelections[id]);
                     return $q.when();
                 }
