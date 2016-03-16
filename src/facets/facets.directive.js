@@ -39,8 +39,8 @@
         vm.isDisabled = isDisabled;
         vm.changed = facetChanged;
         vm.clearTextFacet = clearTextFacet;
-        vm.disableFacet = vm.facetHandler.disableFacet;
-        vm.enableFacet = vm.facetHandler.enableFacet;
+        vm.disableFacet = disableFacet;
+        vm.enableFacet = enableFacet;
 
         vm.getFacetSize = getFacetSize;
 
@@ -64,6 +64,16 @@
         function update() {
             vm.isLoadingFacets = true;
             return vm.facetHandler.update().then(handleUpdateSuccess, handleError);
+        }
+
+        function enableFacet(id) {
+            vm.isLoadingFacets = true;
+            return vm.facetHandler.enableFacet(id).then(handleUpdateSuccess, handleError);
+        }
+
+        function disableFacet(id) {
+            vm.isLoadingFacets = true;
+            return vm.facetHandler.disableFacet(id).then(handleUpdateSuccess, handleError);
         }
 
         function handleUpdateSuccess() {

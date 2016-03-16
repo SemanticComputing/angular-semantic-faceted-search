@@ -146,14 +146,14 @@
                 delete self.enabledFacets[id];
                 delete self.selectedFacets[id];
                 _defaultCountKey = getDefaultCountKey(self.enabledFacets);
-                update();
+                return update();
             }
 
             function enableFacet(id) {
                 self.enabledFacets[id] = _.cloneDeep(self.disabledFacets[id]);
                 delete self.disabledFacets[id];
                 _defaultCountKey = getDefaultCountKey(self.enabledFacets);
-                update();
+                return update();
             }
 
             /* Private functions */
