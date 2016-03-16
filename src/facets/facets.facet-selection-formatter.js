@@ -3,7 +3,7 @@
     'use strict';
 
     /* eslint-disable angular/no-service-method */
-    angular.module('facets')
+    angular.module('seco.facetedSearch')
     .factory('FacetSelectionFormatter', function (_) {
         return function( facets ) {
 

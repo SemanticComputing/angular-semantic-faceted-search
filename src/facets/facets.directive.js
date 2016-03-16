@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    angular.module('facets')
+    angular.module('seco.facetedSearch')
 
     /*
     * Facet selector directive.
@@ -92,6 +92,5 @@
             }
             return '10';
         }
-
     }
 })();

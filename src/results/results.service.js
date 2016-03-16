@@ -1,19 +1,25 @@
 (function() {
-
     'use strict';
 
-    angular.module('resultHandler', ['sparql'])
+    angular.module('seco.facetedSearch')
+    .constant('DEFAULT_PAGES_PER_QUERY', 1)
+    .constant('DEFAULT_RESULTS_PER_PAGE', 10)
 
     /*
     * Result handler service.
     */
-    .factory('Results', Results);
+    .factory('FacetResultHandler', FacetResultHandler);
 
     /* @ngInject */
-    function Results( RESULTS_PER_PAGE, PAGES_PER_QUERY, AdvancedSparqlService,
-                FacetSelectionFormatter, objectMapperService ) {
-        return function( endpointUrl, facets, mapper ) {
+    function FacetResultHandler(DEFAULT_PAGES_PER_QUERY, DEFAULT_RESULTS_PER_PAGE,
+            AdvancedSparqlService, FacetSelectionFormatter, objectMapperService ) {
+
+        return ResultHandler;
+
+        function ResultHandler(endpointUrl, facets, mapper, resultsPerPage, pagesPerQuery) {
             mapper = mapper || objectMapperService;
+            resultsPerPage = resultsPerPage || DEFAULT_RESULTS_PER_PAGE;
+            pagesPerQuery = pagesPerQuery || DEFAULT_PAGES_PER_QUERY;
 
             var formatter = new FacetSelectionFormatter(facets);
             var endpoint = new AdvancedSparqlService(endpointUrl, mapper);
@@ -24,10 +30,10 @@
                 query = query.replace('<FACET_SELECTIONS>',
                         formatter.parseFacetSelections(facetSelections));
                 return endpoint.getObjects(query,
-                    RESULTS_PER_PAGE,
+                    resultsPerPage,
                     resultSetQry.replace('<FACET_SELECTIONS>', formatter.parseFacetSelections(facetSelections)),
-                    PAGES_PER_QUERY);
+                    pagesPerQuery);
             }
-        };
+        }
     }
 })();

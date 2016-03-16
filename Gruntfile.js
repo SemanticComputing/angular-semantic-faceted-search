@@ -4,7 +4,7 @@ module.exports = function(grunt) {
 
     grunt.initConfig({
         ngtemplates: {
-            facets: {
+            'seco.facetedSearch': {
                 src: ['src/facets/facets.directive.html'],
                 dest: 'dist/templates.js'
             }
@@ -12,10 +12,9 @@ module.exports = function(grunt) {
         concat: {
             dist: {
                 src: [
-                    'src/faceturlstate/faceturlstate.module.js',
+                    'src/facets/facets.module.js',
                     'src/faceturlstate/faceturlstate.url-state-handler-service.js',
                     'src/results/results.service.js',
-                    'src/facets/facets.module.js',
                     'src/facets/facets.facet-mapper-service.js',
                     'src/facets/facets.facet-selection-formatter.js',
                     'src/facets/facets.service.js',

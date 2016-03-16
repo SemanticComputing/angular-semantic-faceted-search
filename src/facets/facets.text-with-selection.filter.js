@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    angular.module('facets')
+    angular.module('seco.facetedSearch')
     .filter( 'textWithSelection', function(_) {
         return function(values, text, selection) {
             if (!text) {

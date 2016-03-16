@@ -6,7 +6,7 @@
     *
     * Author Erkki Heino.
     */
-    angular.module('facets')
+    angular.module('seco.facetedSearch')
 
     .factory('facetMapperService', facetMapperService);
 

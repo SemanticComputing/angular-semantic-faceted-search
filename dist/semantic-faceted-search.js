@@ -1,24 +1,29 @@
+/*
+ * facets module definition
+ */
 (function() {
     'use strict';
 
-    angular.module('facetUrlState', [])
-    .constant('_', _); // eslint-disable-line no-undef
+    angular.module('seco.facetedSearch', ['sparql', 'ui.bootstrap', 'angularSpinner'])
+    .constant('_', _) // eslint-disable-line no-undef
+    .constant('NO_SELECTION_STRING', '-- No Selection --');
 })();
+
 
 (function() {
 
     'use strict';
 
     /* eslint-disable angular/no-service-method */
-    angular.module('facetUrlState')
+    angular.module('seco.facetedSearch')
 
     /*
     * Service for updating the URL parameters based on facet selections.
     */
-    .service( 'urlStateHandlerService', urlStateHandlerService );
+    .service('facetUrlStateHandlerService', facetUrlStateHandlerService);
 
     /* @ngInject */
-    function urlStateHandlerService($location, _) {
+    function facetUrlStateHandlerService($location, _) {
 
         this.updateUrlParams = updateUrlParams;
         this.getFacetValuesFromUrlParams = getFacetValuesFromUrlParams;
@@ -69,21 +74,27 @@
 })();
 
 (function() {
-
     'use strict';
 
-    angular.module('resultHandler', ['sparql'])
+    angular.module('seco.facetedSearch')
+    .constant('DEFAULT_PAGES_PER_QUERY', 1)
+    .constant('DEFAULT_RESULTS_PER_PAGE', 10)
 
     /*
     * Result handler service.
     */
-    .factory('Results', Results);
+    .factory('FacetResultHandler', FacetResultHandler);
 
     /* @ngInject */
-    function Results( RESULTS_PER_PAGE, PAGES_PER_QUERY, AdvancedSparqlService,
-                FacetSelectionFormatter, objectMapperService ) {
-        return function( endpointUrl, facets, mapper ) {
+    function FacetResultHandler(DEFAULT_PAGES_PER_QUERY, DEFAULT_RESULTS_PER_PAGE,
+            AdvancedSparqlService, FacetSelectionFormatter, objectMapperService ) {
+
+        return ResultHandler;
+
+        function ResultHandler(endpointUrl, facets, mapper, resultsPerPage, pagesPerQuery) {
             mapper = mapper || objectMapperService;
+            resultsPerPage = resultsPerPage || DEFAULT_RESULTS_PER_PAGE;
+            pagesPerQuery = pagesPerQuery || DEFAULT_PAGES_PER_QUERY;
 
             var formatter = new FacetSelectionFormatter(facets);
             var endpoint = new AdvancedSparqlService(endpointUrl, mapper);
@@ -94,25 +105,13 @@
                 query = query.replace('<FACET_SELECTIONS>',
                         formatter.parseFacetSelections(facetSelections));
                 return endpoint.getObjects(query,
-                    RESULTS_PER_PAGE,
+                    resultsPerPage,
                     resultSetQry.replace('<FACET_SELECTIONS>', formatter.parseFacetSelections(facetSelections)),
-                    PAGES_PER_QUERY);
+                    pagesPerQuery);
             }
-        };
+        }
     }
 })();
-
-/*
- * facets module definition
- */
-(function() {
-    'use strict';
-
-    angular.module('facets', ['sparql', 'ui.bootstrap', 'angularSpinner'])
-    .constant('_', _) // eslint-disable-line no-undef
-    .constant('NO_SELECTION_STRING', '-- No Selection --');
-})();
-
 
 (function() {
     'use strict';
@@ -122,7 +121,7 @@
     *
     * Author Erkki Heino.
     */
-    angular.module('facets')
+    angular.module('seco.facetedSearch')
 
     .factory('facetMapperService', facetMapperService);
 
@@ -183,7 +182,7 @@
     'use strict';
 
     /* eslint-disable angular/no-service-method */
-    angular.module('facets')
+    angular.module('seco.facetedSearch')
     .factory('FacetSelectionFormatter', function (_) {
         return function( facets ) {
 
@@ -333,9 +332,9 @@
     'use strict';
 
     /* eslint-disable angular/no-service-method */
-    angular.module('facets')
+    angular.module('seco.facetedSearch')
 
-    .factory( 'Facets', Facets );
+    .factory('Facets', Facets);
 
     /* ngInject */
     function Facets($rootScope, $q, _, SparqlService, facetMapperService,
@@ -481,6 +480,9 @@
                 self.enabledFacets[id] = _.cloneDeep(self.disabledFacets[id]);
                 delete self.disabledFacets[id];
                 _defaultCountKey = getDefaultCountKey(self.enabledFacets);
+                if (_.includes(freeFacetTypes, self.enabledFacets[id])) {
+                    return $q.when();
+                }
                 return update();
             }
 
@@ -821,7 +823,7 @@
 (function() {
     'use strict';
 
-    angular.module('facets')
+    angular.module('seco.facetedSearch')
     .filter( 'textWithSelection', function(_) {
         return function(values, text, selection) {
             if (!text) {
@@ -841,7 +843,7 @@
     });
 })();
 
-angular.module('facets').run(['$templateCache', function($templateCache) {
+angular.module('seco.facetedSearch').run(['$templateCache', function($templateCache) {
   'use strict';
 
   $templateCache.put('src/facets/facets.directive.html',
@@ -976,7 +978,7 @@ angular.module('facets').run(['$templateCache', function($templateCache) {
 (function() {
     'use strict';
 
-    angular.module('facets')
+    angular.module('seco.facetedSearch')
 
     /*
     * Facet selector directive.
@@ -1067,6 +1069,5 @@ angular.module('facets').run(['$templateCache', function($templateCache) {
             }
             return '10';
         }
-
     }
 })();

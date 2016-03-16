@@ -3,15 +3,15 @@
     'use strict';
 
     /* eslint-disable angular/no-service-method */
-    angular.module('facetUrlState')
+    angular.module('seco.facetedSearch')
 
     /*
     * Service for updating the URL parameters based on facet selections.
     */
-    .service( 'urlStateHandlerService', urlStateHandlerService );
+    .service('facetUrlStateHandlerService', facetUrlStateHandlerService);
 
     /* @ngInject */
-    function urlStateHandlerService($location, _) {
+    function facetUrlStateHandlerService($location, _) {
 
         this.updateUrlParams = updateUrlParams;
         this.getFacetValuesFromUrlParams = getFacetValuesFromUrlParams;

@@ -5,9 +5,9 @@
     'use strict';
 
     /* eslint-disable angular/no-service-method */
-    angular.module('facets')
+    angular.module('seco.facetedSearch')
 
-    .factory( 'Facets', Facets );
+    .factory('Facets', Facets);
 
     /* ngInject */
     function Facets($rootScope, $q, _, SparqlService, facetMapperService,
@@ -153,6 +153,9 @@
                 self.enabledFacets[id] = _.cloneDeep(self.disabledFacets[id]);
                 delete self.disabledFacets[id];
                 _defaultCountKey = getDefaultCountKey(self.enabledFacets);
+                if (_.includes(freeFacetTypes, self.enabledFacets[id])) {
+                    return $q.when();
+                }
                 return update();
             }
 
