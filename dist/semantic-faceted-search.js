@@ -495,7 +495,7 @@
                 self.enabledFacets[id] = _.cloneDeep(self.disabledFacets[id]);
                 delete self.disabledFacets[id];
                 _defaultCountKey = getDefaultCountKey(self.enabledFacets);
-                if (_.includes(freeFacetTypes, self.enabledFacets[id])) {
+                if (_.includes(freeFacetTypes, self.enabledFacets[id].type)) {
                     return $q.when();
                 }
                 return update();
