@@ -33,10 +33,14 @@
 
         vm.facetHandler = new Facets(vm.facets, $scope.options);
         vm.selectedFacets = vm.facetHandler.selectedFacets;
+        vm.disabledFacets = vm.facetHandler.disabledFacets;
+        vm.enabledFacets = vm.facetHandler.enabledFacets;
 
         vm.isDisabled = isDisabled;
         vm.changed = facetChanged;
         vm.clearTextFacet = clearTextFacet;
+        vm.disableFacet = vm.facetHandler.disableFacet;
+        vm.enableFacet = vm.facetHandler.enableFacet;
 
         vm.getFacetSize = getFacetSize;
 
