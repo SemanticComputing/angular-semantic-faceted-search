@@ -871,14 +871,26 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "    padding-left: 0px;\n" +
     "    font-size: small;\n" +
     "  }\n" +
+    "  .vertical-align {\n" +
+    "    display: flex;\n" +
+    "    flex-direction: row;\n" +
+    "  }\n" +
+    "  .vertical-align > [class^=\"col-\"],\n" +
+    "  .vertical-align > [class*=\" col-\"] {\n" +
+    "    display: flex;\n" +
+    "    align-items: center;\n" +
+    "  }\n" +
+    "  .facet-enable-btn-container {\n" +
+    "    justify-content: center;\n" +
+    "  }\n" +
     "</style>\n" +
     "<div class=\"facets\">\n" +
     "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoadingFacets\"></span>\n" +
     "  <div class=\"facet\" ng-repeat=\"(id, facet) in vm.enabledFacets\">\n" +
-    "    <div class=\"well\">\n" +
+    "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12\">\n" +
-    "          <h4 class=\"pull-left\">{{ facet.name }}</h4>\n" +
+    "        <div class=\"col-xs-12 text-left\">\n" +
+    "          <h5 class=\"facet-name pull-left\">{{ facet.name }}</h5>\n" +
     "          <button\n" +
     "            ng-disabled=\"vm.isDisabled()\"\n" +
     "            ng-click=\"vm.disableFacet(id)\"\n" +
@@ -888,7 +900,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "      </div>\n" +
     "      <div class=\"facet-input-container\">\n" +
     "        <div ng-if=\"::!facet.type\">\n" +
-    "          <input type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
+    "          <input ng-disabled=\"vm.isDisabled()\" type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
     "          <select\n" +
     "            ng-change=\"vm.changed(id)\"\n" +
     "            multiple=\"true\"\n" +
@@ -972,15 +984,21 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "    </div>\n" +
     "  </div>\n" +
     "  <div class=\"facet\" ng-repeat=\"(id, facet) in vm.disabledFacets\">\n" +
-    "    <div class=\"well\">\n" +
+    "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12\">\n" +
-    "          <h4 class=\"pull-left\">{{ facet.name }}</h4>\n" +
-    "          <button\n" +
-    "            ng-disabled=\"vm.isDisabled()\"\n" +
-    "            ng-click=\"vm.enableFacet(id)\"\n" +
-    "            class=\"btn btn-primary btn-xs pull-right glyphicon glyphicon-plus\">\n" +
-    "          </button>\n" +
+    "          <div class=\"row vertical-align\">\n" +
+    "            <div class=\"col-xs-10 text-left\">\n" +
+    "              <h5 class=\"facet-name\">{{ facet.name }}</h5>\n" +
+    "            </div>\n" +
+    "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
+    "              <button\n" +
+    "                ng-disabled=\"vm.isDisabled()\"\n" +
+    "                ng-click=\"vm.enableFacet(id)\"\n" +
+    "                class=\"facet-enable-btn btn btn-default btn-xs pull-right glyphicon glyphicon-plus\">\n" +
+    "              </button>\n" +
+    "            </div>\n" +
+    "          </div>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
