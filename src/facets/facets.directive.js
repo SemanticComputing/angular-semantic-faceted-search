@@ -26,7 +26,7 @@
     * Controller for the facet selector directive.
     */
     /* ngInject */
-    function FacetListController( $scope, $log, _, Facets ) {
+    function FacetListController($scope, $log, $q, _, Facets) {
         var vm = this;
 
         vm.facets = $scope.facets;
@@ -51,8 +51,11 @@
         }
 
         function clearTextFacet(id) {
-            vm.selectedFacets[id].value = undefined;
-            return facetChanged(id);
+            if (vm.selectedFacets[id]) {
+                vm.selectedFacets[id].value = undefined;
+                return facetChanged(id);
+            }
+            return $q.when();
         }
 
         function facetChanged(id) {

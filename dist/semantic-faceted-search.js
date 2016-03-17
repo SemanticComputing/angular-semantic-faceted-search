@@ -949,7 +949,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "                min-date=\"facet.min\"\n" +
     "                max-date=\"facet.max\"\n" +
     "                init-date=\"facet.min\"\n" +
-    "                show-button-bar=\"true\"\n" +
+    "                show-button-bar=\"false\"\n" +
     "                starting-day=\"1\"\n" +
     "                ng-required=\"true\"\n" +
     "                close-text=\"Close\" />\n" +
@@ -973,6 +973,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "                min-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
     "                max-date=\"facet.max\"\n" +
     "                init-date=\"vm.selectedFacets[id].value.start || facet.min\"\n" +
+    "                show-button-bar=\"false\"\n" +
     "                starting-day=\"1\"\n" +
     "                ng-required=\"true\"\n" +
     "                close-text=\"Close\" />\n" +
@@ -1036,7 +1037,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     * Controller for the facet selector directive.
     */
     /* ngInject */
-    function FacetListController( $scope, $log, _, Facets ) {
+    function FacetListController($scope, $log, $q, _, Facets) {
         var vm = this;
 
         vm.facets = $scope.facets;
@@ -1061,8 +1062,11 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
         }
 
         function clearTextFacet(id) {
-            vm.selectedFacets[id].value = undefined;
-            return facetChanged(id);
+            if (vm.selectedFacets[id]) {
+                vm.selectedFacets[id].value = undefined;
+                return facetChanged(id);
+            }
+            return $q.when();
         }
 
         function facetChanged(id) {
