@@ -659,7 +659,13 @@
             }
 
             function getInitialEnabledFacets(facets, initialValues) {
-                return _.pick(facets, _.keys(initialValues));
+                var initialFacets = _.pick(facets, _.keys(initialValues));
+                if (!_.isEmpty(initialFacets)) {
+                    return initialFacets;
+                }
+                return _.pickBy(facets, function(facet) {
+                    return facet.enabled;
+                });
             }
 
             function getInitialDisabledFacets(facets, enabledFacets) {
