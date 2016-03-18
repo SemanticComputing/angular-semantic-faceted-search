@@ -20,8 +20,6 @@
 
             var freeFacetTypes = ['text', 'timespan'];
 
-            var initialId;
-            var _defaultCountKey;
             var initialValues = parseInitialValues(config.initialValues, facetSetup);
             var previousSelections = initPreviousSelections(initialValues, facetSetup);
 
@@ -39,6 +37,8 @@
             self.disabledFacets = getInitialDisabledFacets(facetSetup, self.enabledFacets);
 
             /* Implementation */
+
+            var _defaultCountKey = getDefaultCountKey(self.enabledFacets);
 
             var queryTemplate =
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
@@ -207,7 +207,6 @@
             /* Result parsing */
 
             function getStates(facetSelections, facets, id, defaultCountKey) {
-                id = id ? id : initialId;
                 var query = buildQuery(facetSelections, facets, defaultCountKey);
 
                 var promise = endpoint.getObjects(query);
@@ -288,9 +287,6 @@
                     } else {
                         // Text/time-span facet
                         selections[id] = { value: initialVal };
-                        if (_.includes(freeFacetTypes, facets[id].type) && initialVal) {
-                            initialId = id;
-                        }
                     }
                 });
                 return selections;
@@ -342,7 +338,8 @@
             /* Query builders */
 
             function buildQuery(facetSelections, facets, defaultCountKey) {
-                var query = queryTemplate;
+                var query = queryTemplate.replace('<FACETS>',
+                        getTemplateFacets(facets));
                 var textFacets = '';
                 _.forOwn(facetSelections, function(facet, fId) {
                     if (facets[fId].type === 'text' && facet.value) {
@@ -379,10 +376,6 @@
 
             function buildQueryTemplate(template, facets) {
                 var templateSubs = [
-                    {
-                        placeHolder: '<FACETS>',
-                        value: getTemplateFacets(facets)
-                    },
                     {
                         placeHolder: '<GRAPH_START>',
                         value: (config.graph ? ' GRAPH ' + config.graph + ' { ' : '')
