@@ -930,7 +930,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "          </p>\n" +
     "        </div>\n" +
     "        <div ng-if=\"::facet.type === 'timespan'\">\n" +
-    "          <div class=\"row\">\n" +
+    "          <div class=\"row no-gutter\">\n" +
     "            <div class=\"col-md-6 facet-date-left\">\n" +
     "              <span class=\"input-group\">\n" +
     "                <span class=\"input-group-btn\">\n" +
