@@ -38,7 +38,11 @@
       </div>
       <div class="facet-input-container">
         <div ng-if="::!facet.type">
-          <input ng-disabled="vm.isDisabled()" type="text" class="form-control" ng-model="textFilter" />
+          <input
+            ng-disabled="vm.isDisabled()"
+            type="text"
+            class="form-control"
+            ng-model="textFilter" />
           <select
             ng-change="vm.changed(id)"
             multiple="true"

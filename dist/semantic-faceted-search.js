@@ -849,6 +849,11 @@
                 selectedValues = [selection];
             }
 
+            var hasNoSelection = _.some(selectedValues, angular.isUndefined);
+            if (!hasNoSelection) {
+                selectedValues.push(undefined);
+            }
+
             return _.filter(values, function(val) {
                 return _.includes(val.text.toLowerCase(), text.toLowerCase()) || _.includes(selectedValues, val.value);
             });
@@ -900,7 +905,11 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "      </div>\n" +
     "      <div class=\"facet-input-container\">\n" +
     "        <div ng-if=\"::!facet.type\">\n" +
-    "          <input ng-disabled=\"vm.isDisabled()\" type=\"text\" class=\"form-control\" ng-model=\"textFilter\" />\n" +
+    "          <input\n" +
+    "            ng-disabled=\"vm.isDisabled()\"\n" +
+    "            type=\"text\"\n" +
+    "            class=\"form-control\"\n" +
+    "            ng-model=\"textFilter\" />\n" +
     "          <select\n" +
     "            ng-change=\"vm.changed(id)\"\n" +
     "            multiple=\"true\"\n" +

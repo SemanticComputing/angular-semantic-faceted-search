@@ -14,6 +14,11 @@
                 selectedValues = [selection];
             }
 
+            var hasNoSelection = _.some(selectedValues, angular.isUndefined);
+            if (!hasNoSelection) {
+                selectedValues.push(undefined);
+            }
+
             return _.filter(values, function(val) {
                 return _.includes(val.text.toLowerCase(), text.toLowerCase()) || _.includes(selectedValues, val.value);
             });
