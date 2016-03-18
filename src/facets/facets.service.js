@@ -11,7 +11,7 @@
 
     /* ngInject */
     function Facets($rootScope, $q, _, SparqlService, facetMapperService,
-            FacetSelectionFormatter, NO_SELECTION_STRING) {
+            facetSelectionFormatter, NO_SELECTION_STRING) {
 
         return FacetHandler;
 
@@ -25,7 +25,6 @@
             var initialValues = parseInitialValues(config.initialValues, facetSetup);
             var previousSelections = initPreviousSelections(initialValues, facetSetup);
 
-            var formatter = new FacetSelectionFormatter(facetSetup);
             var endpoint = new SparqlService(config.endpointUrl);
 
             /* Public API */
@@ -352,7 +351,8 @@
                 });
                 query = query.replace('<TEXT_FACETS>', textFacets);
                 query = query.replace('<SELECTIONS>',
-                        formatter.parseFacetSelections(facetSelections))
+                        facetSelectionFormatter.parseFacetSelections(facets,
+                            facetSelections))
                         .replace('<DESELECTIONS>',
                                 buildCountUnions(facetSelections, facets, defaultCountKey));
                 return query;
@@ -443,13 +443,13 @@
                         }
                     });
                     deselections.push(s.replace('<OTHER_SELECTIONS>',
-                            formatter.parseFacetSelections(others)));
+                            facetSelectionFormatter.parseFacetSelections(facets, others)));
                     if (select) {
                         var cq = countUnionTemplate.replace('<VALUE>', '"whatever"');
                         cq = cq.replace('<SELECTION>', selection.id);
                         timeSpanSelections.push(cq.replace('<SELECTIONS>',
-                                formatter.parseFacetSelections(others) +
-                                formatter.parseFacetSelections(select)));
+                                facetSelectionFormatter.parseFacetSelections(facets, others) +
+                                facetSelectionFormatter.parseFacetSelections(facets, select)));
                     }
                 });
                 return deselections.join(' ') + ' ' + timeSpanSelections.join(' ');
