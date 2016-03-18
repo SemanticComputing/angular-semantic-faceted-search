@@ -1,12 +1,4 @@
 <style>
-  .facet-date-left {
-    padding-right: 0px;
-    font-size: small;
-  }
-  .facet-date-right {
-    padding-left: 0px;
-    font-size: small;
-  }
   .vertical-align {
     display: flex;
     flex-direction: row;
@@ -18,6 +10,16 @@
   }
   .facet-enable-btn-container {
     justify-content: center;
+  }
+  .row.no-gutter {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .row.no-gutter [class*='col-']:not(:first-child),
+  .row.no-gutter [class*='col-']:not(:last-child) {
+    padding-right: 0;
+    padding-left: 0;
   }
 </style>
 <div class="facets">

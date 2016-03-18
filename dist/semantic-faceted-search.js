@@ -861,14 +861,6 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
 
   $templateCache.put('src/facets/facets.directive.html',
     "<style>\n" +
-    "  .facet-date-left {\n" +
-    "    padding-right: 0px;\n" +
-    "    font-size: small;\n" +
-    "  }\n" +
-    "  .facet-date-right {\n" +
-    "    padding-left: 0px;\n" +
-    "    font-size: small;\n" +
-    "  }\n" +
     "  .vertical-align {\n" +
     "    display: flex;\n" +
     "    flex-direction: row;\n" +
@@ -880,6 +872,16 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "  }\n" +
     "  .facet-enable-btn-container {\n" +
     "    justify-content: center;\n" +
+    "  }\n" +
+    "  .row.no-gutter {\n" +
+    "    margin-left: 0;\n" +
+    "    margin-right: 0;\n" +
+    "  }\n" +
+    "\n" +
+    "  .row.no-gutter [class*='col-']:not(:first-child),\n" +
+    "  .row.no-gutter [class*='col-']:not(:last-child) {\n" +
+    "    padding-right: 0;\n" +
+    "    padding-left: 0;\n" +
     "  }\n" +
     "</style>\n" +
     "<div class=\"facets\">\n" +
