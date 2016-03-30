@@ -48,7 +48,7 @@
 
             var result = '';
             var i = 0;
-            _.forEach( selections, function( facet ) {
+            _.forEach(selections, function(facet) {
                 if (facet.val && facet.val.length) {
                     for (var j = 0; j < facet.val.length; j++) {
                         if (!facet.val[j].value) {
@@ -68,11 +68,29 @@
                     case 'text':
                         result = result + parseTextFacet(facet.val, facet.id, i++);
                         break;
+                    case 'hierarchy':
+                        result = result + parseHierarchyFacet(facet.val, facet.id, facets);
+                        break;
                     default:
                         result = result + parseBasicFacet(facet.val, facet.id);
                 }
             });
             return result;
+        }
+
+        function parseHierarchyFacet(val, key, facets) {
+            var facet = facets[key];
+            if (val.forEach) {
+                var result = '';
+                val.forEach(function(value) {
+                    result = result + ' ?s ' +
+                        (_.contains(facet.classes, value) ? key + '*' : key) +
+                        ' ' + value.value + ' . ';
+                });
+                return result;
+            }
+            return ' ?s ' + (_.contains(facet.classes, val) ? key + '*' : key) +
+                ' ' + val.value + ' . ';
         }
 
         function parseBasicFacet(val, key) {
