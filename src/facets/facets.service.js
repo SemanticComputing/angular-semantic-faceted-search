@@ -407,19 +407,38 @@
                 _.forOwn(facets, function(facet, id) {
                     if (facet.type === 'hierarchy') {
                         unions = unions + hierarchyUnionTemplate
-                            .replace('<HIERARCHY_CLASSES>', facet.classes.join(' '))
+                            .replace('<HIERARCHY_CLASSES>',
+                                getHierarchyFacetClasses(facet, facetSelections))
                             .replace('<HIERARCHY_FACET>', id)
                             .replace(/<HIERARCHY_PROPERTY>/g, facet.property)
-                            .replace(/<SELECTIONS>/g, facetSelectionFormatter.parseFacetSelections(facets,
-                                    rejectHierarchies(facetSelections)));
+                            .replace(/<SELECTIONS>/g,
+                                facetSelectionFormatter.parseFacetSelections(facets,
+                                    rejectHierarchies(facets, facetSelections)));
                     }
                 });
                 return unions;
             }
 
-            function rejectHierarchies(facetSelections) {
-                return _.pickBy(facetSelections, function(s) {
-                    return s.type !== 'hierarchy';
+            function getHierarchyFacetClasses(facet, facetSelections) {
+                var selection = _.find(facetSelections, facet.id);
+                var res = '';
+                if (selection) {
+                    if (_.isArray(selection)) {
+                        selection.forEach(function(s) {
+                            if (s.value) {
+                                res = res + ' ' + s.value;
+                            }
+                        });
+                    } else {
+                        res = selection.value;
+                    }
+                }
+                return res ? res : facet.classes.join(' ');
+            }
+
+            function rejectHierarchies(facets, facetSelections) {
+                return _.pickBy(facetSelections, function(s, key) {
+                    return facets[key].type !== 'hierarchy';
                 });
             }
 
