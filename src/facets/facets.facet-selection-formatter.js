@@ -69,7 +69,7 @@
                         result = result + parseTextFacet(facet.val, facet.id, i++);
                         break;
                     case 'hierarchy':
-                        result = result + parseHierarchyFacet(facet.val, facet.id, facets);
+                        result = result + parseHierarchyFacet(facet.val, facet.id, facets, i++);
                         break;
                     default:
                         result = result + parseBasicFacet(facet.val, facet.id);
@@ -78,19 +78,19 @@
             return result;
         }
 
-        function parseHierarchyFacet(val, key, facets) {
-            var facet = facets[key];
+        function parseHierarchyFacet(val, key, facets, i) {
+            var result = '';
+            var hVar = ' ?h' + i;
+            var hierarchyProp = facets[key].property;
             if (val.forEach) {
-                var result = '';
                 val.forEach(function(value) {
-                    result = result + ' ?s ' +
-                        (_.contains(facet.classes, value) ? key + '*' : key) +
-                        ' ' + value.value + ' . ';
+                    result = result + hVar + ' ' + hierarchyProp + ' ' + value.value + ' . ';
+                    result = result + ' ?s ' + key + ' ' + hVar + ' . ';
                 });
                 return result;
             }
-            return ' ?s ' + (_.contains(facet.classes, val) ? key + '*' : key) +
-                ' ' + val.value + ' . ';
+            result = hVar + ' ' + hierarchyProp + ' ' + val.value + ' . ';
+            return result = result + ' ?s ' + key + ' ' + hVar + ' . ';
         }
 
         function parseBasicFacet(val, key) {

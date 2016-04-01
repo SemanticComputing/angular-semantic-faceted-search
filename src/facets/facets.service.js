@@ -62,7 +62,7 @@
             '           } ' +
             '           ?s ?id ?value .' +
             '         <GRAPH_END> ' +
-            '       } GROUP BY ?id ?value' +
+            '       } GROUP BY ?id ?value ORDER BY ?id ' +
             '     }' +
             '     OPTIONAL {' +
             '       ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
@@ -70,9 +70,9 @@
             '     <OTHER_SERVICES> ' +
             '     BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
             '   }' +
+            '   <HIERARCHY_FACETS> ' +
             '   <DESELECTIONS> ' +
-            ' } ' +
-            ' ORDER BY ?id ?facet_text';
+            ' } ';
             queryTemplate = buildQueryTemplate(queryTemplate, facetSetup);
 
             var deselectUnionTemplate =
@@ -107,6 +107,30 @@
             '   BIND(<SELECTION> AS ?id) ' +
             ' }';
             countUnionTemplate = buildQueryTemplate(countUnionTemplate, facetSetup);
+
+            var hierarchyUnionTemplate =
+            ' UNION { ' +
+            '  SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?facet_text {' +
+            '   BIND(<HIERARCHY_FACET> AS ?id) ' +
+            '   VALUES ?class { ' +
+            '    <HIERARCHY_CLASSES> ' +
+            '   } ' +
+            '   <SELECTIONS> ' +
+            '   ?value <HIERARCHY_PROPERTY> ?class . ' +
+            '   ?h <HIERARCHY_PROPERTY> ?value . ' +
+            '   ?s ?id ?h .' +
+            '   <CLASS> ' +
+            '   OPTIONAL {' +
+            '    ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
+            '   }' +
+            '   BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
+            '   BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
+            '   BIND(IF(?value = ?class, 0, 1) as ?order)' +
+            '  } ' +
+            ' GROUP BY ?class ?value ?facet_text ?order ?id' +
+            ' ORDER BY ?class ?order ?facet_text' +
+            ' } ';
+            hierarchyUnionTemplate = buildQueryTemplate(hierarchyUnionTemplate, facetSetup);
 
             /* Public API functions */
 
@@ -338,6 +362,7 @@
             /* Query builders */
 
             function buildQuery(facetSelections, facets, defaultCountKey) {
+
                 var query = queryTemplate.replace('<FACETS>',
                         getTemplateFacets(facets));
                 var textFacets = '';
@@ -347,11 +372,14 @@
                     }
                 });
                 query = query.replace('<TEXT_FACETS>', textFacets);
-                query = query.replace('<SELECTIONS>',
+                query = query
+                    .replace('<HIERARCHY_FACETS>', buildHierarchyUnions(facets, facetSelections))
+                    .replace('<DESELECTIONS>', buildCountUnions(facetSelections,
+                            facets, defaultCountKey))
+                    .replace(/<SELECTIONS>/g,
                         facetSelectionFormatter.parseFacetSelections(facets,
-                            facetSelections))
-                        .replace('<DESELECTIONS>',
-                                buildCountUnions(facetSelections, facets, defaultCountKey));
+                            facetSelections));
+
                 return query;
             }
 
@@ -373,6 +401,28 @@
                 query = query.replace('<OTHER_SERVICES>', unions);
                 return query;
             }
+
+            function buildHierarchyUnions(facets, facetSelections) {
+                var unions = '';
+                _.forOwn(facets, function(facet, id) {
+                    if (facet.type === 'hierarchy') {
+                        unions = unions + hierarchyUnionTemplate
+                            .replace('<HIERARCHY_CLASSES>', facet.classes.join(' '))
+                            .replace('<HIERARCHY_FACET>', id)
+                            .replace(/<HIERARCHY_PROPERTY>/g, facet.property)
+                            .replace(/<SELECTIONS>/g, facetSelectionFormatter.parseFacetSelections(facets,
+                                    rejectHierarchies(facetSelections)));
+                    }
+                });
+                return unions;
+            }
+
+            function rejectHierarchies(facetSelections) {
+                return _.pickBy(facetSelections, function(s) {
+                    return s.type !== 'hierarchy';
+                });
+            }
+
 
             function buildQueryTemplate(template, facets) {
                 var templateSubs = [
@@ -482,7 +532,7 @@
             function getTemplateFacets(facets) {
                 var res = [];
                 _.forOwn(facets, function(facet, uri) {
-                    if (facet.type !== 'text') {
+                    if (facet.type !== 'text' && facet.type !== 'hierarchy') {
                         res.push(uri);
                     }
                 });

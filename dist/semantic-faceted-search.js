@@ -241,7 +241,7 @@
 
             var result = '';
             var i = 0;
-            _.forEach( selections, function( facet ) {
+            _.forEach(selections, function(facet) {
                 if (facet.val && facet.val.length) {
                     for (var j = 0; j < facet.val.length; j++) {
                         if (!facet.val[j].value) {
@@ -261,11 +261,29 @@
                     case 'text':
                         result = result + parseTextFacet(facet.val, facet.id, i++);
                         break;
+                    case 'hierarchy':
+                        result = result + parseHierarchyFacet(facet.val, facet.id, facets, i++);
+                        break;
                     default:
                         result = result + parseBasicFacet(facet.val, facet.id);
                 }
             });
             return result;
+        }
+
+        function parseHierarchyFacet(val, key, facets, i) {
+            var result = '';
+            var hVar = ' ?h' + i;
+            var hierarchyProp = facets[key].property;
+            if (val.forEach) {
+                val.forEach(function(value) {
+                    result = result + hVar + ' ' + hierarchyProp + ' ' + value.value + ' . ';
+                    result = result + ' ?s ' + key + ' ' + hVar + ' . ';
+                });
+                return result;
+            }
+            result = hVar + ' ' + hierarchyProp + ' ' + val.value + ' . ';
+            return result = result + ' ?s ' + key + ' ' + hVar + ' . ';
         }
 
         function parseBasicFacet(val, key) {
@@ -403,7 +421,7 @@
             '           } ' +
             '           ?s ?id ?value .' +
             '         <GRAPH_END> ' +
-            '       } GROUP BY ?id ?value' +
+            '       } GROUP BY ?id ?value ORDER BY ?id ' +
             '     }' +
             '     OPTIONAL {' +
             '       ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
@@ -411,9 +429,9 @@
             '     <OTHER_SERVICES> ' +
             '     BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
             '   }' +
+            '   <HIERARCHY_FACETS> ' +
             '   <DESELECTIONS> ' +
-            ' } ' +
-            ' ORDER BY ?id ?facet_text';
+            ' } ';
             queryTemplate = buildQueryTemplate(queryTemplate, facetSetup);
 
             var deselectUnionTemplate =
@@ -448,6 +466,30 @@
             '   BIND(<SELECTION> AS ?id) ' +
             ' }';
             countUnionTemplate = buildQueryTemplate(countUnionTemplate, facetSetup);
+
+            var hierarchyUnionTemplate =
+            ' UNION { ' +
+            '  SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?facet_text {' +
+            '   BIND(<HIERARCHY_FACET> AS ?id) ' +
+            '   VALUES ?class { ' +
+            '    <HIERARCHY_CLASSES> ' +
+            '   } ' +
+            '   <SELECTIONS> ' +
+            '   ?value <HIERARCHY_PROPERTY> ?class . ' +
+            '   ?h <HIERARCHY_PROPERTY> ?value . ' +
+            '   ?s ?id ?h .' +
+            '   <CLASS> ' +
+            '   OPTIONAL {' +
+            '    ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
+            '   }' +
+            '   BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
+            '   BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
+            '   BIND(IF(?value = ?class, 0, 1) as ?order)' +
+            '  } ' +
+            ' GROUP BY ?class ?value ?facet_text ?order ?id' +
+            ' ORDER BY ?class ?order ?facet_text' +
+            ' } ';
+            hierarchyUnionTemplate = buildQueryTemplate(hierarchyUnionTemplate, facetSetup);
 
             /* Public API functions */
 
@@ -679,6 +721,7 @@
             /* Query builders */
 
             function buildQuery(facetSelections, facets, defaultCountKey) {
+
                 var query = queryTemplate.replace('<FACETS>',
                         getTemplateFacets(facets));
                 var textFacets = '';
@@ -688,11 +731,14 @@
                     }
                 });
                 query = query.replace('<TEXT_FACETS>', textFacets);
-                query = query.replace('<SELECTIONS>',
+                query = query
+                    .replace('<HIERARCHY_FACETS>', buildHierarchyUnions(facets, facetSelections))
+                    .replace('<DESELECTIONS>', buildCountUnions(facetSelections,
+                            facets, defaultCountKey))
+                    .replace(/<SELECTIONS>/g,
                         facetSelectionFormatter.parseFacetSelections(facets,
-                            facetSelections))
-                        .replace('<DESELECTIONS>',
-                                buildCountUnions(facetSelections, facets, defaultCountKey));
+                            facetSelections));
+
                 return query;
             }
 
@@ -714,6 +760,28 @@
                 query = query.replace('<OTHER_SERVICES>', unions);
                 return query;
             }
+
+            function buildHierarchyUnions(facets, facetSelections) {
+                var unions = '';
+                _.forOwn(facets, function(facet, id) {
+                    if (facet.type === 'hierarchy') {
+                        unions = unions + hierarchyUnionTemplate
+                            .replace('<HIERARCHY_CLASSES>', facet.classes.join(' '))
+                            .replace('<HIERARCHY_FACET>', id)
+                            .replace(/<HIERARCHY_PROPERTY>/g, facet.property)
+                            .replace(/<SELECTIONS>/g, facetSelectionFormatter.parseFacetSelections(facets,
+                                    rejectHierarchies(facetSelections)));
+                    }
+                });
+                return unions;
+            }
+
+            function rejectHierarchies(facetSelections) {
+                return _.pickBy(facetSelections, function(s) {
+                    return s.type !== 'hierarchy';
+                });
+            }
+
 
             function buildQueryTemplate(template, facets) {
                 var templateSubs = [
@@ -823,7 +891,7 @@
             function getTemplateFacets(facets) {
                 var res = [];
                 _.forOwn(facets, function(facet, uri) {
-                    if (facet.type !== 'text') {
+                    if (facet.type !== 'text' && facet.type !== 'hierarchy') {
                         res.push(uri);
                     }
                 });
@@ -904,7 +972,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "        </div>\n" +
     "      </div>\n" +
     "      <div class=\"facet-input-container\">\n" +
-    "        <div ng-if=\"::!facet.type\">\n" +
+    "        <div ng-if=\"::!facet.type || facet.type === 'hierarchy'\">\n" +
     "          <input\n" +
     "            ng-disabled=\"vm.isDisabled()\"\n" +
     "            type=\"text\"\n" +

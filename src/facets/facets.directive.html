@@ -37,7 +37,7 @@
         </div>
       </div>
       <div class="facet-input-container">
-        <div ng-if="::!facet.type">
+        <div ng-if="::!facet.type || facet.type === 'hierarchy'">
           <input
             ng-disabled="vm.isDisabled()"
             type="text"
