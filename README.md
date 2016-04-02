@@ -81,4 +81,4 @@ Then, in the template:
 
 ## Examples
 
-See the [WarSampo casualties demo][https://github.com/SemanticComputing/casualties-demo].
+See the [WarSampo casualties demo](https://github.com/SemanticComputing/casualties-demo).
