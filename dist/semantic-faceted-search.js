@@ -399,7 +399,26 @@
 
             var _defaultCountKey = getDefaultCountKey(self.enabledFacets);
 
+            var labelPart =
+            '   OPTIONAL {' +
+            '     ?value skos:prefLabel ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            '   }' +
+            '   OPTIONAL {' +
+            '     ?value rdfs:label ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            '   }' +
+            '   OPTIONAL {' +
+            '     ?value skos:prefLabel ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "")) .' +
+            '   }' +
+            '   OPTIONAL {' +
+            '     ?value rdfs:label ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "")) .' +
+            '   }';
+
             var queryTemplate =
+            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
             ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
             ' PREFIX sf: <http://ldf.fi/functions#> ' +
@@ -423,9 +442,7 @@
             '         <GRAPH_END> ' +
             '       } GROUP BY ?id ?value ORDER BY ?id ' +
             '     }' +
-            '     OPTIONAL {' +
-            '       ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
-            '     }' +
+            '     <LABEL_PART> ' +
             '     <OTHER_SERVICES> ' +
             '     BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
             '   }' +
@@ -479,9 +496,7 @@
             '   ?h <HIERARCHY_PROPERTY> ?value . ' +
             '   ?s ?id ?h .' +
             '   <CLASS> ' +
-            '   OPTIONAL {' +
-            '    ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
-            '   }' +
+            '   <LABEL_PART> ' +
             '   BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
             '   BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
             '   BIND(IF(?value = ?class, 0, 1) as ?order)' +
@@ -752,7 +767,7 @@
                         '  BIND(IF(BOUND(?ss), ?value, <>) AS ?gobbledigook) ' +
                         '  ?ss ?id ?gobbledigook . ' +
                         '  SERVICE ' + facet.service + ' { ' +
-                        '   ?value sf:preferredLanguageLiteral (skos:prefLabel "<PREF_LANG>" "" ?lbl) .' +
+                            labelPart +
                         '  } ' +
                         ' } ';
                     }
@@ -814,7 +829,12 @@
                     },
                     {
                         placeHolder: '<GRAPH_END>',
-                        value: (config.graph ? ' } ' : '') },
+                        value: (config.graph ? ' } ' : '')
+                    },
+                    {
+                        placeHolder: '<LABEL_PART>',
+                        value: labelPart
+                    },
                     {
                         placeHolder: /<PREF_LANG>/g,
                         value: (config.preferredLang ? config.preferredLang : 'fi')
