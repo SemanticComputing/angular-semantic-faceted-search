@@ -41,22 +41,22 @@
             var _defaultCountKey = getDefaultCountKey(self.enabledFacets);
 
             var labelPart =
-            '   OPTIONAL {' +
-            '     ?value skos:prefLabel ?lbl . ' +
-            '     FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
-            '   }' +
-            '   OPTIONAL {' +
-            '     ?value rdfs:label ?lbl . ' +
-            '     FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
-            '   }' +
-            '   OPTIONAL {' +
-            '     ?value skos:prefLabel ?lbl . ' +
-            '     FILTER(langMatches(lang(?lbl), "")) .' +
-            '   }' +
-            '   OPTIONAL {' +
-            '     ?value rdfs:label ?lbl . ' +
-            '     FILTER(langMatches(lang(?lbl), "")) .' +
-            '   }';
+            ' OPTIONAL {' +
+            '  ?value skos:prefLabel ?lbl . ' +
+            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            ' }' +
+            ' OPTIONAL {' +
+            '  ?value rdfs:label ?lbl . ' +
+            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            ' }' +
+            ' OPTIONAL {' +
+            '  ?value skos:prefLabel ?lbl . ' +
+            '  FILTER(langMatches(lang(?lbl), "")) .' +
+            ' }' +
+            ' OPTIONAL {' +
+            '  ?value rdfs:label ?lbl . ' +
+            '  FILTER(langMatches(lang(?lbl), "")) .' +
+            ' }';
 
             var queryTemplate =
             ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
@@ -66,62 +66,62 @@
             ' PREFIX text: <http://jena.apache.org/text#> ' +
 
             ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
-            '   { ' +
-            '     {' +
-            '       SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value' +
-            '       WHERE {' +
-            '         VALUES ?id {' +
-            '           <TEXT_FACETS> ' +
-            '           <FACETS> ' +
-            '         } ' +
-            '         <GRAPH_START> ' +
-            '           { ' +
-            '             <SELECTIONS> ' +
-            '             <CLASS> ' +
-            '           } ' +
-            '           ?s ?id ?value .' +
-            '         <GRAPH_END> ' +
-            '       } GROUP BY ?id ?value ORDER BY ?id ' +
-            '     }' +
-            '     <LABEL_PART> ' +
-            '     <OTHER_SERVICES> ' +
-            '     BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
+            '  { ' +
+            '   {' +
+            '    SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value' +
+            '    WHERE {' +
+            '     VALUES ?id {' +
+            '      <TEXT_FACETS> ' +
+            '      <FACETS> ' +
+            '     } ' +
+            '     <GRAPH_START> ' +
+            '      { ' +
+            '       <SELECTIONS> ' +
+            '       <CLASS> ' +
+            '      } ' +
+            '      ?s ?id ?value .' +
+            '     <GRAPH_END> ' +
+            '    } GROUP BY ?id ?value ORDER BY ?id ' +
             '   }' +
-            '   <HIERARCHY_FACETS> ' +
-            '   <DESELECTIONS> ' +
+            '   <LABEL_PART> ' +
+            '   <OTHER_SERVICES> ' +
+            '   BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
+            '  }' +
+            '  <HIERARCHY_FACETS> ' +
+            '  <DESELECTIONS> ' +
             ' } ';
             queryTemplate = buildQueryTemplate(queryTemplate, facetSetup);
 
             var deselectUnionTemplate =
             ' UNION { ' +
-            '   { ' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
-            '     WHERE { ' +
-            '       <GRAPH_START> ' +
-            '          <OTHER_SELECTIONS> ' +
-            '          <CLASS> ' +
-            '       <GRAPH_END> ' +
-            '     } ' +
+            '  { ' +
+            '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
+            '   WHERE { ' +
+            '    <GRAPH_START> ' +
+            '     <OTHER_SELECTIONS> ' +
+            '     <CLASS> ' +
+            '    <GRAPH_END> ' +
             '   } ' +
-            '   BIND("' + NO_SELECTION_STRING + '" AS ?facet_text) ' +
-            '   BIND(<DESELECTION> AS ?id) ' +
+            '  } ' +
+            '  BIND("' + NO_SELECTION_STRING + '" AS ?facet_text) ' +
+            '  BIND(<DESELECTION> AS ?id) ' +
             ' }';
             deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate, facetSetup);
 
             var countUnionTemplate =
             ' UNION { ' +
-            '   { ' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
-            '     WHERE { ' +
-            '       <GRAPH_START> ' +
-            '          <SELECTIONS> ' +
-            '          <CLASS> ' +
-            '       <GRAPH_END> ' +
-            '     } ' +
+            '  { ' +
+            '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
+            '   WHERE { ' +
+            '    <GRAPH_START> ' +
+            '     <SELECTIONS> ' +
+            '     <CLASS> ' +
+            '    <GRAPH_END> ' +
             '   } ' +
-            '   BIND("TEXT" AS ?facet_text) ' +
-            '   BIND(<VALUE> AS ?value) ' +
-            '   BIND(<SELECTION> AS ?id) ' +
+            '  } ' +
+            '  BIND("TEXT" AS ?facet_text) ' +
+            '  BIND(<VALUE> AS ?value) ' +
+            '  BIND(<SELECTION> AS ?id) ' +
             ' }';
             countUnionTemplate = buildQueryTemplate(countUnionTemplate, facetSetup);
 
@@ -161,6 +161,7 @@
                     _.forOwn(self.enabledFacets, function(facet, key) {
                         facet.state = _.find(states, ['id', key]);
                     });
+                    return self.enabledFacets;
                 });
             }
 
@@ -577,6 +578,30 @@
                 });
                 return res.join(' ');
             }
+
+            /* Exposed for testing purposes only */
+
+            self._hasChanged = hasChanged;
+            self._hasSameValue = hasSameValue;
+            self._getFreeFacetCount = getFreeFacetCount;
+            self._getTemplateFacets = getTemplateFacets;
+            self._buildCountUnions = buildCountUnions;
+            self._getHierarchyFacetClasses = getHierarchyFacetClasses;
+            self._rejectHierarchies = rejectHierarchies;
+            self._buildHierarchyUnions = buildHierarchyUnions;
+            self._buildQueryTemplate = buildQueryTemplate;
+            self._buildQuery = buildQuery;
+            self._basicFacetChanged = basicFacetChanged;
+            self._timeSpanFacetChanged = timeSpanFacetChanged;
+            self._textFacetChanged = textFacetChanged;
+            self._getNoSelectionCountFromResults = getNoSelectionCountFromResults;
+            self._setNotSelectionValues = setNotSelectionValues;
+            self._getStates = getStates;
+            self._parseResults = parseResults;
+            self._parseInitialValues = parseInitialValues;
+            self._initPreviousSelections = initPreviousSelections;
+            self._getInitialEnabledFacets = getInitialEnabledFacets;
+            self._getInitialDisabledFacets = getInitialDisabledFacets;
         }
     }
 })();
