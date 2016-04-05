@@ -154,7 +154,7 @@
             function update(id) {
                 config.updateResults(self.selectedFacets);
                 if (!_.size(self.enabledFacets)) {
-                    return $q.when();
+                    return $q.when({});
                 }
                 return getStates(self.selectedFacets, self.enabledFacets, id, _defaultCountKey)
                 .then(function(states) {
@@ -285,7 +285,7 @@
             function getNoSelectionCountFromResults(results, facetSelections, defaultCountKey) {
                 var countKeySelection;
                 if (facetSelections) {
-                    ((facetSelections[defaultCountKey] || [])[0] || {}).value;
+                    countKeySelection = ((facetSelections[defaultCountKey] || [])[0] || {}).value;
                 }
 
                 var count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
@@ -602,6 +602,9 @@
             self._initPreviousSelections = initPreviousSelections;
             self._getInitialEnabledFacets = getInitialEnabledFacets;
             self._getInitialDisabledFacets = getInitialDisabledFacets;
+            self._getDefaultCountKey = getDefaultCountKey;
+
+            self._getCurrentDefaultCountKey = function() { return _defaultCountKey; };
         }
     }
 })();
