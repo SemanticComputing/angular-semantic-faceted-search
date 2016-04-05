@@ -119,10 +119,8 @@ describe('Facets', function() {
         }];
 
         var count = instance._getNoSelectionCountFromResults(
-                getUnknownGenderFacetObjectList, selectedFacets, countKey);
+                getUnknownGenderFacetObjectList(), selectedFacets, countKey);
 
-        console.log(countKey);
-        console.log(count);
         expect(count).toEqual(5);
     });
 
@@ -152,7 +150,6 @@ describe('Facets', function() {
             results = res;
         });
         $rootScope.$apply();
-        console.log(results);
         expect(results).toEqual(getExpectedUnknownGenderFacetState());
     });
 
