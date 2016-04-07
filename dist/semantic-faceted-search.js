@@ -564,6 +564,9 @@
 
             function timeSpanFacetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
+                if (!hasChanged(id, selectedFacet, previousSelections)) {
+                    return $q.when();
+                }
                 if (selectedFacet) {
                     var start = (selectedFacet.value || {}).start;
                     var end = (selectedFacet.value || {}).end;
@@ -577,7 +580,8 @@
             }
 
             function textFacetChanged(id) {
-                if (hasChanged(id, self.enabledFacets, previousSelections)) {
+                var selectedFacet = self.selectedFacets[id];
+                if (hasChanged(id, selectedFacet, previousSelections)) {
                     previousSelections[id] = _.clone(self.selectedFacets[id]);
                     return update(id);
                 }
@@ -597,7 +601,7 @@
                     self.selectedFacets[id] = _.clone(previousSelections[id]);
                     return $q.when();
                 }
-                if (hasChanged(id, self.enabledFacets, previousSelections)) {
+                if (hasChanged(id, selectedFacet, previousSelections)) {
                     previousSelections[id] = _.cloneDeep(selectedFacet);
                     return update(id);
                 }
@@ -900,8 +904,7 @@
 
             /* Utilities */
 
-            function hasChanged(id, facets, previousSelections) {
-                var selectedFacet = facets[id];
+            function hasChanged(id, selectedFacet, previousSelections) {
                 if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
                     return true;
                 }
