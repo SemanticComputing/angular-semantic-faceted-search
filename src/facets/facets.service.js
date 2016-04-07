@@ -66,26 +66,27 @@
             ' PREFIX text: <http://jena.apache.org/text#> ' +
 
             ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
-            '  { ' +
-            '   {' +
-            '    SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value' +
-            '    WHERE {' +
-            '     VALUES ?id {' +
-            '      <TEXT_FACETS> ' +
-            '      <FACETS> ' +
-            '     } ' +
-            '     <GRAPH_START> ' +
-            '      { ' +
-            '       <SELECTIONS> ' +
-            '       <CLASS> ' +
+            '  {' +
+            '   SELECT ?cnt ?ss ?id ?value ?facet_text { ' +
+            '    {' +
+            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value {' +
+            '      VALUES ?id {' +
+            '       <TEXT_FACETS> ' +
+            '       <FACETS> ' +
             '      } ' +
-            '      ?s ?id ?value .' +
-            '     <GRAPH_END> ' +
-            '    } GROUP BY ?id ?value ORDER BY ?id ' +
-            '   }' +
-            '   <LABEL_PART> ' +
-            '   <OTHER_SERVICES> ' +
-            '   BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
+            '      <GRAPH_START> ' +
+            '       { ' +
+            '        <SELECTIONS> ' +
+            '        <CLASS> ' +
+            '       } ' +
+            '       ?s ?id ?value . ' +
+            '      <GRAPH_END> ' +
+            '     } GROUP BY ?id ?value ' +
+            '    }' +
+            '    <LABEL_PART> ' +
+            '    <OTHER_SERVICES> ' +
+            '    BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
+            '   } ORDER BY ?id ?facet_text ' +
             '  }' +
             '  <HIERARCHY_FACETS> ' +
             '  <DESELECTIONS> ' +
