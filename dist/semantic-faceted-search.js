@@ -441,7 +441,8 @@
             '       ?s ?id ?value . ' +
             '      <GRAPH_END> ' +
             '     } GROUP BY ?id ?value ' +
-            '    }' +
+            '    } ' +
+            '    FILTER(BOUND(?id)) ' +
             '    <LABEL_PART> ' +
             '    <OTHER_SERVICES> ' +
             '    BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
@@ -527,6 +528,10 @@
 
             // Handle a facet state change.
             function facetChanged(id) {
+                var selectedFacet = self.selectedFacets[id];
+                if (!hasChanged(id, selectedFacet, previousSelections)) {
+                    return $q.when();
+                }
                 if (self.selectedFacets[id]) {
                     switch(self.enabledFacets[id].type) {
                         case 'timespan':
@@ -564,9 +569,6 @@
 
             function timeSpanFacetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
-                if (!hasChanged(id, selectedFacet, previousSelections)) {
-                    return $q.when();
-                }
                 if (selectedFacet) {
                     var start = (selectedFacet.value || {}).start;
                     var end = (selectedFacet.value || {}).end;
@@ -580,12 +582,8 @@
             }
 
             function textFacetChanged(id) {
-                var selectedFacet = self.selectedFacets[id];
-                if (hasChanged(id, selectedFacet, previousSelections)) {
-                    previousSelections[id] = _.clone(self.selectedFacets[id]);
-                    return update(id);
-                }
-                return $q.when();
+                previousSelections[id] = _.clone(self.selectedFacets[id]);
+                return update(id);
             }
 
             function basicFacetChanged(id) {
@@ -601,11 +599,8 @@
                     self.selectedFacets[id] = _.clone(previousSelections[id]);
                     return $q.when();
                 }
-                if (hasChanged(id, selectedFacet, previousSelections)) {
-                    previousSelections[id] = _.cloneDeep(selectedFacet);
-                    return update(id);
-                }
-                return $q.when();
+                previousSelections[id] = _.cloneDeep(selectedFacet);
+                return update(id);
             }
 
             /* Result parsing */
