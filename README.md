@@ -2,6 +2,14 @@
 
 ## Installation
 
+`bower install sparql-faceter`
+
+Include `seco.facetedSearch` in your module dependenies:
+
+```
+angular.module('myApp', ['seco.facetedSearch'])
+```
+
 ## Configuration and Usage
 
 Setup in the controller:
