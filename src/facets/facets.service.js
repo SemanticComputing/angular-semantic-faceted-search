@@ -436,7 +436,7 @@
             }
 
             function getHierarchyFacetClasses(facet, facetSelections, id) {
-                var selection = _.find(facetSelections, id);
+                var selection = facetSelections[id];
                 var res = '';
                 if (selection) {
                     if (_.isArray(selection)) {

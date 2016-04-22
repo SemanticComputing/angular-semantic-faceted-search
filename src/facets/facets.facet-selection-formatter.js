@@ -82,10 +82,11 @@
             var result = '';
             var hVar = ' ?h' + i;
             var hierarchyProp = facets[key].property;
-            if (val.forEach) {
+            if (_.isArray(val)) {
                 val.forEach(function(value) {
                     result = result + hVar + ' ' + hierarchyProp + ' ' + value.value + ' . ';
                     result = result + ' ?s ' + key + ' ' + hVar + ' . ';
+                    hVar = hVar + '_' + i++;
                 });
                 return result;
             }
@@ -95,7 +96,7 @@
 
         function parseBasicFacet(val, key) {
             var result = '';
-            if (val.forEach) {
+            if (_.isArray(val)) {
                 val.forEach(function(value) {
                     result = result + ' ?s ' + key + ' ' + value.value + ' . ';
                 });
