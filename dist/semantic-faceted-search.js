@@ -301,7 +301,7 @@
             var result = ' ?s text:query "' + val.value + '*" . ';
             var textVar = ' ?text' + i;
             result = result + ' ?s ' + key + ' ' + textVar + ' . ';
-            var words = val.value.replace(/[,.-_*'\\/]/g, '');
+            var words = val.value.replace(/[?,._*'\\/-]/g, '');
 
             words.split(' ').forEach(function(word) {
                 result = result + ' FILTER(REGEX(' + textVar + ', "' + word + '", "i")) ';
@@ -783,7 +783,7 @@
                     if (facet.type === 'hierarchy') {
                         unions = unions + hierarchyUnionTemplate
                             .replace('<HIERARCHY_CLASSES>',
-                                getHierarchyFacetClasses(facet, facetSelections))
+                                getHierarchyFacetClasses(facet, facetSelections, id))
                             .replace('<HIERARCHY_FACET>', id)
                             .replace(/<HIERARCHY_PROPERTY>/g, facet.property)
                             .replace(/<SELECTIONS>/g,
@@ -794,8 +794,8 @@
                 return unions;
             }
 
-            function getHierarchyFacetClasses(facet, facetSelections) {
-                var selection = _.find(facetSelections, facet.id);
+            function getHierarchyFacetClasses(facet, facetSelections, id) {
+                var selection = _.find(facetSelections, id);
                 var res = '';
                 if (selection) {
                     if (_.isArray(selection)) {
