@@ -489,23 +489,25 @@
 
             var hierarchyUnionTemplate =
             ' UNION { ' +
-            '  SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?facet_text {' +
-            '   BIND(<HIERARCHY_FACET> AS ?id) ' +
-            '   VALUES ?class { ' +
-            '    <HIERARCHY_CLASSES> ' +
+            '  SELECT DISTINCT ?cnt ?id ?value ?facet_text {' +
+            '   { ' +
+            '    SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?class {' +
+            '     BIND(<HIERARCHY_FACET> AS ?id) ' +
+            '     VALUES ?class { ' +
+            '      <HIERARCHY_CLASSES> ' +
+            '     } ' +
+            '     <SELECTIONS> ' +
+            '     ?value <HIERARCHY_PROPERTY> ?class . ' +
+            '     ?h <HIERARCHY_PROPERTY> ?value . ' +
+            '     ?s ?id ?h .' +
+            '     <CLASS> ' +
+            '    } GROUP BY ?class ?value ?id' +
             '   } ' +
-            '   <SELECTIONS> ' +
-            '   ?value <HIERARCHY_PROPERTY> ?class . ' +
-            '   ?h <HIERARCHY_PROPERTY> ?value . ' +
-            '   ?s ?id ?h .' +
-            '   <CLASS> ' +
             '   <LABEL_PART> ' +
             '   BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
             '   BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
             '   BIND(IF(?value = ?class, 0, 1) as ?order)' +
-            '  } ' +
-            ' GROUP BY ?class ?value ?facet_text ?order ?id' +
-            ' ORDER BY ?class ?order ?facet_text' +
+            '  } ORDER BY ?class ?order ?facet_text' +
             ' } ';
             hierarchyUnionTemplate = buildQueryTemplate(hierarchyUnionTemplate, facetSetup);
 
