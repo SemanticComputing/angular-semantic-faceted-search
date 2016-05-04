@@ -42,9 +42,10 @@ vm.facets = {
         min: '1939-10-01',
         max: '1989-12-31'
     },
-    // "Hierarchichal" facet
+    // Hierarchical facet
     '<http://ldf.fi/schema/narc-menehtyneet1939-45/sotilasarvo>': {
         name: 'Rank',
+        type: 'hierarchy',
         property: '<http://purl.org/dc/terms/isPartOf>*|(<http://rdf.muninn-project.org/ontologies/organization#equalTo>/dct:isPartOf*)',
         classes: [
             '<http://ldf.fi/warsa/actors/ranks/Upseeri>',
