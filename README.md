@@ -46,7 +46,7 @@ vm.facets = {
     '<http://ldf.fi/schema/narc-menehtyneet1939-45/sotilasarvo>': {
         name: 'Rank',
         type: 'hierarchy',
-        property: '<http://purl.org/dc/terms/isPartOf>*|(<http://rdf.muninn-project.org/ontologies/organization#equalTo>/dct:isPartOf*)',
+        property: '<http://purl.org/dc/terms/isPartOf>*|(<http://rdf.muninn-project.org/ontologies/organization#equalTo>/<http://purl.org/dc/terms/isPartOf>*)',
         classes: [
             '<http://ldf.fi/warsa/actors/ranks/Upseeri>',
             '<http://ldf.fi/warsa/actors/ranks/Aliupseeri>',
