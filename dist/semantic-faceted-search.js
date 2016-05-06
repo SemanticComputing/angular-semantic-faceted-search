@@ -438,7 +438,7 @@
             '      <GRAPH_START> ' +
             '       { ' +
             '        <SELECTIONS> ' +
-            '        <CLASS> ' +
+            '        <CONSTRAINT> ' +
             '       } ' +
             '       <SELECTION_FILTERS> ' +
             '       ?s ?id ?value . ' +
@@ -462,7 +462,7 @@
             '   WHERE { ' +
             '    <GRAPH_START> ' +
             '     <OTHER_SELECTIONS> ' +
-            '     <CLASS> ' +
+            '     <CONSTRAINT> ' +
             '    <GRAPH_END> ' +
             '   } ' +
             '  } ' +
@@ -478,7 +478,7 @@
             '   WHERE { ' +
             '    <GRAPH_START> ' +
             '     <SELECTIONS> ' +
-            '     <CLASS> ' +
+            '     <CONSTRAINT> ' +
             '    <GRAPH_END> ' +
             '   } ' +
             '  } ' +
@@ -501,7 +501,7 @@
             '     ?value <HIERARCHY_PROPERTY> ?class . ' +
             '     ?h <HIERARCHY_PROPERTY> ?value . ' +
             '     ?s ?id ?h .' +
-            '     <CLASS> ' +
+            '     <CONSTRAINT> ' +
             '    } GROUP BY ?class ?value ?id' +
             '   } ' +
             '   <LABEL_PART> ' +
@@ -844,8 +844,8 @@
                         value: (config.graph ? ' GRAPH ' + config.graph + ' { ' : '')
                     },
                     {
-                        placeHolder: '<CLASS>',
-                        value: (config.rdfClass ? ' ?s a ' + config.rdfClass + ' . ' : '')
+                        placeHolder: '<CONSTRAINT>',
+                        value: getInitialConstraints()
                     },
                     {
                         placeHolder: '<GRAPH_END>',
@@ -867,6 +867,12 @@
                     template = template.replace(s.placeHolder, s.value);
                 });
                 return template;
+            }
+
+            function getInitialConstraints() {
+                var constraints = config.rdfClass ? ' ?s a ' + config.rdfClass + ' . ' : '';
+                constraints = constraints + (config.constraint || '');
+                return constraints;
             }
 
             // Build unions for deselection counts and time-span selection counts.
