@@ -648,7 +648,8 @@
             function getNoSelectionCountFromResults(results, facetSelections, defaultCountKey) {
                 var countKeySelection;
                 if (facetSelections) {
-                    countKeySelection = ((facetSelections[defaultCountKey] || [])[0] || {}).value;
+                    var v = (facetSelections[defaultCountKey] || []);
+                    countKeySelection = ((_.isArray(v) ? v[0] : v) || {}).value;
                 }
 
                 var count = (_.find((_.find(results, ['id', defaultCountKey]) || {}).values,
