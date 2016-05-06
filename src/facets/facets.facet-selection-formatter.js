@@ -49,7 +49,7 @@
             var result = '';
             var i = 0;
             _.forEach(selections, function(facet) {
-                if (facet.val && facet.val.length) {
+                if (facet.val && _.isArray(facet.val)) {
                     for (var j = 0; j < facet.val.length; j++) {
                         if (!facet.val[j].value) {
                             return;

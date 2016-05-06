@@ -66,6 +66,7 @@
             ' PREFIX text: <http://jena.apache.org/text#> ' +
 
             ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
+            '  <DESELECTIONS> ' +
             '  {' +
             '   SELECT ?cnt ?ss ?id ?value ?facet_text { ' +
             '    {' +
@@ -79,6 +80,7 @@
             '        <SELECTIONS> ' +
             '        <CLASS> ' +
             '       } ' +
+            '       <SELECTION_FILTERS> ' +
             '       ?s ?id ?value . ' +
             '      <GRAPH_END> ' +
             '     } GROUP BY ?id ?value ' +
@@ -86,16 +88,15 @@
             '    FILTER(BOUND(?id)) ' +
             '    <LABEL_PART> ' +
             '    <OTHER_SERVICES> ' +
-            '    BIND(COALESCE(?lbl, STR(?value)) as ?facet_text)' +
+            '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value), "^.+/(.+?)$", "$1"), STR(?value))) as ?facet_text)' +
             '   } ORDER BY ?id ?facet_text ' +
             '  }' +
             '  <HIERARCHY_FACETS> ' +
-            '  <DESELECTIONS> ' +
             ' } ';
             queryTemplate = buildQueryTemplate(queryTemplate, facetSetup);
 
             var deselectUnionTemplate =
-            ' UNION { ' +
+            ' { ' +
             '  { ' +
             '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
             '   WHERE { ' +
@@ -107,7 +108,7 @@
             '  } ' +
             '  BIND("' + NO_SELECTION_STRING + '" AS ?facet_text) ' +
             '  BIND(<DESELECTION> AS ?id) ' +
-            ' }';
+            ' } UNION ';
             deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate, facetSetup);
 
             var countUnionTemplate =
@@ -323,13 +324,7 @@
                     if (!initialVal) {
                         return;
                     }
-                    if (!val.type) {
-                        // Basic facet
-                        selections[id] = [{ value: initialVal }];
-                    } else {
-                        // Text/time-span facet
-                        selections[id] = { value: initialVal };
-                    }
+                    selections[id] = { value: initialVal };
                 });
                 return selections;
             }
@@ -396,9 +391,30 @@
                             facets, defaultCountKey))
                     .replace(/<SELECTIONS>/g,
                         facetSelectionFormatter.parseFacetSelections(facets,
-                            facetSelections));
+                            facetSelections))
+                    .replace('<SELECTION_FILTERS>',
+                            buildSelectionFilters(facetSelections, facets));
 
                 return query;
+            }
+
+            function buildSelectionFilters(facetSelections, facets) {
+                var filter = '';
+                _.forOwn(facetSelections, function(facet, fId) {
+                    if (!facets[fId].type && _.isArray(facet)) {
+                        facet.forEach(function(selection) {
+                            filter = filter + getSelectionFilter(fId, selection.value);
+                        });
+                    } else {
+                        filter = filter + getSelectionFilter(fId, facet.value);
+                    }
+                });
+                return filter;
+            }
+
+            function getSelectionFilter(fId, value) {
+                return value ? ' FILTER(?id != ' + fId +
+                    ' || ?id = ' + fId + ' && ?value = ' + value + ') ' : '';
             }
 
             function buildServiceUnions(query, facets) {
