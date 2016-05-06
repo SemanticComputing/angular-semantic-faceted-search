@@ -89,5 +89,6 @@ Then, in the template:
 ```
 
 ## Examples
-
 See the [WarSampo casualties demo](https://github.com/SemanticComputing/casualties-demo).
+
+Simplistic demo using DBpedia: [Demo](http://semanticcomputing.github.io/sparql-faceter-dbpedia-demo/#), [Demo repository](https://github.com/SemanticComputing/sparql-faceter-dbpedia-demo)
