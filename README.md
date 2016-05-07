@@ -62,6 +62,21 @@ vm.facets = {
     }
 };
 
+/*
+* "endpointUrl" is the SPARQL endpoint URL as an URI.
+*
+* "rdfClass" is the rdf:type of the resources that are the target of the faceted search.
+* Instead of "rdfClass" (or in addition to it) you can use "constraint", which takes
+* any triple pattern with "?s" as the subject. Both are optional, but you should
+* probably define at least one of them, or you might get strange results.
+*
+* "preferredLang" is the language tag of the facet value labels for facet values
+* that are resources.
+* The label types currently supported are skos:prefLabel and rdfs:label.
+* If a label with the given language tag is not found, a label with no tag
+* is retrieved. If no label is found like this, the end of the resource URI is used
+* as the label.
+*/
 vm.facetOptions = {
     endpointUrl: '<http://ldf.fi/warsa/sparql>',
     rdfClass: '<http://www.cidoc-crm.org/cidoc-crm/E31_Document>',
@@ -99,3 +114,5 @@ See the [WarSampo casualties demo](https://github.com/SemanticComputing/casualti
 
 Simplistic demo using DBpedia: [Demo](http://semanticcomputing.github.io/sparql-faceter-dbpedia-demo/#),
 [Demo repository](https://github.com/SemanticComputing/sparql-faceter-dbpedia-demo) (the code in the repo contains helpful comments)
+
+You can also see the tool in action in the [WarSampo photograph perspective](http://www.sotasampo.fi/en/photographs).
