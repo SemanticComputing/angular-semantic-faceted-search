@@ -12,7 +12,7 @@ module.exports = function(config) {
         '../bower_components/angular-spinner/angular-spinner.js',
         '../src/facets/facets.module.js',
         '../src/**/*.js',
-        'tests.js'
+        '*.js'
         ]
     })
 }

@@ -8,8 +8,8 @@
 
     /* ngInject */
     function facetSelectionFormatter(_) {
+
         this.parseFacetSelections = parseFacetSelections;
-        this.parseBasicFacet = parseBasicFacet;
 
         var resourceTimeSpanFilterTemplate =
         ' ?s <TIME_SPAN_PROPERTY> ?time_span_uri . ' +
@@ -85,13 +85,13 @@
             if (_.isArray(val)) {
                 val.forEach(function(value) {
                     result = result + hVar + ' ' + hierarchyProp + ' ' + value.value + ' . ';
-                    result = result + ' ?s ' + key + ' ' + hVar + ' . ';
+                    result = result + ' ?s ' + key + hVar + ' . ';
                     hVar = hVar + '_' + i++;
                 });
                 return result;
             }
             result = hVar + ' ' + hierarchyProp + ' ' + val.value + ' . ';
-            return result = result + ' ?s ' + key + ' ' + hVar + ' . ';
+            return result = result + ' ?s ' + key + hVar + ' . ';
         }
 
         function parseBasicFacet(val, key) {
@@ -107,7 +107,7 @@
 
         function parseTextFacet(val, key, i) {
             var result = ' ?s text:query "' + val.value + '*" . ';
-            var textVar = ' ?text' + i;
+            var textVar = '?text' + i;
             result = result + ' ?s ' + key + ' ' + textVar + ' . ';
             var words = val.value.replace(/[?,._*'\\/-]/g, '');
 
@@ -162,5 +162,13 @@
         function dateToISOString(date) {
             return date.toISOString().slice(0, 10);
         }
+
+        /* Exposed for testing purposes only */
+
+        this.parseBasicFacet = parseBasicFacet;
+        this.parseTimeSpanFacet = parseTimeSpanFacet;
+        this.parseTextFacet = parseTextFacet;
+        this.parseBasicFacet = parseBasicFacet;
+        this.parseHierarchyFacet = parseHierarchyFacet;
     }
 })();

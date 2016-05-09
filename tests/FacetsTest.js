@@ -45,11 +45,6 @@ describe('Facets', function() {
     }));
 
 
-    function disableFacets() { }
-
-    function handleSelections() { }
-
-
     it('should call SparqlService.getObjects in update', function() {
         defaultInstance.update();
         expect(mock.getObjects).toHaveBeenCalled();
@@ -152,6 +147,11 @@ describe('Facets', function() {
         $rootScope.$apply();
         expect(results).toEqual(getExpectedUnknownGenderFacetState());
     });
+
+
+    function disableFacets() { }
+
+    function handleSelections() { }
 
     /* eslint-disable */
     var nationalityResponse = [
