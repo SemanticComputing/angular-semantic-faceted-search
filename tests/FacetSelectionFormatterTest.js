@@ -206,6 +206,28 @@ describe('facetSelectionFormatter', function() {
             expect(parsed).toContain(
                 'FILTER(?end <= "1999-03-03"^^<http://www.w3.org/2001/XMLSchema#date>)');
         });
+
+        it('should handle multiple facet selections', function() {
+            var parsed = facetSelectionFormatter.parseFacetSelections(
+                facets, getMultipleFacetSelections());
+
+            expect(parsed).toContain('?s <basic> <value> .');
+            expect(parsed).toContain('?s <other_basic> <other1> .');
+            expect(parsed).toContain('?s <other_basic> <other2> .');
+
+            expect(parsed).toContain('?s text:query "terve*" .');
+            expect(parsed).toContain('FILTER(REGEX(?text0, "terve", "i"))');
+
+            expect(parsed).toContain('?s text:query "moro*" .');
+            expect(parsed).toContain('FILTER(REGEX(?text1, "moro", "i"))');
+
+            expect(parsed).toContain('?s <start> ?start .');
+            expect(parsed).toContain('?s <end> ?end .');
+            expect(parsed).toContain(
+                'FILTER(?start >= "1900-01-01"^^<http://www.w3.org/2001/XMLSchema#date>)');
+            expect(parsed).toContain(
+                'FILTER(?end <= "1999-03-03"^^<http://www.w3.org/2001/XMLSchema#date>)');
+        });
     });
 
 
@@ -228,6 +250,19 @@ describe('facetSelectionFormatter', function() {
         }
     };
 
+    var multipleFacetsSelected = {
+        '<basic>': { value: '<value>' },
+        '<other_basic>': [
+            { value: '<other1>' },
+            { value: '<other2>' }
+        ],
+        '<text>': { value: 'terve' },
+        '<text2>': { value: 'moro' },
+        '<time_different_property>': {
+            value: { start: new Date('1900-01-01'), end: new Date('1999-03-03') }
+        }
+    };
+
     function getBasicFacetSelections() {
         return basicFacetSelections;
     }
@@ -238,5 +273,9 @@ describe('facetSelectionFormatter', function() {
 
     function getTimeSpanFacetSelections() {
         return timeSpanFacetSelections;
+    }
+
+    function getMultipleFacetSelections() {
+        return multipleFacetsSelected;
     }
 });
