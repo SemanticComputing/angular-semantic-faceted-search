@@ -28,7 +28,7 @@ vm.facets = {
         name: 'Municipality of death',
         service: '<http://ldf.fi/pnr/sparql>'
     },
-    // Free-text facet (the endpoint has to support Jena text query)
+    // Free-text facet
     '<http://www.w3.org/2004/02/skos/core#prefLabel>': {
         name: 'Name',
         type: 'text'
