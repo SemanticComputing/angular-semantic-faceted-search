@@ -21,9 +21,12 @@
             var freeFacetTypes = ['text', 'timespan'];
 
             var initialValues = parseInitialValues(config.initialValues, facetSetup);
-            var previousSelections = initPreviousSelections(initialValues, facetSetup);
 
             var endpoint = new SparqlService(config.endpointUrl);
+
+            if (!config.updateResults) {
+                config.updateResults = function() {};
+            }
 
             /* Public API */
 
@@ -32,9 +35,12 @@
             self.disableFacet = disableFacet;
             self.enableFacet = enableFacet;
 
-            self.selectedFacets = _.cloneDeep(previousSelections);
             self.enabledFacets = getInitialEnabledFacets(facetSetup, initialValues);
             self.disabledFacets = getInitialDisabledFacets(facetSetup, self.enabledFacets);
+
+            var previousSelections = initPreviousSelections(initialValues, self.enabledFacets);
+
+            self.selectedFacets = _.cloneDeep(previousSelections);
 
             /* Implementation */
 
@@ -112,7 +118,7 @@
             deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate, facetSetup);
 
             var countUnionTemplate =
-            ' UNION { ' +
+            ' { ' +
             '  { ' +
             '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
             '   WHERE { ' +
@@ -125,7 +131,7 @@
             '  BIND("TEXT" AS ?facet_text) ' +
             '  BIND(<VALUE> AS ?value) ' +
             '  BIND(<SELECTION> AS ?id) ' +
-            ' }';
+            ' } UNION ';
             countUnionTemplate = buildQueryTemplate(countUnionTemplate, facetSetup);
 
             var hierarchyUnionTemplate =
@@ -137,13 +143,14 @@
             '     VALUES ?class { ' +
             '      <HIERARCHY_CLASSES> ' +
             '     } ' +
-            '     <SELECTIONS> ' +
             '     ?value <HIERARCHY_PROPERTY> ?class . ' +
             '     ?h <HIERARCHY_PROPERTY> ?value . ' +
             '     ?s ?id ?h .' +
+            '     <SELECTIONS> ' +
             '     <CONSTRAINT> ' +
             '    } GROUP BY ?class ?value ?id' +
             '   } ' +
+            '   FILTER(BOUND(?id))' +
             '   <LABEL_PART> ' +
             '   BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
             '   BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
@@ -174,19 +181,17 @@
             function facetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
                 if (!hasChanged(id, selectedFacet, previousSelections)) {
-                    return $q.when();
+                    return $q.when(self.enabledFacets);
                 }
-                if (self.selectedFacets[id]) {
-                    switch(self.enabledFacets[id].type) {
-                        case 'timespan':
-                            return timeSpanFacetChanged(id);
-                        case 'text':
-                            return textFacetChanged(id);
-                        default:
-                            return basicFacetChanged(id);
-                    }
+                switch(self.enabledFacets[id].type) {
+                    case 'timespan':
+                        return timeSpanFacetChanged(id);
+                    case 'text':
+                        return textFacetChanged(id);
+                    default:
+                        return basicFacetChanged(id);
                 }
-                return $q.when();
+                return $q.when(self.enabledFacets);
             }
 
             function disableFacet(id) {
@@ -194,7 +199,7 @@
                 delete self.enabledFacets[id];
                 delete self.selectedFacets[id];
                 _defaultCountKey = getDefaultCountKey(self.enabledFacets);
-                return update();
+                return self.update();
             }
 
             function enableFacet(id) {
@@ -202,9 +207,9 @@
                 delete self.disabledFacets[id];
                 _defaultCountKey = getDefaultCountKey(self.enabledFacets);
                 if (_.includes(freeFacetTypes, self.enabledFacets[id].type)) {
-                    return $q.when();
+                    return $q.when(self.enabledFacets);
                 }
-                return update();
+                return self.update();
             }
 
             /* Private functions */
@@ -220,31 +225,35 @@
                     if ((start || end) && !(start && end)) {
                         return $q.when();
                     }
-                    return update(id);
+                    return self.update(id);
                 }
-                return $q.when();
+                return $q.when(self.enabledFacets);
             }
 
             function textFacetChanged(id) {
                 previousSelections[id] = _.clone(self.selectedFacets[id]);
-                return update(id);
+                return self.update(id);
             }
 
             function basicFacetChanged(id) {
                 var selectedFacet = self.selectedFacets[id];
-                if (selectedFacet.length === 0) {
+                if (selectedFacet === null) {
                     // Another facet selection (text search) has resulted in this
                     // facet not having a value even though it has a selection.
                     // Fix it by adding its previous state to the facet state list
                     // with count = 0.
                     var prev = _.clone(previousSelections[id]);
-                    prev[0].count = 0;
+                    if (_.isArray(prev)) {
+                        prev[0].count = 0;
+                    } else {
+                        prev.count = 0;
+                    }
                     self.enabledFacets[id].state.values = self.enabledFacets[id].state.values.concat(prev);
                     self.selectedFacets[id] = _.clone(previousSelections[id]);
-                    return $q.when();
+                    return $q.when(self.enabledFacets);
                 }
                 previousSelections[id] = _.cloneDeep(selectedFacet);
-                return update(id);
+                return self.update(id);
             }
 
             /* Result parsing */
@@ -275,7 +284,7 @@
                 var count;
 
                 if (isFreeFacet) {
-                    count = getFreeFacetCount(facetSelections, results, selectionId);
+                    count = getFreeFacetCount(facetSelections, results, selectionId, defaultCountKey);
                 } else {
                     count = getNoSelectionCountFromResults(results, facetSelections, defaultCountKey);
                 }
@@ -322,9 +331,6 @@
                 var selections = {};
                 _.forOwn(facets, function(val, id) {
                     var initialVal = initialValues[id];
-                    if (!initialVal) {
-                        return;
-                    }
                     selections[id] = { value: initialVal };
                 });
                 return selections;
@@ -376,7 +382,6 @@
             /* Query builders */
 
             function buildQuery(facetSelections, facets, defaultCountKey) {
-
                 var query = queryTemplate.replace('<FACETS>',
                         getTemplateFacets(facets));
                 var textFacets = '';
@@ -402,12 +407,14 @@
             function buildSelectionFilters(facetSelections, facets) {
                 var filter = '';
                 _.forOwn(facetSelections, function(facet, fId) {
-                    if (!facets[fId].type && _.isArray(facet)) {
-                        facet.forEach(function(selection) {
-                            filter = filter + getSelectionFilter(fId, selection.value);
-                        });
-                    } else {
-                        filter = filter + getSelectionFilter(fId, facet.value);
+                    if (!facets[fId].type) {
+                        if (_.isArray(facet)) {
+                            facet.forEach(function(selection) {
+                                filter = filter + getSelectionFilter(fId, selection.value);
+                            });
+                        } else if (facet) {
+                            filter = filter + getSelectionFilter(fId, facet.value);
+                        }
                     }
                 });
                 return filter;
@@ -573,18 +580,29 @@
             }
 
             function hasSameValue(first, second) {
-                if (_.isArray(first)) {
+                if (!first && !second) {
+                    return true;
+                }
+                if ((!first && second) || (first && !second)) {
+                    return false;
+                }
+                var isFirstArray = _.isArray(first);
+                var isSecondArray = _.isArray(second);
+                if (isFirstArray || isSecondArray) {
+                    if (!(isFirstArray && isSecondArray)) {
+                        return false;
+                    }
                     var firstVals = _.map(first, 'value');
                     var secondVals = _.map(second, 'value');
                     return _.isEqual(firstVals, secondVals);
                 }
-                return _.isEqual(first, second);
+                return _.isEqual(first.value, second.value);
             }
 
-            function getFreeFacetCount(facetSelections, results, id) {
+            function getFreeFacetCount(facetSelections, results, id, defaultCountKey) {
                 var isEmpty = !facetSelections[id].value;
                 if (isEmpty) {
-                    return getNoSelectionCountFromResults(results);
+                    return getNoSelectionCountFromResults(results, facetSelections, defaultCountKey);
                 }
 
                 var facet = _.find(results, ['id', id]);
@@ -627,8 +645,10 @@
             self._getInitialEnabledFacets = getInitialEnabledFacets;
             self._getInitialDisabledFacets = getInitialDisabledFacets;
             self._getDefaultCountKey = getDefaultCountKey;
+            self._buildSelectionFilters = buildSelectionFilters;
 
             self._getCurrentDefaultCountKey = function() { return _defaultCountKey; };
+            self._getPreviousSelections = function() { return previousSelections; };
         }
     }
 })();

@@ -3,7 +3,8 @@
 
 describe('Facets', function() {
     var mock, mockConstructor, nationalityFacet, facetOptions,
-        defaultInstance, $rootScope, $q, Facets;
+        defaultInstance, $rootScope, $q, Facets, basicFacetSelections,
+        textFacetSelections, timeSpanFacetSelections, multipleFacetsSelected;
 
     beforeEach(module('seco.facetedSearch'));
     beforeEach(module(function($provide) {
@@ -36,6 +37,38 @@ describe('Facets', function() {
 
         defaultInstance = new Facets(nationalityFacet, facetOptions);
 
+        basicFacetSelections = {
+            '<basic>': { value: '<value>' },
+            '<other_basic>': [
+                { value: '<other1>' },
+                { value: '<other2>' }
+            ]
+        };
+
+        textFacetSelections = {
+            '<text>': { value: 'terve' },
+            '<text2>': { value: 'moro' }
+        };
+
+        timeSpanFacetSelections = {
+            '<time_different_property>': {
+                value: { start: new Date('1900-01-01'), end: new Date('1999-03-03') }
+            }
+        };
+
+        multipleFacetsSelected = {
+            '<basic>': { value: '<value>' },
+            '<other_basic>': [
+                { value: '<other1>' },
+                { value: '<other2>' }
+            ],
+            '<text>': { value: 'terve' },
+            '<text2>': { value: 'moro' },
+            '<time_different_property>': {
+                value: { start: new Date('1900-01-01'), end: new Date('1999-03-03') }
+            }
+        };
+
     }));
 
     beforeEach(inject(function(){
@@ -44,52 +77,53 @@ describe('Facets', function() {
         spyOn(facetOptions, 'disableFacets').and.callThrough();
     }));
 
-
-    it('should call SparqlService.getObjects in update', function() {
-        defaultInstance.update();
-        expect(mock.getObjects).toHaveBeenCalled();
-    });
-
-    it('should call the given callback function in update', function() {
-        defaultInstance.update();
-        expect(facetOptions.updateResults).toHaveBeenCalled();
-    });
-
-    it('should not call the given disableFacets function in update', function() {
-        defaultInstance.update();
-        expect(facetOptions.disableFacets).not.toHaveBeenCalled();
-    });
-
-    it('should update facet states according to query results', function() {
-        var results;
-
-        defaultInstance.update().then(function(res) {
-            results = res;
+    describe('update', function() {
+        it('should call SparqlService.getObjects', function() {
+            defaultInstance.update();
+            expect(mock.getObjects).toHaveBeenCalled();
         });
-        $rootScope.$apply();
-        expect(results).toEqual(getExpectedNationalityFacetState());
-    });
 
-    it('should work with multiple facets', function() {
-        var facets = {
-            '<http://ldf.fi/schema/narc-menehtyneet1939-45/sukupuoli>': {
-                name: 'Sukupuoli',
-                enabled: true
-            },
-            '<http://ldf.fi/schema/narc-menehtyneet1939-45/kansalaisuus>': {
-                name: 'Kansalaisuus',
-                enabled: true
-            }
-        };
-
-        var results;
-        var instance = new Facets(facets, facetOptions);
-        mock._testResponse = 'nationalityAndGender';
-        instance.update().then(function(res) {
-            results = res;
+        it('should call the given callback function', function() {
+            defaultInstance.update();
+            expect(facetOptions.updateResults).toHaveBeenCalled();
         });
-        $rootScope.$apply();
-        expect(results).toEqual(getExpectedNationalityAndGenderFacetState());
+
+        it('should not call the given disableFacets function', function() {
+            defaultInstance.update();
+            expect(facetOptions.disableFacets).not.toHaveBeenCalled();
+        });
+
+        it('should update facet states according to query results', function() {
+            var results;
+
+            defaultInstance.update().then(function(res) {
+                results = res;
+            });
+            $rootScope.$apply();
+            expect(results).toEqual(getExpectedNationalityFacetState());
+        });
+
+        it('should work with multiple facets', function() {
+            var facets = {
+                '<http://ldf.fi/schema/narc-menehtyneet1939-45/sukupuoli>': {
+                    name: 'Sukupuoli',
+                    enabled: true
+                },
+                '<http://ldf.fi/schema/narc-menehtyneet1939-45/kansalaisuus>': {
+                    name: 'Kansalaisuus',
+                    enabled: true
+                }
+            };
+
+            var results;
+            var instance = new Facets(facets, facetOptions);
+            mock._testResponse = 'nationalityAndGender';
+            instance.update().then(function(res) {
+                results = res;
+            });
+            $rootScope.$apply();
+            expect(results).toEqual(getExpectedNationalityAndGenderFacetState());
+        });
     });
 
     it('should count "no selection" amounts correctly', function() {
@@ -119,35 +153,222 @@ describe('Facets', function() {
         expect(count).toEqual(5);
     });
 
-    it('should set counts correctly', function() {
-        var facets = {
-            '<http://ldf.fi/schema/narc-menehtyneet1939-45/sukupuoli>': {
-                name: 'Sukupuoli',
-                enabled: true
-            },
-            '<http://ldf.fi/schema/narc-menehtyneet1939-45/kansalaisuus>': {
-                name: 'Kansalaisuus',
-                enabled: true
-            }
-        };
+    describe('facetChanged', function() {
+        it('should set counts correctly', function() {
+            var facets = {
+                '<http://ldf.fi/schema/narc-menehtyneet1939-45/sukupuoli>': {
+                    name: 'Sukupuoli',
+                    enabled: true
+                },
+                '<http://ldf.fi/schema/narc-menehtyneet1939-45/kansalaisuus>': {
+                    name: 'Kansalaisuus',
+                    enabled: true
+                }
+            };
 
-        var results;
-        var instance = new Facets(facets, facetOptions);
-        mock._testResponse = 'unknownGenderSelected';
-        var facetId = '<http://ldf.fi/schema/narc-menehtyneet1939-45/sukupuoli>';
+            var results;
+            var instance = new Facets(facets, facetOptions);
+            mock._testResponse = 'unknownGenderSelected';
+            var facetId = '<http://ldf.fi/schema/narc-menehtyneet1939-45/sukupuoli>';
 
-        instance.selectedFacets = {};
-        instance.selectedFacets[facetId] = [{
-            value: '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Tuntematon>'
-        }];
+            instance.selectedFacets = {};
+            instance.selectedFacets[facetId] = [{
+                value: '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Tuntematon>'
+            }];
 
-        instance.facetChanged(facetId).then(function(res) {
-            results = res;
+            instance.facetChanged(facetId).then(function(res) {
+                results = res;
+            });
+            $rootScope.$apply();
+            expect(results).toEqual(getExpectedUnknownGenderFacetState());
         });
-        $rootScope.$apply();
-        expect(results).toEqual(getExpectedUnknownGenderFacetState());
+
+        xit('should call update if facet value has changed', function() {
+        });
+
+        xit('should not call update if facet value has not changed', function() {
+        });
     });
 
+    describe('_hasSameValue', function() {
+        it('should return true if facet values are identical', function() {
+            expect(defaultInstance._hasSameValue({ value: 'value' }, {value: 'value' }))
+                .toBe(true);
+
+            var list1 = [{ value: 'value' }, {value: 'value2' }];
+            var list2 = [{ value: 'value' }, {value: 'value2' }];
+            expect(defaultInstance._hasSameValue(list1, list2)).toBe(true);
+
+            var timeSpan1 = { start: new Date('1999-02-02'), end: new Date('1999-02-02') };
+            var timeSpan2 = { start: new Date('1999-02-02'), end: new Date('1999-02-02') };
+            expect(defaultInstance._hasSameValue(
+                    { value: timeSpan1 }, { value: timeSpan2 }))
+                .toBe(true);
+        });
+
+        it('should return false if facet values are not identical', function() {
+            expect(defaultInstance._hasSameValue({ value: 'value' }, { value: 'not same' }))
+                .toBe(false);
+
+            var list1 = [{ value: 'value' }, {value: 'value2' }];
+            var list2 = [{ value: 'valu' }, {value: 'value2' }];
+            expect(defaultInstance._hasSameValue(list1, list2)).toBe(false);
+
+            var timeSpan1 = { start: new Date('1999-02-02'), end: new Date('1999-02-02') };
+            var timeSpan2 = { start: new Date('1999-02-02'), end: new Date('2000-02-02') };
+            expect(defaultInstance._hasSameValue(
+                    { value: timeSpan1 }, { value: timeSpan2 }))
+                .toBe(false);
+        });
+    });
+
+    describe('_hasChanged', function() {
+        it('should return true if the facet value has changed', function() {
+
+            expect(defaultInstance._hasChanged('<basic>', { value: '<value2>' },
+                    basicFacetSelections))
+                .toBe(true);
+
+            var timeSpan = { start: new Date('1999-02-02'), end: new Date('1999-02-02') };
+            expect(defaultInstance._hasChanged('<time_different_property>',
+                    { value: timeSpan }, timeSpanFacetSelections))
+                .toBe(true);
+        });
+
+        it('should return false if the facet value has not changed', function() {
+            expect(defaultInstance._hasChanged('<basic>', { value: '<value>' },
+                    basicFacetSelections))
+                .toBe(false);
+
+            var timeSpan = { start: new Date('1900-01-01'), end: new Date('1999-03-03') };
+            expect(defaultInstance._hasChanged('<time_different_property>',
+                    { value: timeSpan }, timeSpanFacetSelections))
+                .toBe(false);
+        });
+    });
+
+    describe('_basicFacetChanged', function() {
+        var facets;
+        beforeEach(function() {
+            facets = {
+                '<basic>': {
+                    name: 'Basic',
+                    enabled: true
+                }
+            };
+        });
+
+        it('should update previousSelections', function() {
+            var instance = new Facets(facets, facetOptions);
+
+            instance.selectedFacets['<basic>'] = { value: '<initial>' };
+            instance._basicFacetChanged('<basic>');
+            expect(instance._getPreviousSelections()).toEqual({ '<basic>': { value: '<initial>' } });
+        });
+
+        it('should call update', function() {
+            var instance = new Facets(facets, facetOptions);
+
+            spyOn(instance, 'update');
+
+            instance.selectedFacets['<basic>'] = { value: '<initial>' };
+            instance._basicFacetChanged('<basic>');
+
+            expect(instance.update).toHaveBeenCalledWith('<basic>');
+        });
+
+        xit('should revert to a previous value if facet has no value', function() {
+        });
+
+        xit('should handle hierarchy facets as well', function() {
+        });
+    });
+
+    describe('_timeSpanFacetChanged', function() {
+        xit('should call update if both start and end have been selected', function() {
+        });
+
+        xit('should not call update if either start or end has no selection', function() {
+        });
+    });
+
+    describe('_textFacetChanged', function() {
+        var facets;
+        beforeEach(function() {
+            facets = {
+                '<text>': {
+                    name: 'Text',
+                    type: 'text',
+                    enabled: true
+                }
+            };
+        });
+
+        it('should update previousSelections', function() {
+            var instance = new Facets(facets, facetOptions);
+
+            instance.selectedFacets['<text>'] = { value: 'initial' };
+            instance._textFacetChanged('<text>');
+            expect(instance._getPreviousSelections()).toEqual({ '<text>': { value: 'initial' } });
+        });
+
+        it('should call update', function() {
+            var instance = new Facets(facets, facetOptions);
+
+            spyOn(instance, 'update');
+
+            instance.selectedFacets['<text>'] = { value: 'initial' };
+            instance._textFacetChanged('<text>');
+
+            expect(instance.update).toHaveBeenCalledWith('<text>');
+        });
+    });
+
+    describe('_getFreeFacetCount', function() {
+        xit('should get the "no selection" count from results if facet has no selection', function() {
+        });
+
+        xit('should calculate the count using the results if the facet has a selection', function() {
+        });
+    });
+
+    describe('_getTemplateFacets', function() {
+        xit('should include all facets except types "text" and "hierarchy"', function() {
+        });
+    });
+
+    describe('_buildCountUnions', function() {
+        xit('should build union queries for deselections', function() {
+        });
+
+        xit('should build union queries for time span counts', function() {
+        });
+    });
+
+    describe('_getHierarchyFacetClasses', function() {
+        xit('should return hierarchy facet classes', function() {
+        });
+    });
+
+    describe('_rejectHierarchies', function() {
+        xit('should filter out hierarchy facets from facet selections', function() {
+        });
+    });
+
+    describe('_buildHierarchyUnions', function() {
+        xit('should build hierarchy facet union queries', function() {
+        });
+    });
+
+    describe('_buildQueryTemplate', function() {
+        xit('should build the facet query template by replacing placeholders', function() {
+        });
+    });
+
+    describe('_buildQuery', function() {
+        xit('should build a query based on facets and selections', function() {
+        });
+    });
 
     function disableFacets() { }
 

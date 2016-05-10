@@ -82,9 +82,9 @@ describe('facetSelectionFormatter', function() {
         var parsed = facetSelectionFormatter.parseTextFacet(
             { value: 'Pertti Turtti' }, '<text>', 0);
 
-        expect(parsed).toContain('?s text:query "Pertti Turtti*" .');
-        expect(parsed).toContain('FILTER(REGEX(?text0, "Pertti", "i"))');
-        expect(parsed).toContain('FILTER(REGEX(?text0, "Turtti", "i"))');
+        expect(parsed).toContain('?s <text> ?text0 .');
+        expect(parsed).toContain('FILTER(CONTAINS(LCASE(?text0), "pertti"))');
+        expect(parsed).toContain('FILTER(CONTAINS(LCASE(?text0), "turtti"))');
     });
 
     it('should format simple time span facets', function() {
@@ -188,11 +188,10 @@ describe('facetSelectionFormatter', function() {
             var parsed = facetSelectionFormatter.parseFacetSelections(
                 facets, getTextFacetSelections());
 
-            expect(parsed).toContain('?s text:query "terve*" .');
-            expect(parsed).toContain('FILTER(REGEX(?text0, "terve", "i"))');
-
-            expect(parsed).toContain('?s text:query "moro*" .');
-            expect(parsed).toContain('FILTER(REGEX(?text1, "moro", "i"))');
+            expect(parsed).toContain('?s <text> ?text0 .');
+            expect(parsed).toContain('?s <text2> ?text1 .');
+            expect(parsed).toContain('FILTER(CONTAINS(LCASE(?text0), "terve"))');
+            expect(parsed).toContain('FILTER(CONTAINS(LCASE(?text1), "moro"))');
         });
 
         it('should format time span facets', function() {
@@ -215,11 +214,11 @@ describe('facetSelectionFormatter', function() {
             expect(parsed).toContain('?s <other_basic> <other1> .');
             expect(parsed).toContain('?s <other_basic> <other2> .');
 
-            expect(parsed).toContain('?s text:query "terve*" .');
-            expect(parsed).toContain('FILTER(REGEX(?text0, "terve", "i"))');
+            expect(parsed).toContain('?s <text> ?text0 .');
+            expect(parsed).toContain('FILTER(CONTAINS(LCASE(?text0), "terve"))');
 
-            expect(parsed).toContain('?s text:query "moro*" .');
-            expect(parsed).toContain('FILTER(REGEX(?text1, "moro", "i"))');
+            expect(parsed).toContain('?s <text2> ?text1 .');
+            expect(parsed).toContain('FILTER(CONTAINS(LCASE(?text1), "moro"))');
 
             expect(parsed).toContain('?s <start> ?start .');
             expect(parsed).toContain('?s <end> ?end .');

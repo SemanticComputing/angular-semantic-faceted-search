@@ -35,16 +35,26 @@
         var resourceTimeSpanUri = '?time_span_uri';
 
         function parseFacetSelections(facets, facetSelections) {
+            // Put hierarchy facets first and text facets last, and
+            // sort the selections by count for optimization
             var otherFacets = [];
+            var hierarchyFacets = [];
             var textFacets = [];
-            _.forOwn(facetSelections, function(facet, id) {
-                if (facets[id].type === 'text') {
-                    textFacets.push({ id: id, val: facet });
+            var sorted = _(facetSelections).map(function(o, k) {
+                return { id: k, val: o };
+            }).sortBy(facetSelections, 'val.count').value();
+
+            _.forEach(sorted, function(facet) {
+                if (facets[facet.id].type === 'text') {
+                    textFacets.push(facet);
+                } else if (facets[facet.id].type === 'hierarchy') {
+                    hierarchyFacets.push(facet);
                 } else {
-                    otherFacets.push({ id: id, val: facet });
+                    otherFacets.push(facet);
                 }
             });
-            var selections = textFacets.concat(otherFacets);
+
+            var selections = hierarchyFacets.concat(otherFacets).concat(textFacets);
 
             var result = '';
             var i = 0;
@@ -105,14 +115,15 @@
             return ' ?s ' + key + ' ' + val.value + ' . ';
         }
 
-        function parseTextFacet(val, key, i) {
-            var result = ' ?s text:query "' + val.value + '*" . ';
+        function parseTextFacet(val, key, i, useJenaText) {
+            var result = useJenaText ? ' ?s text:query "' + val.value + '*" . ' : '';
             var textVar = '?text' + i;
             result = result + ' ?s ' + key + ' ' + textVar + ' . ';
             var words = val.value.replace(/[?,._*'\\/-]/g, '');
 
             words.split(' ').forEach(function(word) {
-                result = result + ' FILTER(REGEX(' + textVar + ', "' + word + '", "i")) ';
+                result = result + ' FILTER(CONTAINS(LCASE(' + textVar + '), "' +
+                        word.toLowerCase() + '")) ';
             });
 
             return result;
