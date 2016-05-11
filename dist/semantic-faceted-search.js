@@ -1112,7 +1112,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "          <select\n" +
     "            ng-change=\"vm.changed(id)\"\n" +
     "            ng-disabled=\"vm.isDisabled()\"\n" +
-    "            size=\"{{ vm.getFacetSize(facet.state.values) }}\"\n" +
+    "            ng-attr-size=\"{{ vm.getFacetSize(facet.state.values) }}\"\n" +
     "            id=\"{{ ::facet.name + '_select' }}\"\n" +
     "            class=\"selector form-control\"\n" +
     "            ng-options=\"value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value\"\n" +

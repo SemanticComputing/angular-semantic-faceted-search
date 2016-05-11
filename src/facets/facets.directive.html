@@ -46,7 +46,7 @@
           <select
             ng-change="vm.changed(id)"
             ng-disabled="vm.isDisabled()"
-            size="{{ vm.getFacetSize(facet.state.values) }}"
+            ng-attr-size="{{ vm.getFacetSize(facet.state.values) }}"
             id="{{ ::facet.name + '_select' }}"
             class="selector form-control"
             ng-options="value as (value.text + ' (' + value.count + ')') for value in facet.state.values | textWithSelection:textFilter:vm.selectedFacets[id] track by value.value"
