@@ -73,8 +73,6 @@ describe('Facets', function() {
 
     beforeEach(inject(function(){
         spyOn(mock, 'getObjects').and.callThrough();
-        spyOn(facetOptions, 'updateResults').and.callThrough();
-        spyOn(facetOptions, 'disableFacets').and.callThrough();
     }));
 
     describe('update', function() {
@@ -84,13 +82,17 @@ describe('Facets', function() {
         });
 
         it('should call the given callback function', function() {
+            expect(defaultInstance.config.updateResults).toEqual(facetOptions.updateResults);
+            spyOn(defaultInstance.config, 'updateResults').and.callThrough();
             defaultInstance.update();
-            expect(facetOptions.updateResults).toHaveBeenCalled();
+            expect(defaultInstance.config.updateResults).toHaveBeenCalled();
         });
 
         it('should not call the given disableFacets function', function() {
+            expect(defaultInstance.config.disableFacets).toEqual(facetOptions.disableFacets);
+            spyOn(defaultInstance.config, 'disableFacets').and.callThrough();
             defaultInstance.update();
-            expect(facetOptions.disableFacets).not.toHaveBeenCalled();
+            expect(defaultInstance.config.disableFacets).not.toHaveBeenCalled();
         });
 
         it('should update facet states according to query results', function() {

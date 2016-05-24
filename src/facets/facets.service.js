@@ -18,16 +18,6 @@
         function FacetHandler(facetSetup, config) {
             var self = this;
 
-            var freeFacetTypes = ['text', 'timespan'];
-
-            var initialValues = parseInitialValues(config.initialValues, facetSetup);
-
-            var endpoint = new SparqlService(config.endpointUrl);
-
-            if (!config.updateResults) {
-                config.updateResults = function() {};
-            }
-
             /* Public API */
 
             self.facetChanged = facetChanged;
@@ -35,6 +25,20 @@
             self.disableFacet = disableFacet;
             self.enableFacet = enableFacet;
 
+            /* Implementation */
+
+            var freeFacetTypes = ['text', 'timespan'];
+
+            var defaultConfig = {
+                updateResults: function() {},
+                preferredLang: 'en'
+            };
+
+            self.config = angular.extend({}, defaultConfig, config);
+
+            self.endpoint = new SparqlService(self.config.endpointUrl);
+
+            var initialValues = parseInitialValues(self.config.initialValues, facetSetup);
             self.enabledFacets = getInitialEnabledFacets(facetSetup, initialValues);
             self.disabledFacets = getInitialDisabledFacets(facetSetup, self.enabledFacets);
 
@@ -42,26 +46,17 @@
 
             self.selectedFacets = _.cloneDeep(previousSelections);
 
-            /* Implementation */
-
             var _defaultCountKey = getDefaultCountKey(self.enabledFacets);
 
             var labelPart =
+            ' ?value skos:prefLabel|rdfs:label [] . ' +
             ' OPTIONAL {' +
             '  ?value skos:prefLabel ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>") || lang(?lbl) = "") .' +
             ' }' +
             ' OPTIONAL {' +
             '  ?value rdfs:label ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
-            ' }' +
-            ' OPTIONAL {' +
-            '  ?value skos:prefLabel ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "")) .' +
-            ' }' +
-            ' OPTIONAL {' +
-            '  ?value rdfs:label ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "")) .' +
+            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>") || lang(?lbl) = "") .' +
             ' }';
 
             var queryTemplate =
@@ -71,10 +66,10 @@
             ' PREFIX sf: <http://ldf.fi/functions#> ' +
             ' PREFIX text: <http://jena.apache.org/text#> ' +
 
-            ' SELECT ?cnt ?id ?facet_text ?value WHERE {' +
+            ' SELECT DISTINCT ?cnt ?id ?facet_text ?value WHERE {' +
             '  <DESELECTIONS> ' +
             '  {' +
-            '   SELECT ?cnt ?ss ?id ?value ?facet_text { ' +
+            '   SELECT DISTINCT ?cnt ?id ?value ?facet_text { ' +
             '    {' +
             '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value {' +
             '      VALUES ?id {' +
@@ -92,14 +87,19 @@
             '     } GROUP BY ?id ?value ' +
             '    } ' +
             '    FILTER(BOUND(?id)) ' +
-            '    <LABEL_PART> ' +
+            '    {' +
+            '     <LABEL_PART> ' +
+            '    } UNION { ' +
+            '     FILTER(!ISURI(?value)) ' +
+            '     BIND(STR(?value) AS ?lbl) ' +
+            '    }' +
             '    <OTHER_SERVICES> ' +
-            '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value), "^.+/(.+?)$", "$1"), STR(?value))) as ?facet_text)' +
+            '    BIND(COALESCE(?lbl, REPLACE(STR(?value), "^.+/(.+?)$", "$1")) as ?facet_text)' +
             '   } ORDER BY ?id ?facet_text ' +
             '  }' +
             '  <HIERARCHY_FACETS> ' +
             ' } ';
-            queryTemplate = buildQueryTemplate(queryTemplate, facetSetup);
+            queryTemplate = buildQueryTemplate(queryTemplate, self.config);
 
             var deselectUnionTemplate =
             ' { ' +
@@ -115,7 +115,7 @@
             '  BIND("' + NO_SELECTION_STRING + '" AS ?facet_text) ' +
             '  BIND(<DESELECTION> AS ?id) ' +
             ' } UNION ';
-            deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate, facetSetup);
+            deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate, self.config);
 
             var countUnionTemplate =
             ' { ' +
@@ -132,7 +132,7 @@
             '  BIND(<VALUE> AS ?value) ' +
             '  BIND(<SELECTION> AS ?id) ' +
             ' } UNION ';
-            countUnionTemplate = buildQueryTemplate(countUnionTemplate, facetSetup);
+            countUnionTemplate = buildQueryTemplate(countUnionTemplate, self.config);
 
             var hierarchyUnionTemplate =
             ' UNION { ' +
@@ -157,14 +157,14 @@
             '   BIND(IF(?value = ?class, 0, 1) as ?order)' +
             '  } ORDER BY ?class ?order ?facet_text' +
             ' } ';
-            hierarchyUnionTemplate = buildQueryTemplate(hierarchyUnionTemplate, facetSetup);
+            hierarchyUnionTemplate = buildQueryTemplate(hierarchyUnionTemplate, self.config);
 
             /* Public API functions */
 
             // Update the facets and call the updateResults callback.
             // id is the id of the facet that triggered the update.
             function update(id) {
-                config.updateResults(self.selectedFacets);
+                self.config.updateResults(self.selectedFacets);
                 if (!_.size(self.enabledFacets)) {
                     return $q.when({});
                 }
@@ -258,10 +258,11 @@
 
             /* Result parsing */
 
+            // Build a query with the facet selections and use it to get the facet states.
             function getStates(facetSelections, facets, id, defaultCountKey) {
-                var query = buildQuery(facetSelections, facets, defaultCountKey);
+                var query = buildQuery(facetSelections, facets, defaultCountKey, self.config.preferredLang);
 
-                var promise = endpoint.getObjects(query);
+                var promise = self.endpoint.getObjects(query);
                 return promise.then(function(results) {
                     return parseResults(results, facetSelections, facets, id, defaultCountKey);
                 });
@@ -276,8 +277,8 @@
                     isFreeFacet = true;
                 }
 
-                // Due to optimization, no redundant "no selection" values are queried.
-                // Because of this, they need to be set for each facet for which
+                // Due to optimization, redundant "no selection" values are reduced.
+                // Because of this, the values need to be set for each facet for which
                 // the value was not queried.
 
                 // count is the current result count.
@@ -381,7 +382,8 @@
 
             /* Query builders */
 
-            function buildQuery(facetSelections, facets, defaultCountKey) {
+            // Build the facet query
+            function buildQuery(facetSelections, facets, defaultCountKey, lang) {
                 var query = queryTemplate.replace('<FACETS>',
                         getTemplateFacets(facets));
                 var textFacets = '';
@@ -392,18 +394,22 @@
                 });
                 query = query.replace('<TEXT_FACETS>', textFacets);
                 query = query
-                    .replace('<HIERARCHY_FACETS>', buildHierarchyUnions(facets, facetSelections))
-                    .replace('<DESELECTIONS>', buildCountUnions(facetSelections,
+                    .replace(/<OTHER_SERVICES>/g, buildServiceUnions(facets))
+                    .replace(/<HIERARCHY_FACETS>/g, buildHierarchyUnions(facets, facetSelections))
+                    .replace(/<DESELECTIONS>/g, buildCountUnions(facetSelections,
                             facets, defaultCountKey))
                     .replace(/<SELECTIONS>/g,
                         facetSelectionFormatter.parseFacetSelections(facets,
                             facetSelections))
-                    .replace('<SELECTION_FILTERS>',
-                            buildSelectionFilters(facetSelections, facets));
+                    .replace(/<SELECTION_FILTERS>/g,
+                            buildSelectionFilters(facetSelections, facets))
+                    .replace(/<PREF_LANG>/g, lang);
 
                 return query;
             }
 
+            // Build filters that restrict the displayed values to only the selected
+            // value if a facet has a selection.
             function buildSelectionFilters(facetSelections, facets) {
                 var filter = '';
                 _.forOwn(facetSelections, function(facet, fId) {
@@ -420,28 +426,27 @@
                 return filter;
             }
 
+            // Filter for selections so that only the selected value is displayed in a facet.
             function getSelectionFilter(fId, value) {
                 return value ? ' FILTER(?id != ' + fId +
                     ' || ?id = ' + fId + ' && ?value = ' + value + ') ' : '';
             }
 
-            function buildServiceUnions(query, facets) {
+            function buildServiceUnions(facets) {
                 var unions = '';
                 _.forOwn(facets, function(facet, id) {
                     if (facet.service) {
                         unions = unions +
-                        ' OPTIONAL { ' +
+                        ' UNION { ' +
                         '  FILTER(?id = ' + id + ') ' +
-                        '  BIND(IF(BOUND(?ss), ?value, <>) AS ?gobbledigook) ' +
-                        '  ?ss ?id ?gobbledigook . ' +
+                        '  ?ss ?id ?value . ' +
                         '  SERVICE ' + facet.service + ' { ' +
                             labelPart +
                         '  } ' +
                         ' } ';
                     }
                 });
-                query = query.replace('<OTHER_SERVICES>', unions);
-                return query;
+                return unions;
             }
 
             function buildHierarchyUnions(facets, facetSelections) {
@@ -485,7 +490,8 @@
             }
 
 
-            function buildQueryTemplate(template, facets) {
+            // Replace placeholders in the query template using the configuration.
+            function buildQueryTemplate(template, config) {
                 var templateSubs = [
                     {
                         placeHolder: '<GRAPH_START>',
@@ -493,23 +499,17 @@
                     },
                     {
                         placeHolder: '<CONSTRAINT>',
-                        value: getInitialConstraints()
+                        value: getInitialConstraints(config)
                     },
                     {
                         placeHolder: '<GRAPH_END>',
                         value: (config.graph ? ' } ' : '')
                     },
                     {
-                        placeHolder: '<LABEL_PART>',
+                        placeHolder: /<LABEL_PART>/g,
                         value: labelPart
-                    },
-                    {
-                        placeHolder: /<PREF_LANG>/g,
-                        value: (config.preferredLang ? config.preferredLang : 'fi')
                     }
                 ];
-
-                template = buildServiceUnions(template, facets);
 
                 templateSubs.forEach(function(s) {
                     template = template.replace(s.placeHolder, s.value);
@@ -517,7 +517,8 @@
                 return template;
             }
 
-            function getInitialConstraints() {
+            // Combine the possible RDF class and constraint definitions in the config.
+            function getInitialConstraints(config) {
                 var constraints = config.rdfClass ? ' ?s a ' + config.rdfClass + ' . ' : '';
                 constraints = constraints + (config.constraint || '');
                 return constraints;
@@ -572,6 +573,7 @@
 
             /* Utilities */
 
+            // Check if the value of a facet has changed
             function hasChanged(id, selectedFacet, previousSelections) {
                 if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
                     return true;
@@ -579,6 +581,7 @@
                 return false;
             }
 
+            // Check if the first facet value is the same value as the second.
             function hasSameValue(first, second) {
                 if (!first && !second) {
                     return true;
@@ -611,6 +614,7 @@
                 });
             }
 
+            // Get the URIs of the facets that should be present in the query.
             function getTemplateFacets(facets) {
                 var res = [];
                 _.forOwn(facets, function(facet, uri) {
