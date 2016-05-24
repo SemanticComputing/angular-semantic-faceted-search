@@ -436,7 +436,6 @@
 
             var freeFacetTypes = ['text', 'timespan'];
 
-
             var defaultConfig = {
                 updateResults: function() {},
                 preferredLang: 'en'
