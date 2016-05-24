@@ -459,11 +459,19 @@
             ' ?value skos:prefLabel|rdfs:label [] . ' +
             ' OPTIONAL {' +
             '  ?value skos:prefLabel ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>") || lang(?lbl) = "") .' +
+            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
             ' }' +
             ' OPTIONAL {' +
             '  ?value rdfs:label ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>") || lang(?lbl) = "") .' +
+            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            ' }' +
+            ' OPTIONAL {' +
+            '  ?value skos:prefLabel ?lbl . ' +
+            '  FILTER(langMatches(lang(?lbl), "")) .' +
+            ' }' +
+            ' OPTIONAL {' +
+            '  ?value rdfs:label ?lbl . ' +
+            '  FILTER(langMatches(lang(?lbl), "")) .' +
             ' }';
 
             var queryTemplate =
@@ -496,12 +504,9 @@
             '    FILTER(BOUND(?id)) ' +
             '    {' +
             '     <LABEL_PART> ' +
-            '    } UNION { ' +
-            '     FILTER(!ISURI(?value)) ' +
-            '     BIND(STR(?value) AS ?lbl) ' +
             '    }' +
             '    <OTHER_SERVICES> ' +
-            '    BIND(COALESCE(?lbl, REPLACE(STR(?value), "^.+/(.+?)$", "$1")) as ?facet_text)' +
+            '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value), "^.+/(.+?)$", "$1"), STR(?value))) as ?facet_text)' +
             '   } ORDER BY ?id ?facet_text ' +
             '  }' +
             '  <HIERARCHY_FACETS> ' +
@@ -853,6 +858,13 @@
                         ' } ';
                     }
                 });
+                if (unions) {
+                    unions = unions +
+                    ' UNION { ' +
+                    '  FILTER(!ISURI(?value)) ' +
+                    '  BIND(STR(?value) AS ?lbl) ' +
+                    ' } ';
+                }
                 return unions;
             }
 
