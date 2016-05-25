@@ -65,10 +65,10 @@
             if (value.type === 'uri') {
                 return '<' + value.value + '>';
             }
-            if (value.type === 'typed-literal' && value.datatype === 'http://www.w3.org/2001/XMLSchema#integer') {
+            if (_.includes(value.type, 'literal') && value.datatype === 'http://www.w3.org/2001/XMLSchema#integer') {
                 return value.value;
             }
-            if (value.type === 'typed-literal' && value.datatype === 'http://www.w3.org/2001/XMLSchema#date') {
+            if (_.includes(value.type, 'literal') && value.datatype === 'http://www.w3.org/2001/XMLSchema#date') {
                 return '"' + value.value + '"^^<http://www.w3.org/2001/XMLSchema#date>';
             }
             return '"' + value.value + '"';
