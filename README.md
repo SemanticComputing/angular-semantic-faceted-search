@@ -1,5 +1,7 @@
 # SPARQL Faceter
 
+A paper describing SPARQL Faceter can be found [here](http://seco.cs.aalto.fi/publications/2016/koho-et-al-sparql-faceter.pdf).
+
 ## Installation
 
 `bower install sparql-faceter`
