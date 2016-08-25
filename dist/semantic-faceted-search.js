@@ -456,23 +456,31 @@
             var _defaultCountKey = getDefaultCountKey(self.enabledFacets);
 
             var labelPart =
-            ' ?value skos:prefLabel|rdfs:label [] . ' +
-            ' OPTIONAL {' +
-            '  ?value skos:prefLabel ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            ' { ' +
+            '  ?value skos:prefLabel|rdfs:label [] . ' +
+            '  OPTIONAL {' +
+            '   ?value skos:prefLabel ?lbl . ' +
+            '   FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            '  }' +
+            '  OPTIONAL {' +
+            '   ?value rdfs:label ?lbl . ' +
+            '   FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            '  }' +
+            '  OPTIONAL {' +
+            '   ?value skos:prefLabel ?lbl . ' +
+            '   FILTER(langMatches(lang(?lbl), "")) .' +
+            '  }' +
+            '  OPTIONAL {' +
+            '   ?value rdfs:label ?lbl . ' +
+            '   FILTER(langMatches(lang(?lbl), "")) .' +
+            '  } ' +
+            '  FILTER(BOUND(?lbl)) ' +
             ' }' +
-            ' OPTIONAL {' +
-            '  ?value rdfs:label ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
-            ' }' +
-            ' OPTIONAL {' +
-            '  ?value skos:prefLabel ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "")) .' +
-            ' }' +
-            ' OPTIONAL {' +
-            '  ?value rdfs:label ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "")) .' +
-            ' }';
+            ' UNION { ' +
+            '  FILTER(!ISURI(?value)) ' +
+            '  BIND(STR(?value) AS ?lbl) ' +
+            '  FILTER(BOUND(?lbl)) ' +
+            ' } ';
 
             var queryTemplate =
             ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
@@ -496,15 +504,13 @@
             '        <SELECTIONS> ' +
             '        <CONSTRAINT> ' +
             '       } ' +
-            '       <SELECTION_FILTERS> ' +
             '       ?s ?id ?value . ' +
             '      <GRAPH_END> ' +
             '     } GROUP BY ?id ?value ' +
             '    } ' +
             '    FILTER(BOUND(?id)) ' +
-            '    {' +
-            '     <LABEL_PART> ' +
-            '    }' +
+            '    <SELECTION_FILTERS> ' + // This is in this particular spot because DBPedia
+            '    <LABEL_PART> ' +
             '    <OTHER_SERVICES> ' +
             '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value), "^.+/(.+?)$", "$1"), STR(?value))) as ?facet_text)' +
             '   } ORDER BY ?id ?facet_text ' +
@@ -840,8 +846,7 @@
 
             // Filter for selections so that only the selected value is displayed in a facet.
             function getSelectionFilter(fId, value) {
-                return value ? ' FILTER(?id != ' + fId +
-                    ' || ?id = ' + fId + ' && ?value = ' + value + ') ' : '';
+                return value ? ' FILTER(?id != ' + fId + ' ||  ?value = ' + value + ') ' : '';
             }
 
             function buildServiceUnions(facets) {
@@ -858,13 +863,6 @@
                         ' } ';
                     }
                 });
-                if (unions) {
-                    unions = unions +
-                    ' UNION { ' +
-                    '  FILTER(!ISURI(?value)) ' +
-                    '  BIND(STR(?value) AS ?lbl) ' +
-                    ' } ';
-                }
                 return unions;
             }
 
