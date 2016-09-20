@@ -145,6 +145,7 @@
                 endFilter = timeSpanEndFilterSimple;
             }
             if (start) {
+                start.setHours(12, 0, 0);
                 start = dateToISOString(start);
                 result = result
                     .replace('<START_FILTER>',
@@ -157,6 +158,7 @@
                 result = result.replace('<START_FILTER>', '');
             }
             if (end) {
+                end.setHours(12, 0, 0);
                 end = dateToISOString(end);
                 result = result.replace('<END_FILTER>',
                         endFilter.replace('<END_PROPERTY>',
