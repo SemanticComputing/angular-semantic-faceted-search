@@ -4,13 +4,12 @@
 (function() {
     'use strict';
 
-    /* eslint-disable angular/no-service-method */
     angular.module('seco.facetedSearch')
 
     .factory('Facets', Facets);
 
     /* ngInject */
-    function Facets($rootScope, $q, _, SparqlService, facetMapperService,
+    function Facets($q, _, SparqlService, facetMapperService,
             facetSelectionFormatter, NO_SELECTION_STRING) {
 
         return FacetHandler;
