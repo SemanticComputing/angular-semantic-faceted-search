@@ -24,6 +24,8 @@
             self.enable = enable;
             self.isLoading = isLoading;
 
+            self.value;
+
             /* Implementation */
 
             self.facetUri = facetUri;
@@ -66,25 +68,22 @@
             ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
 
             ' SELECT DISTINCT ?cnt ?id ?facet_text ?value WHERE {' +
-            '  <DESELECTIONS> ' +
+            '  <DESELECTION> ' +
             '  {' +
             '   SELECT DISTINCT ?cnt ?id ?value ?facet_text { ' +
             '    {' +
             '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value {' +
-            '      VALUES ?id {' +
-            '       <FACET_ID> ' +
-            '      } ' +
             '      <GRAPH_START> ' +
             '       { ' +
             '        <SELECTIONS> ' +
             '        <CONSTRAINT> ' +
             '       } ' +
-            '       ?s ?id ?value . ' +
+            '       ?s <PREDICATE> ?value . ' +
+            '       BIND(<ID> AS ?id) ' +
             '      <GRAPH_END> ' +
             '     } GROUP BY ?id ?value ' +
             '    } ' +
             '    FILTER(BOUND(?id)) ' +
-            '    <SELECTION_FILTERS> ' + // This is in this particular spot because DBPedia
             '    <LABEL_PART> ' +
             '    <OTHER_SERVICES> ' +
             '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value),' +
@@ -116,7 +115,7 @@
                 self.isBusy = true;
                 var pattern = self.getTriplePattern(value);
                 var constraints = self.handler.update(self.facetUri, pattern);
-                return getState(value, constraints).then(function(state) {
+                return getState(value, constraints, pattern).then(function(state) {
                     self.state = state;
                     self.isBusy = false;
                     return state;
@@ -139,8 +138,9 @@
             /* Private functions */
 
             // Build a query with the facet selection and use it to get the facet state.
-            function getState(value, constraints) {
-                var query = buildQuery(value, constraints, self.config.preferredLang);
+            function getState(value, constraints, ownConstraint) {
+                var query = buildQuery(value, constraints, ownConstraint,
+                    self.config.preferredLang);
 
                 var promise = self.endpoint.getObjects(query);
                 return promise.then(function(results) {
@@ -160,11 +160,11 @@
             }
 
             // Build the facet query
-            function buildQuery(selection, constraints, lang) {
+            function buildQuery(selection, constraints, ownConstraint, lang) {
                 var query = queryTemplate.replace('<FACET>', self.facetUri);
                 query = query
                     .replace(/<OTHER_SERVICES>/g, buildServiceUnions(self.config.services))
-                    .replace(/<DESELECTIONS>/g, buildDeselectUnion(constraints))
+                    .replace(/<DESELECTION>/g, buildDeselectUnion(constraints, ownConstraint))
                     .replace(/<SELECTIONS>/g, constraints.join(' '))
                     .replace(/<PREF_LANG>/g, lang);
 
@@ -205,8 +205,12 @@
                         value: (config.graph ? ' } ' : '')
                     },
                     {
-                        placeHolder: '<FACET_ID>',
+                        placeHolder: /<ID>/g,
                         value: self.facetUri
+                    },
+                    {
+                        placeHolder: /<PREDICATE>/g,
+                        value: self.predicate
                     },
                     {
                         placeholder: /<LABEL_PART>/g,

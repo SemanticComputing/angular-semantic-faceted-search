@@ -10,7 +10,7 @@
 
     /* ngInject */
     function Facets($q, _, SparqlService, facetMapperService,
-            facetSelectionFormatter, NO_SELECTION_STRING) {
+            facetSelectionFormatter) {
 
         return FacetHandler;
 
@@ -26,7 +26,6 @@
             /* Implementation */
 
             var defaultConfig = {
-                updateResults: function() {},
                 preferredLang: 'en'
             };
 
@@ -44,25 +43,27 @@
 
             /* Public API functions */
 
-            function registerFacet(facet) {
-                self.facets.push(facet);
-            }
-
             // Update the facets and call the updateResults callback.
             // id is the id of the facet that triggered the update.
             function update(id) {
-                self.config.updateResults(self.selectedFacets);
-                if (!_.size(self.enabledFacets)) {
-                    return $q.when({});
-                }
-
+                self.constraints[id] = _.find(self.facets, ['id', id]).getConstraint();
+                var promises = [];
+                var cons = _.values(self.constraints);
+                self.facets.forEach(function(facet) {
+                    promises.push(facet.update(cons));
+                });
+                return $q.all(promises).then(function(results) {
+                    self.facets.forEach(function(facet) {
+                        facet.ready();
+                    });
+                    return results;
+                });
             }
 
             function disableFacet(id) {
                 self.disabledFacets[id] = _.cloneDeep(self.enabledFacets[id]);
                 delete self.enabledFacets[id];
                 delete self.selectedFacets[id];
-                _defaultCountKey = getDefaultCountKey(self.enabledFacets);
                 return self.update();
             }
 
