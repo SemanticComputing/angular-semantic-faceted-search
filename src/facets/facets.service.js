@@ -9,8 +9,7 @@
     .factory('Facets', Facets);
 
     /* ngInject */
-    function Facets($q, _, SparqlService, facetMapperService,
-            facetSelectionFormatter) {
+    function Facets($location, $q, _) {
 
         return FacetHandler;
 
@@ -20,8 +19,6 @@
             /* Public API */
 
             self.update = update;
-            self.disableFacet = disableFacet;
-            self.enableFacet = enableFacet;
 
             /* Implementation */
 
@@ -31,16 +28,6 @@
 
             self.config = angular.extend({}, defaultConfig, config);
 
-            self.endpoint = new SparqlService(self.config.endpointUrl);
-
-            var initialValues = parseInitialValues(self.config.initialValues, facetSetup);
-            self.enabledFacets = getInitialEnabledFacets(facetSetup, initialValues);
-            self.disabledFacets = getInitialDisabledFacets(facetSetup, self.enabledFacets);
-
-            var previousSelections = initPreviousSelections(initialValues, self.enabledFacets);
-
-            self.selectedFacets = _.cloneDeep(previousSelections);
-
             /* Public API functions */
 
             // Update the facets and call the updateResults callback.
@@ -48,7 +35,7 @@
             function update(id) {
                 self.constraints[id] = _.find(self.facets, ['id', id]).getConstraint();
                 var promises = [];
-                var cons = _.values(self.constraints);
+                var cons = _.values(_(self.constraints).values().compact().value());
                 self.facets.forEach(function(facet) {
                     promises.push(facet.update(cons));
                 });
@@ -60,59 +47,23 @@
                 });
             }
 
-            function disableFacet(id) {
-                self.disabledFacets[id] = _.cloneDeep(self.enabledFacets[id]);
-                delete self.enabledFacets[id];
-                delete self.selectedFacets[id];
-                return self.update();
-            }
-
-            function enableFacet(id) {
-                self.enabledFacets[id] = _.cloneDeep(self.disabledFacets[id]);
-                delete self.disabledFacets[id];
-                _defaultCountKey = getDefaultCountKey(self.enabledFacets);
-                if (_.includes(freeFacetTypes, self.enabledFacets[id].type)) {
-                    return $q.when(self.enabledFacets);
-                }
-                return self.update();
-            }
-
             /* Private functions */
 
             /* Initialization */
 
-            function initPreviousSelections(initialValues, facets) {
-                var selections = {};
-                _.forOwn(facets, function(val, id) {
-                    var initialVal = initialValues[id];
-                    selections[id] = { value: initialVal };
-                });
-                return selections;
-            }
-
-            function parseInitialValues(values, facets) {
+            function parseInitialConstraints(values, facets) {
                 var result = {};
                 _.forOwn(values, function(val, id) {
                     if (!facets[id]) {
                         return;
                     }
-                    result[id] = facets[id].fromUrlParam(val);
+                    result[id] = facets[id].constraintFromUrlParam(val);
                 });
                 return result;
             }
 
-            function getInitialEnabledFacets(facets, initialValues) {
-                var initialFacets = _.pick(facets, _.keys(initialValues));
-                if (!_.isEmpty(initialFacets)) {
-                    return initialFacets;
-                }
-                return _.pickBy(facets, function(facet) {
-                    return facet.enabled;
-                });
-            }
-
-            function getInitialDisabledFacets(facets, enabledFacets) {
-                return _.omit(facets, _.keys(enabledFacets));
+            function getFacetValuesFromUrlParams() {
+                return $location.search();
             }
 
             // Combine the possible RDF class and constraint definitions in the config.
@@ -121,48 +72,6 @@
                 constraints = constraints + (config.constraint || '');
                 return constraints;
             }
-
-            /* Utilities */
-
-            // Check if the value of a facet has changed
-            function hasChanged(id, selectedFacet, previousSelections) {
-                if (!_.isEqualWith(previousSelections[id], selectedFacet, hasSameValue)) {
-                    return true;
-                }
-                return false;
-            }
-
-            // Check if the first facet value is the same value as the second.
-            function hasSameValue(first, second) {
-                if (!first && !second) {
-                    return true;
-                }
-                if ((!first && second) || (first && !second)) {
-                    return false;
-                }
-                var isFirstArray = _.isArray(first);
-                var isSecondArray = _.isArray(second);
-                if (isFirstArray || isSecondArray) {
-                    if (!(isFirstArray && isSecondArray)) {
-                        return false;
-                    }
-                    var firstVals = _.map(first, 'value');
-                    var secondVals = _.map(second, 'value');
-                    return _.isEqual(firstVals, secondVals);
-                }
-                return _.isEqual(first.value, second.value);
-            }
-
-            /* Exposed for testing purposes only */
-
-            self._hasChanged = hasChanged;
-            self._hasSameValue = hasSameValue;
-            self._parseInitialValues = parseInitialValues;
-            self._initPreviousSelections = initPreviousSelections;
-            self._getInitialEnabledFacets = getInitialEnabledFacets;
-            self._getInitialDisabledFacets = getInitialDisabledFacets;
-
-            self._getPreviousSelections = function() { return previousSelections; };
         }
     }
 })();

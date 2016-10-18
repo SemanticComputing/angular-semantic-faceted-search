@@ -5,7 +5,7 @@ module.exports = function(grunt) {
     grunt.initConfig({
         ngtemplates: {
             'seco.facetedSearch': {
-                src: ['src/facets/facets.directive.html'],
+                src: ['src/facets/facets.basic.directive.html'],
                 dest: 'dist/templates.js'
             }
         },

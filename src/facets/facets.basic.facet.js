@@ -23,8 +23,9 @@
             self.disable = disable;
             self.enable = enable;
             self.isLoading = isLoading;
+            self.isEnabled = isEnabled;
 
-            self.value;
+            self.selectedValue;
 
             /* Implementation */
 
@@ -33,7 +34,8 @@
             self.config = handler.getConfig();
             self.endpoint = new SparqlService(self.config.endpointUrl);
 
-            self.getTriplePattern = getTriplePattern;
+            self.getConstraint = getTriplePattern;
+            self.constraintFromUrlParam = constraintFromUrlParam;
 
             var labelPart =
             ' { ' +
@@ -111,24 +113,26 @@
 
             /* Public API functions */
 
-            function update(value) {
+            function update(constraints) {
                 self.isBusy = true;
-                var pattern = self.getTriplePattern(value);
-                var constraints = self.handler.update(self.facetUri, pattern);
-                return getState(value, constraints, pattern).then(function(state) {
+                return getState(constraints).then(function(state) {
                     self.state = state;
                     self.isBusy = false;
                     return state;
                 });
             }
 
+            function isEnabled() {
+                return self._isEnabled;
+            }
+
             function enable() {
-                self.isEnabled = true;
+                self._isEnabled = true;
                 return self.update();
             }
 
             function disable() {
-                self.isEnabled = false;
+                self._isEnabled = false;
             }
 
             function isLoading() {
@@ -138,8 +142,8 @@
             /* Private functions */
 
             // Build a query with the facet selection and use it to get the facet state.
-            function getState(value, constraints, ownConstraint) {
-                var query = buildQuery(value, constraints, ownConstraint,
+            function getState(constraints) {
+                var query = buildQuery(self.selectedValue, constraints, self.getTriplePattern(),
                     self.config.preferredLang);
 
                 var promise = self.endpoint.getObjects(query);
@@ -148,15 +152,18 @@
                 });
             }
 
-            function getTriplePattern(val) {
+            function getTriplePattern() {
+                if (!self.selectedValue) {
+                    return;
+                }
                 var result = '';
-                if (_.isArray(val)) {
-                    val.forEach(function(value) {
-                        result = result + ' ?s ' + self.facetUri + ' ' + value.value + ' . ';
+                if (_.isArray(self.selectedValue)) {
+                    self.selectedValue.forEach(function(value) {
+                        result = result + ' ?s ' + self.predicate + ' ' + value + ' . ';
                     });
                     return result;
                 }
-                return ' ?s ' + self.facetUri + ' ' + val.value + ' . ';
+                return ' ?s ' + self.predicate + ' ' + self.selectedValue + ' . ';
             }
 
             // Build the facet query
@@ -222,6 +229,35 @@
                     template = template.replace(s.placeHolder, s.value);
                 });
                 return template;
+            }
+
+
+            function constraintFromUrlParam(val) {
+                var vals = _(val).map('value').compact().value();
+                return vals;
+            }
+
+            /* Utilities */
+
+            // Check if the first facet value is the same value as the second.
+            function hasSameValue(first, second) {
+                if (!first && !second) {
+                    return true;
+                }
+                if ((!first && second) || (first && !second)) {
+                    return false;
+                }
+                var isFirstArray = _.isArray(first);
+                var isSecondArray = _.isArray(second);
+                if (isFirstArray || isSecondArray) {
+                    if (!(isFirstArray && isSecondArray)) {
+                        return false;
+                    }
+                    var firstVals = _.map(first, 'value');
+                    var secondVals = _.map(second, 'value');
+                    return _.isEqual(firstVals, secondVals);
+                }
+                return _.isEqual(first.value, second.value);
             }
         }
     }
