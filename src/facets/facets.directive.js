@@ -18,7 +18,7 @@
             },
             controller: FacetListController,
             controllerAs: 'vm',
-            templateUrl: 'src/facets/facets.directive.html'
+            templateUrl: 'src/facets/facets.basic.directive.html'
         };
     }
 
