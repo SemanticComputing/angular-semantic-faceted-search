@@ -9,12 +9,12 @@
     .factory('BasicFacet', BasicFacet);
 
     /* ngInject */
-    function BasicFacet($q, _, SparqlService, facetMapperService,
+    function BasicFacet($q, $log, _, SparqlService, facetMapperService,
             facetSelectionFormatter, NO_SELECTION_STRING) {
 
         return BasicFacetConstructor;
 
-        function BasicFacetConstructor(facetUri, handler) {
+        function BasicFacetConstructor(options) {
             var self = this;
 
             /* Public API */
@@ -25,17 +25,32 @@
             self.isLoading = isLoading;
             self.isEnabled = isEnabled;
 
-            self.selectedValue;
-
-            /* Implementation */
-
-            self.facetUri = facetUri;
-            self.handler = handler;
-            self.config = handler.getConfig();
-            self.endpoint = new SparqlService(self.config.endpointUrl);
+            // Properties
+            self.selectedValue = {};
+            self.predicate;
+            self.name;
+            self.config;
+            self.facetUri;
+            self.endpoint;
 
             self.getConstraint = getTriplePattern;
             self.constraintFromUrlParam = constraintFromUrlParam;
+
+            init();
+
+            /* Implementation */
+
+            function init() {
+                var defaultConfig = {
+                    preferredLang: 'fi'
+                };
+
+                self.config = angular.extend({}, defaultConfig, options);
+                self.name = options.name;
+                self.facetUri = options.facetUri;
+                self.predicate = options.predicate;
+                self.endpoint = new SparqlService(self.config.endpointUrl);
+            }
 
             var labelPart =
             ' { ' +
@@ -78,7 +93,6 @@
             '      <GRAPH_START> ' +
             '       { ' +
             '        <SELECTIONS> ' +
-            '        <CONSTRAINT> ' +
             '       } ' +
             '       ?s <PREDICATE> ?value . ' +
             '       BIND(<ID> AS ?id) ' +
@@ -101,13 +115,12 @@
             '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
             '   WHERE { ' +
             '    <GRAPH_START> ' +
-            '     <OTHER_SELECTIONS> ' +
-            '     <CONSTRAINT> ' +
+            '     <SELECTIONS> ' +
             '    <GRAPH_END> ' +
             '   } ' +
             '  } ' +
             '  BIND("' + NO_SELECTION_STRING + '" AS ?facet_text) ' +
-            '  BIND(<DESELECTION> AS ?id) ' +
+            '  BIND(<ID> AS ?id) ' +
             ' } UNION ';
             deselectUnionTemplate = buildQueryTemplate(deselectUnionTemplate, self.config);
 
@@ -115,9 +128,11 @@
 
             function update(constraints) {
                 self.isBusy = true;
+                $log.log('Update', constraints);
                 return getState(constraints).then(function(state) {
                     self.state = state;
                     self.isBusy = false;
+                    $log.log('Get state', state);
                     return state;
                 });
             }
@@ -128,7 +143,6 @@
 
             function enable() {
                 self._isEnabled = true;
-                return self.update();
             }
 
             function disable() {
@@ -143,44 +157,47 @@
 
             // Build a query with the facet selection and use it to get the facet state.
             function getState(constraints) {
-                var query = buildQuery(self.selectedValue, constraints, self.getTriplePattern(),
-                    self.config.preferredLang);
+                var query = buildQuery(constraints);
 
                 var promise = self.endpoint.getObjects(query);
                 return promise.then(function(results) {
-                    return facetMapperService.makeObjectList(results);
+                    var res = facetMapperService.makeObjectList(results);
+                    $log.log('Results', res);
+                    return _.first(res);
                 });
             }
 
             function getTriplePattern() {
-                if (!self.selectedValue) {
+                $log.log('Selected value', self.selectedValue);
+                if (!self.selectedValue.value) {
                     return;
                 }
                 var result = '';
                 if (_.isArray(self.selectedValue)) {
                     self.selectedValue.forEach(function(value) {
-                        result = result + ' ?s ' + self.predicate + ' ' + value + ' . ';
+                        result = result + ' ?s ' + self.predicate + ' ' + value.value + ' . ';
                     });
                     return result;
                 }
-                return ' ?s ' + self.predicate + ' ' + self.selectedValue + ' . ';
+                return ' ?s ' + self.predicate + ' ' + self.selectedValue.value + ' . ';
             }
 
             // Build the facet query
-            function buildQuery(selection, constraints, ownConstraint, lang) {
-                var query = queryTemplate.replace('<FACET>', self.facetUri);
-                query = query
+            function buildQuery(constraints) {
+                constraints = constraints || [];
+                var query = queryTemplate
                     .replace(/<OTHER_SERVICES>/g, buildServiceUnions(self.config.services))
-                    .replace(/<DESELECTION>/g, buildDeselectUnion(constraints, ownConstraint))
+                    .replace(/<DESELECTION>/g, buildDeselectUnion(constraints, self.getConstraint()))
                     .replace(/<SELECTIONS>/g, constraints.join(' '))
-                    .replace(/<PREF_LANG>/g, lang);
+                    .replace(/<PREF_LANG>/g, self.config.preferredLang);
 
                 return query;
             }
 
             function buildDeselectUnion(constraints, ownConstraint) {
+                $log.log('Deselection', constraints, ownConstraint);
                 var deselections = _.reject(constraints, function(v) { return v === ownConstraint; });
-                return deselectUnionTemplate.replace('<DESELECTION>', deselections.join(' '));
+                return deselectUnionTemplate.replace('<SELECTIONS>', deselections.join(' '));
             }
 
             function buildServiceUnions(services) {
@@ -204,10 +221,6 @@
                         value: (config.graph ? ' GRAPH ' + config.graph + ' { ' : '')
                     },
                     {
-                        placeHolder: '<CONSTRAINT>',
-                        value: config.constraints
-                    },
-                    {
                         placeHolder: '<GRAPH_END>',
                         value: (config.graph ? ' } ' : '')
                     },
@@ -217,10 +230,10 @@
                     },
                     {
                         placeHolder: /<PREDICATE>/g,
-                        value: self.predicate
+                        value: config.predicate
                     },
                     {
-                        placeholder: /<LABEL_PART>/g,
+                        placeHolder: /<LABEL_PART>/g,
                         value: labelPart
                     }
                 ];
