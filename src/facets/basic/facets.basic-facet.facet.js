@@ -50,6 +50,7 @@
                 self.facetUri = options.facetUri;
                 self.predicate = options.predicate;
                 self.endpoint = new SparqlService(self.config.endpointUrl);
+                self._isEnabled = self.config.enabled;
             }
 
             var labelPart =
@@ -146,6 +147,7 @@
             }
 
             function disable() {
+                self.selectedValue = {};
                 self._isEnabled = false;
             }
 
@@ -157,6 +159,9 @@
 
             // Build a query with the facet selection and use it to get the facet state.
             function getState(constraints) {
+                if (!self.isEnabled()) {
+                    return;
+                }
                 var query = buildQuery(constraints);
 
                 var promise = self.endpoint.getObjects(query);

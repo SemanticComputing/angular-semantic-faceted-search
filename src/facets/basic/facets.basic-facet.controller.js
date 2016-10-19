@@ -6,7 +6,7 @@
 
     /* ngInject */
     function BasicFacetController($scope, $log, $q, _, BasicFacet, EVENT_FACET_CONSTRAINTS,
-            EVENT_FACET_CHANGED) {
+            EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS) {
         var vm = this;
 
         vm.isDisabled = isDisabled;
@@ -19,17 +19,28 @@
 
         vm.facet;
 
+        vm.previousConstraints;
+
         init();
 
         function init() {
             vm.facet = new BasicFacet($scope.options);
+            $log.log('Init', vm.facet.name);
             $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
-                $log.log('Receive constraints', cons);
+                $log.log('Receive constraints', vm.facet.name, cons);
                 update(cons);
             });
+            $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
         }
 
         function update(constraints) {
+            $log.log('Controller update', vm.facet.name, vm.previousConstraints, constraints);
+            if (_.isEqual(constraints, vm.previousConstraints) && vm.isLoadingFacets) {
+                return $q.when();
+            } else {
+                vm.previousConstraints = _.clone(constraints);
+            }
+
             vm.isLoadingFacets = true;
             return vm.facet.update(constraints).then(handleUpdateSuccess, handleError);
         }

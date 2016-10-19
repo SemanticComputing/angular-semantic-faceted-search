@@ -6,6 +6,7 @@
 
     angular.module('seco.facetedSearch', ['sparql', 'ui.bootstrap', 'angularSpinner'])
     .constant('_', _) // eslint-disable-line no-undef
+    .constant('EVENT_REQUEST_CONSTRAINTS', 'sf-request-constraints')
     .constant('EVENT_FACET_CHANGED', 'sf-facet-changed')
     .constant('EVENT_FACET_CONSTRAINTS', 'sf-facet-constraints')
     .constant('NO_SELECTION_STRING', '-- No Selection --');
@@ -417,7 +418,7 @@
 
     /* ngInject */
     function Facets($log, $rootScope, $location, $q, _, EVENT_FACET_CONSTRAINTS,
-                EVENT_FACET_CHANGED) {
+                EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS) {
 
         return FacetHandler;
 
@@ -430,28 +431,35 @@
 
             /* Implementation */
 
-            var defaultConfig = {
-                preferredLang: 'en'
-            };
+            init();
 
-            self.config = angular.extend({}, defaultConfig, config);
+            function init() {
+                var defaultConfig = {
+                    preferredLang: 'en'
+                };
 
-            self.constraints = {};
-            if (self.config.constraint) {
-                self.constraints.default = self.config.constraint;
+                self.config = angular.extend({}, defaultConfig, config);
+
+                self.changeListener = $rootScope.$on(EVENT_FACET_CHANGED, update);
+                self.initListener = $rootScope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastConstraints);
+
+                self.constraints = getFacetValuesFromUrlParams();
+                if (self.config.constraint && !self.constraints.default) {
+                    self.constraints.default = getInitialConstraints(self.config);
+                }
+                $log.log('Initial constraints', self.constraints);
             }
-            if (self.config.rdfClass) {
-                self.constraints.rdfClass = '?s a ' + self.config.rdfClass + ' . ';
-            }
 
-            self.listener = $rootScope.$on(EVENT_FACET_CHANGED, update);
 
-            // Update the facets and call the updateResults callback.
-            // id is the id of the facet that triggered the update.
+            // Update constraints, and broadcast the to listening facets.
             function update(event, constraint) {
                 self.constraints[constraint.id] = constraint.constraint;
+                broadCastConstraints();
+            }
+
+            function broadCastConstraints() {
+                $location.search(self.constraints);
                 var cons = _.values(_(self.constraints).values().compact().value());
-                $log.log(cons);
                 $log.log('Broadcast', cons);
                 $rootScope.$broadcast(EVENT_FACET_CONSTRAINTS, cons);
             }
@@ -460,19 +468,9 @@
 
             /* Initialization */
 
-            function parseInitialConstraints(values, facets) {
-                var result = {};
-                _.forOwn(values, function(val, id) {
-                    if (!facets[id]) {
-                        return;
-                    }
-                    result[id] = facets[id].constraintFromUrlParam(val);
-                });
-                return result;
-            }
-
             function getFacetValuesFromUrlParams() {
-                return $location.search();
+                $log.log('URL params', $location.search());
+                return $location.search() || {};
             }
 
             // Combine the possible RDF class and constraint definitions in the config.
@@ -565,6 +563,7 @@
                 self.facetUri = options.facetUri;
                 self.predicate = options.predicate;
                 self.endpoint = new SparqlService(self.config.endpointUrl);
+                self._isEnabled = self.config.enabled;
             }
 
             var labelPart =
@@ -661,6 +660,7 @@
             }
 
             function disable() {
+                self.selectedValue = {};
                 self._isEnabled = false;
             }
 
@@ -672,6 +672,9 @@
 
             // Build a query with the facet selection and use it to get the facet state.
             function getState(constraints) {
+                if (!self.isEnabled()) {
+                    return;
+                }
                 var query = buildQuery(constraints);
 
                 var promise = self.endpoint.getObjects(query);
@@ -799,7 +802,7 @@
 
     /* ngInject */
     function BasicFacetController($scope, $log, $q, _, BasicFacet, EVENT_FACET_CONSTRAINTS,
-            EVENT_FACET_CHANGED) {
+            EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS) {
         var vm = this;
 
         vm.isDisabled = isDisabled;
@@ -812,17 +815,28 @@
 
         vm.facet;
 
+        vm.previousConstraints;
+
         init();
 
         function init() {
             vm.facet = new BasicFacet($scope.options);
+            $log.log('Init', vm.facet.name);
             $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
-                $log.log('Receive constraints', cons);
+                $log.log('Receive constraints', vm.facet.name, cons);
                 update(cons);
             });
+            $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
         }
 
         function update(constraints) {
+            $log.log('Controller update', vm.facet.name, vm.previousConstraints, constraints);
+            if (_.isEqual(constraints, vm.previousConstraints) && vm.isLoadingFacets) {
+                return $q.when();
+            } else {
+                vm.previousConstraints = _.clone(constraints);
+            }
+
             vm.isLoadingFacets = true;
             return vm.facet.update(constraints).then(handleUpdateSuccess, handleError);
         }
@@ -880,9 +894,6 @@
 
     angular.module('seco.facetedSearch')
 
-    /*
-    * Facet selector directive.
-    */
     .directive('secoBasicFacet', basicFacet);
 
     function basicFacet() {

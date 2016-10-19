@@ -10,7 +10,7 @@
 
     /* ngInject */
     function Facets($log, $rootScope, $location, $q, _, EVENT_FACET_CONSTRAINTS,
-                EVENT_FACET_CHANGED) {
+                EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS) {
 
         return FacetHandler;
 
@@ -23,28 +23,35 @@
 
             /* Implementation */
 
-            var defaultConfig = {
-                preferredLang: 'en'
-            };
+            init();
 
-            self.config = angular.extend({}, defaultConfig, config);
+            function init() {
+                var defaultConfig = {
+                    preferredLang: 'en'
+                };
 
-            self.constraints = {};
-            if (self.config.constraint) {
-                self.constraints.default = self.config.constraint;
+                self.config = angular.extend({}, defaultConfig, config);
+
+                self.changeListener = $rootScope.$on(EVENT_FACET_CHANGED, update);
+                self.initListener = $rootScope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastConstraints);
+
+                self.constraints = getFacetValuesFromUrlParams();
+                if (self.config.constraint && !self.constraints.default) {
+                    self.constraints.default = getInitialConstraints(self.config);
+                }
+                $log.log('Initial constraints', self.constraints);
             }
-            if (self.config.rdfClass) {
-                self.constraints.rdfClass = '?s a ' + self.config.rdfClass + ' . ';
-            }
 
-            self.listener = $rootScope.$on(EVENT_FACET_CHANGED, update);
 
-            // Update the facets and call the updateResults callback.
-            // id is the id of the facet that triggered the update.
+            // Update constraints, and broadcast the to listening facets.
             function update(event, constraint) {
                 self.constraints[constraint.id] = constraint.constraint;
+                broadCastConstraints();
+            }
+
+            function broadCastConstraints() {
+                $location.search(self.constraints);
                 var cons = _.values(_(self.constraints).values().compact().value());
-                $log.log(cons);
                 $log.log('Broadcast', cons);
                 $rootScope.$broadcast(EVENT_FACET_CONSTRAINTS, cons);
             }
@@ -53,19 +60,9 @@
 
             /* Initialization */
 
-            function parseInitialConstraints(values, facets) {
-                var result = {};
-                _.forOwn(values, function(val, id) {
-                    if (!facets[id]) {
-                        return;
-                    }
-                    result[id] = facets[id].constraintFromUrlParam(val);
-                });
-                return result;
-            }
-
             function getFacetValuesFromUrlParams() {
-                return $location.search();
+                $log.log('URL params', $location.search());
+                return $location.search() || {};
             }
 
             // Combine the possible RDF class and constraint definitions in the config.
