@@ -9,11 +9,12 @@
     .factory('Facets', Facets);
 
     /* ngInject */
-    function Facets($location, $q, _) {
+    function Facets($log, $rootScope, $location, $q, _, EVENT_FACET_CONSTRAINTS,
+                EVENT_FACET_CHANGED) {
 
         return FacetHandler;
 
-        function FacetHandler(facetSetup, config) {
+        function FacetHandler(config) {
             var self = this;
 
             /* Public API */
@@ -28,23 +29,24 @@
 
             self.config = angular.extend({}, defaultConfig, config);
 
-            /* Public API functions */
+            self.constraints = {};
+            if (self.config.constraint) {
+                self.constraints.default = self.config.constraint;
+            }
+            if (self.config.rdfClass) {
+                self.constraints.rdfClass = '?s a ' + self.config.rdfClass + ' . ';
+            }
+
+            self.listener = $rootScope.$on(EVENT_FACET_CHANGED, update);
 
             // Update the facets and call the updateResults callback.
             // id is the id of the facet that triggered the update.
-            function update(id) {
-                self.constraints[id] = _.find(self.facets, ['id', id]).getConstraint();
-                var promises = [];
+            function update(event, constraint) {
+                self.constraints[constraint.id] = constraint.constraint;
                 var cons = _.values(_(self.constraints).values().compact().value());
-                self.facets.forEach(function(facet) {
-                    promises.push(facet.update(cons));
-                });
-                return $q.all(promises).then(function(results) {
-                    self.facets.forEach(function(facet) {
-                        facet.ready();
-                    });
-                    return results;
-                });
+                $log.log(cons);
+                $log.log('Broadcast', cons);
+                $rootScope.$broadcast(EVENT_FACET_CONSTRAINTS, cons);
             }
 
             /* Private functions */
