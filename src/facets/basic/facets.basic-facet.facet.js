@@ -138,19 +138,22 @@
                 if (!self.isEnabled()) {
                     return $q.when();
                 }
-                if (self.previousConstraints &&
-                    _.isEqual(constraints.constraint, self.previousConstraints)) {
+                if (self.previousConstraints && _.isEqual(constraints.constraint,
+                        self.previousConstraints)) {
                     return $q.when();
-                } else {
-                    self.previousConstraints = constraints.constraint;
                 }
+                self.previousConstraints = _.clone(constraints.constraint);
+
                 self.isBusy = true;
-                $log.debug(self.name, 'Update', constraints);
+
                 return getState(constraints).then(function(state) {
-                    $log.debug(self.name, 'Get state', state);
+                    if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
+                        return $q.reject('Facet state changed');
+                    }
                     self.state = state;
                     self.isBusy = false;
-                    return state;
+
+                    return self.state;
                 });
             }
 

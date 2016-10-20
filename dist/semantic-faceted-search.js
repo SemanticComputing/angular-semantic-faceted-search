@@ -681,19 +681,22 @@
                 if (!self.isEnabled()) {
                     return $q.when();
                 }
-                if (self.previousConstraints &&
-                    _.isEqual(constraints.constraint, self.previousConstraints)) {
+                if (self.previousConstraints && _.isEqual(constraints.constraint,
+                        self.previousConstraints)) {
                     return $q.when();
-                } else {
-                    self.previousConstraints = constraints.constraint;
                 }
+                self.previousConstraints = _.clone(constraints.constraint);
+
                 self.isBusy = true;
-                $log.debug(self.name, 'Update', constraints);
+
                 return getState(constraints).then(function(state) {
-                    $log.debug(self.name, 'Get state', state);
+                    if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
+                        return $q.reject('Facet state changed');
+                    }
                     self.state = state;
                     self.isBusy = false;
-                    return state;
+
+                    return self.state;
                 });
             }
 
@@ -884,7 +887,7 @@
 
         function listen() {
             vm.listener = $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
-                $log.debug(vm.facet.name, 'Receive constraints', cons);
+                $log.debug(vm.facet.name, 'Receive constraints', _.cloneDeep(cons));
                 update(cons);
             });
         }
@@ -899,10 +902,17 @@
         }
 
         function emitChange() {
+            var val = vm.facet.getSelectedValue();
+            if (vm.previousVal && _.isEqual(vm.previousVal, val)) {
+                $log.debug(vm.facet.name, 'Skip emit');
+                vm.isLoadingFacet = false;
+                return;
+            }
+            vm.previousVal = _.clone(val);
             var args = {
                 id: vm.facet.facetUri,
                 constraint: vm.facet.getConstraint(),
-                value: vm.facet.getSelectedValue()
+                value: val
             };
             $log.debug(vm.facet.name, 'Emit', args);
             $scope.$emit(EVENT_FACET_CHANGED, args);
