@@ -6,7 +6,7 @@
 
     /* ngInject */
     function BasicFacetController($scope, $log, $q, _, BasicFacet, EVENT_FACET_CONSTRAINTS,
-            EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS) {
+            EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS) {
         var vm = this;
 
         vm.isDisabled = isDisabled;
@@ -19,68 +19,79 @@
 
         vm.facet;
 
-        vm.previousConstraints;
+        vm.listener = function() { };
 
         init();
 
         function init() {
-            vm.facet = new BasicFacet($scope.options);
-            $log.log('Init', vm.facet.name);
-            $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
-                $log.log('Receive constraints', vm.facet.name, cons);
-                update(cons);
+            var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
+                $log.debug($scope.options.name, 'Init');
+                var initial = _.cloneDeep($scope.options);
+                initial.initialConstraints = cons;
+                vm.facet = new BasicFacet(initial);
+                if (vm.facet.isEnabled()) {
+                    listen();
+                    changed();
+                }
+                // Unregister initListener
+                initListener();
             });
             $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
         }
 
-        function update(constraints) {
-            $log.log('Controller update', vm.facet.name, vm.previousConstraints, constraints);
-            if (_.isEqual(constraints, vm.previousConstraints) && vm.isLoadingFacets) {
-                return $q.when();
-            } else {
-                vm.previousConstraints = _.clone(constraints);
-            }
+        function listen() {
+            vm.listener = $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
+                $log.debug(vm.facet.name, 'Receive constraints', cons);
+                update(cons);
+            });
+        }
 
-            vm.isLoadingFacets = true;
+        function update(constraints) {
+            vm.isLoadingFacet = true;
             return vm.facet.update(constraints).then(handleUpdateSuccess, handleError);
         }
 
         function isDisabled() {
-            return vm.isLoadingFacets;
+            return vm.isLoadingFacet || vm.facet.isLoading();
         }
 
         function emitChange() {
-            var args = { id: vm.facet.facetUri, constraint: vm.facet.getConstraint() };
-            $log.log('Emit', args);
+            var args = {
+                id: vm.facet.facetUri,
+                constraint: vm.facet.getConstraint(),
+                value: vm.facet.getSelectedValue()
+            };
+            $log.debug(vm.facet.name, 'Emit', args);
             $scope.$emit(EVENT_FACET_CHANGED, args);
         }
 
         function changed() {
-            vm.isLoadingFacets = true;
+            $log.debug(vm.facet.name, 'Changed');
+            vm.isLoadingFacet = true;
             emitChange();
         }
 
         function enableFacet() {
-            vm.isLoadingFacets = true;
+            listen();
+            vm.isLoadingFacet = true;
             vm.facet.enable();
             emitChange();
         }
 
         function disableFacet() {
-            vm.isLoadingFacets = true;
+            vm.listener();
             vm.facet.disable();
             emitChange();
         }
 
         function handleUpdateSuccess() {
-            $log.log('Success');
-            vm.isLoadingFacets = false;
+            $log.debug(vm.facet.name, 'Success');
+            vm.isLoadingFacet = false;
         }
 
         function handleError(error) {
-            $log.log('Fail');
-            vm.isLoadingFacets = false;
-            $log.log(error);
+            vm.isLoadingFacet = false;
+            $log.error(vm.facet.facetUri, error);
             vm.error = error;
         }
 

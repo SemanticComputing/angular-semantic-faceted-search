@@ -22,8 +22,8 @@
     padding-left: 0;
   }
 </style>
-<div class="facets">
-  <span us-spinner="{radius:30, width:8, length: 40}" ng-if="vm.isLoadingFacets"></span>
+<div class="facet-wrapper">
+  <span us-spinner="{radius:30, width:8, length: 40}" ng-if="vm.isLoadingFacet"></span>
   <div class="facet" ng-if=vm.facet.isEnabled()>
     <div class="well well-sm">
       <div class="row">
