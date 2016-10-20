@@ -7,6 +7,7 @@
     angular.module('seco.facetedSearch', ['sparql', 'ui.bootstrap', 'angularSpinner'])
     .constant('_', _) // eslint-disable-line no-undef
     .constant('EVENT_REQUEST_CONSTRAINTS', 'sf-request-constraints')
+    .constant('EVENT_INITIAL_CONSTRAINTS', 'sf-initial-constraints')
     .constant('EVENT_FACET_CHANGED', 'sf-facet-changed')
     .constant('EVENT_FACET_CONSTRAINTS', 'sf-facet-constraints')
     .constant('NO_SELECTION_STRING', '-- No Selection --');
@@ -89,7 +90,7 @@
     .factory('FacetResultHandler', FacetResultHandler);
 
     /* @ngInject */
-    function FacetResultHandler(DEFAULT_PAGES_PER_QUERY, DEFAULT_RESULTS_PER_PAGE,
+    function FacetResultHandler(_, DEFAULT_PAGES_PER_QUERY, DEFAULT_RESULTS_PER_PAGE,
             AdvancedSparqlService, facetSelectionFormatter, objectMapperService,
             QueryBuilderService) {
 
@@ -124,8 +125,9 @@
             // Get results based on the facet selections and the query template.
             // Use paging if defined in the options.
             function getResults(facetSelections, orderBy) {
+                var constraints = facetSelections.constraint.join(' ');
                 var resultSet = resultSetTemplate.replace(/<FACET_SELECTIONS>/g,
-                        facetSelections.join(' '));
+                        constraints);
                 var qry = qryBuilder.buildQuery(options.queryTemplate, resultSet, orderBy);
 
                 if (options.paging) {
@@ -418,7 +420,7 @@
 
     /* ngInject */
     function Facets($log, $rootScope, $location, $q, _, EVENT_FACET_CONSTRAINTS,
-                EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS) {
+                EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS) {
 
         return FacetHandler;
 
@@ -434,6 +436,8 @@
             init();
 
             function init() {
+                self.state = { facets: {} };
+
                 var defaultConfig = {
                     preferredLang: 'en'
                 };
@@ -441,43 +445,69 @@
                 self.config = angular.extend({}, defaultConfig, config);
 
                 self.changeListener = $rootScope.$on(EVENT_FACET_CHANGED, update);
-                self.initListener = $rootScope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastConstraints);
+                self.initListener = $rootScope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastInitial);
 
-                self.constraints = getFacetValuesFromUrlParams();
-                if (self.config.constraint && !self.constraints.default) {
-                    self.constraints.default = getInitialConstraints(self.config);
+                self.state.facets = getFacetValuesFromUrlParams();
+                if (self.config.constraint) {
+                    self.state.default = getInitialConstraints(self.config);
                 }
-                $log.log('Initial constraints', self.constraints);
+                $log.log('Initial state', self.state);
             }
 
 
-            // Update constraints, and broadcast the to listening facets.
+            // Update state, and broadcast them to listening facets.
             function update(event, constraint) {
-                self.constraints[constraint.id] = constraint.constraint;
-                broadCastConstraints();
+                self.state.facets[constraint.id] = constraint;
+                broadCastConstraints(EVENT_FACET_CONSTRAINTS);
             }
 
-            function broadCastConstraints() {
-                $location.search(self.constraints);
-                var cons = _.values(_(self.constraints).values().compact().value());
-                $log.log('Broadcast', cons);
-                $rootScope.$broadcast(EVENT_FACET_CONSTRAINTS, cons);
+            function broadCastInitial() {
+                $log.debug('Broadcast initial');
+                broadCastConstraints(EVENT_INITIAL_CONSTRAINTS);
+            }
+
+            function broadCastConstraints(event) {
+                updateUrlParams();
+                var constraint = getConstraint();
+                constraint.push(self.state.default);
+                var data = { facets: self.state.facets, constraint: constraint };
+                $log.log('Broadcast', data);
+                $rootScope.$broadcast(event, data);
             }
 
             /* Private functions */
+
+            function getConstraint() {
+                return _(self.state.facets).values().map('constraint').compact().value();
+            }
+
+            function updateUrlParams() {
+                var params = {};
+                _(self.state.facets).forOwn(function(val, id) {
+                    if (val && val.value) {
+                        params[id] = angular.toJson({ value: val.value, constraint: val.constraint });
+                    }
+                });
+                $location.search(params);
+            }
 
             /* Initialization */
 
             function getFacetValuesFromUrlParams() {
                 $log.log('URL params', $location.search());
-                return $location.search() || {};
+                var params = $location.search() || {};
+                var res = {};
+                _.forOwn(params, function(val, id) {
+                    res[id] = angular.fromJson(val);
+                });
+                return res;
             }
 
             // Combine the possible RDF class and constraint definitions in the config.
             function getInitialConstraints(config) {
-                var constraints = config.rdfClass ? ' ?s a ' + config.rdfClass + ' . ' : '';
-                constraints = constraints + (config.constraint || '');
-                return constraints;
+                var state = config.rdfClass ? ' ?s a ' + config.rdfClass + ' . ' : '';
+                state = state + (config.constraint || '');
+                return state;
             }
         }
     }
@@ -537,6 +567,7 @@
             self.enable = enable;
             self.isLoading = isLoading;
             self.isEnabled = isEnabled;
+            self.getSelectedValue = getSelectedValue;
 
             // Properties
             self.selectedValue = {};
@@ -546,8 +577,9 @@
             self.facetUri;
             self.endpoint;
 
+            self.previousConstraints;
+
             self.getConstraint = getTriplePattern;
-            self.constraintFromUrlParam = constraintFromUrlParam;
 
             init();
 
@@ -564,6 +596,11 @@
                 self.predicate = options.predicate;
                 self.endpoint = new SparqlService(self.config.endpointUrl);
                 self._isEnabled = self.config.enabled;
+
+                var constVal = self.config.initialConstraints.facets[self.facetUri];
+                if (constVal && constVal.value) {
+                    self.selectedValue = { value: constVal.value };
+                }
             }
 
             var labelPart =
@@ -641,14 +678,33 @@
             /* Public API functions */
 
             function update(constraints) {
+                if (!self.isEnabled()) {
+                    return $q.when();
+                }
+                if (self.previousConstraints &&
+                    _.isEqual(constraints.constraint, self.previousConstraints)) {
+                    return $q.when();
+                } else {
+                    self.previousConstraints = constraints.constraint;
+                }
                 self.isBusy = true;
-                $log.log('Update', constraints);
+                $log.debug(self.name, 'Update', constraints);
                 return getState(constraints).then(function(state) {
+                    $log.debug(self.name, 'Get state', state);
                     self.state = state;
                     self.isBusy = false;
-                    $log.log('Get state', state);
                     return state;
                 });
+            }
+
+            function getSelectedValue() {
+                var val;
+                if (_.isArray(self.selectedValue)) {
+                    val = _.map(self.selectedValue, 'value');
+                } else {
+                    val = self.selectedValue.value;
+                }
+                return val;
             }
 
             function isEnabled() {
@@ -672,32 +728,29 @@
 
             // Build a query with the facet selection and use it to get the facet state.
             function getState(constraints) {
-                if (!self.isEnabled()) {
-                    return;
-                }
-                var query = buildQuery(constraints);
+                var query = buildQuery(constraints.constraint);
 
                 var promise = self.endpoint.getObjects(query);
                 return promise.then(function(results) {
                     var res = facetMapperService.makeObjectList(results);
-                    $log.log('Results', res);
                     return _.first(res);
                 });
             }
 
             function getTriplePattern() {
-                $log.log('Selected value', self.selectedValue);
-                if (!self.selectedValue.value) {
+                var result = '';
+                if (!self.selectedValue) {
                     return;
                 }
-                var result = '';
                 if (_.isArray(self.selectedValue)) {
                     self.selectedValue.forEach(function(value) {
                         result = result + ' ?s ' + self.predicate + ' ' + value.value + ' . ';
                     });
                     return result;
                 }
-                return ' ?s ' + self.predicate + ' ' + self.selectedValue.value + ' . ';
+                if (self.selectedValue.value) {
+                    return ' ?s ' + self.predicate + ' ' + self.selectedValue.value + ' . ';
+                }
             }
 
             // Build the facet query
@@ -705,15 +758,15 @@
                 constraints = constraints || [];
                 var query = queryTemplate
                     .replace(/<OTHER_SERVICES>/g, buildServiceUnions(self.config.services))
-                    .replace(/<DESELECTION>/g, buildDeselectUnion(constraints, self.getConstraint()))
+                    .replace(/<DESELECTION>/g, buildDeselectUnion(constraints))
                     .replace(/<SELECTIONS>/g, constraints.join(' '))
                     .replace(/<PREF_LANG>/g, self.config.preferredLang);
 
                 return query;
             }
 
-            function buildDeselectUnion(constraints, ownConstraint) {
-                $log.log('Deselection', constraints, ownConstraint);
+            function buildDeselectUnion(constraints) {
+                var ownConstraint = self.getConstraint();
                 var deselections = _.reject(constraints, function(v) { return v === ownConstraint; });
                 return deselectUnionTemplate.replace('<SELECTIONS>', deselections.join(' '));
             }
@@ -762,12 +815,6 @@
                 return template;
             }
 
-
-            function constraintFromUrlParam(val) {
-                var vals = _(val).map('value').compact().value();
-                return vals;
-            }
-
             /* Utilities */
 
             // Check if the first facet value is the same value as the second.
@@ -802,7 +849,7 @@
 
     /* ngInject */
     function BasicFacetController($scope, $log, $q, _, BasicFacet, EVENT_FACET_CONSTRAINTS,
-            EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS) {
+            EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS) {
         var vm = this;
 
         vm.isDisabled = isDisabled;
@@ -815,68 +862,79 @@
 
         vm.facet;
 
-        vm.previousConstraints;
+        vm.listener = function() { };
 
         init();
 
         function init() {
-            vm.facet = new BasicFacet($scope.options);
-            $log.log('Init', vm.facet.name);
-            $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
-                $log.log('Receive constraints', vm.facet.name, cons);
-                update(cons);
+            var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
+                $log.debug($scope.options.name, 'Init');
+                var initial = _.cloneDeep($scope.options);
+                initial.initialConstraints = cons;
+                vm.facet = new BasicFacet(initial);
+                if (vm.facet.isEnabled()) {
+                    listen();
+                    changed();
+                }
+                // Unregister initListener
+                initListener();
             });
             $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
         }
 
-        function update(constraints) {
-            $log.log('Controller update', vm.facet.name, vm.previousConstraints, constraints);
-            if (_.isEqual(constraints, vm.previousConstraints) && vm.isLoadingFacets) {
-                return $q.when();
-            } else {
-                vm.previousConstraints = _.clone(constraints);
-            }
+        function listen() {
+            vm.listener = $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
+                $log.debug(vm.facet.name, 'Receive constraints', cons);
+                update(cons);
+            });
+        }
 
-            vm.isLoadingFacets = true;
+        function update(constraints) {
+            vm.isLoadingFacet = true;
             return vm.facet.update(constraints).then(handleUpdateSuccess, handleError);
         }
 
         function isDisabled() {
-            return vm.isLoadingFacets;
+            return vm.isLoadingFacet || vm.facet.isLoading();
         }
 
         function emitChange() {
-            var args = { id: vm.facet.facetUri, constraint: vm.facet.getConstraint() };
-            $log.log('Emit', args);
+            var args = {
+                id: vm.facet.facetUri,
+                constraint: vm.facet.getConstraint(),
+                value: vm.facet.getSelectedValue()
+            };
+            $log.debug(vm.facet.name, 'Emit', args);
             $scope.$emit(EVENT_FACET_CHANGED, args);
         }
 
         function changed() {
-            vm.isLoadingFacets = true;
+            $log.debug(vm.facet.name, 'Changed');
+            vm.isLoadingFacet = true;
             emitChange();
         }
 
         function enableFacet() {
-            vm.isLoadingFacets = true;
+            listen();
+            vm.isLoadingFacet = true;
             vm.facet.enable();
             emitChange();
         }
 
         function disableFacet() {
-            vm.isLoadingFacets = true;
+            vm.listener();
             vm.facet.disable();
             emitChange();
         }
 
         function handleUpdateSuccess() {
-            $log.log('Success');
-            vm.isLoadingFacets = false;
+            $log.debug(vm.facet.name, 'Success');
+            vm.isLoadingFacet = false;
         }
 
         function handleError(error) {
-            $log.log('Fail');
-            vm.isLoadingFacets = false;
-            $log.log(error);
+            vm.isLoadingFacet = false;
+            $log.error(vm.facet.facetUri, error);
             vm.error = error;
         }
 
@@ -937,8 +995,8 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "    padding-left: 0;\n" +
     "  }\n" +
     "</style>\n" +
-    "<div class=\"facets\">\n" +
-    "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoadingFacets\"></span>\n" +
+    "<div class=\"facet-wrapper\">\n" +
+    "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoadingFacet\"></span>\n" +
     "  <div class=\"facet\" ng-if=vm.facet.isEnabled()>\n" +
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +

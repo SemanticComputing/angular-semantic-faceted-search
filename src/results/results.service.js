@@ -11,7 +11,7 @@
     .factory('FacetResultHandler', FacetResultHandler);
 
     /* @ngInject */
-    function FacetResultHandler(DEFAULT_PAGES_PER_QUERY, DEFAULT_RESULTS_PER_PAGE,
+    function FacetResultHandler(_, DEFAULT_PAGES_PER_QUERY, DEFAULT_RESULTS_PER_PAGE,
             AdvancedSparqlService, facetSelectionFormatter, objectMapperService,
             QueryBuilderService) {
 
@@ -46,8 +46,9 @@
             // Get results based on the facet selections and the query template.
             // Use paging if defined in the options.
             function getResults(facetSelections, orderBy) {
+                var constraints = facetSelections.constraint.join(' ');
                 var resultSet = resultSetTemplate.replace(/<FACET_SELECTIONS>/g,
-                        facetSelections.join(' '));
+                        constraints);
                 var qry = qryBuilder.buildQuery(options.queryTemplate, resultSet, orderBy);
 
                 if (options.paging) {

@@ -24,6 +24,7 @@
             self.enable = enable;
             self.isLoading = isLoading;
             self.isEnabled = isEnabled;
+            self.getSelectedValue = getSelectedValue;
 
             // Properties
             self.selectedValue = {};
@@ -33,8 +34,9 @@
             self.facetUri;
             self.endpoint;
 
+            self.previousConstraints;
+
             self.getConstraint = getTriplePattern;
-            self.constraintFromUrlParam = constraintFromUrlParam;
 
             init();
 
@@ -51,6 +53,11 @@
                 self.predicate = options.predicate;
                 self.endpoint = new SparqlService(self.config.endpointUrl);
                 self._isEnabled = self.config.enabled;
+
+                var constVal = self.config.initialConstraints.facets[self.facetUri];
+                if (constVal && constVal.value) {
+                    self.selectedValue = { value: constVal.value };
+                }
             }
 
             var labelPart =
@@ -128,14 +135,33 @@
             /* Public API functions */
 
             function update(constraints) {
+                if (!self.isEnabled()) {
+                    return $q.when();
+                }
+                if (self.previousConstraints &&
+                    _.isEqual(constraints.constraint, self.previousConstraints)) {
+                    return $q.when();
+                } else {
+                    self.previousConstraints = constraints.constraint;
+                }
                 self.isBusy = true;
-                $log.log('Update', constraints);
+                $log.debug(self.name, 'Update', constraints);
                 return getState(constraints).then(function(state) {
+                    $log.debug(self.name, 'Get state', state);
                     self.state = state;
                     self.isBusy = false;
-                    $log.log('Get state', state);
                     return state;
                 });
+            }
+
+            function getSelectedValue() {
+                var val;
+                if (_.isArray(self.selectedValue)) {
+                    val = _.map(self.selectedValue, 'value');
+                } else {
+                    val = self.selectedValue.value;
+                }
+                return val;
             }
 
             function isEnabled() {
@@ -159,32 +185,29 @@
 
             // Build a query with the facet selection and use it to get the facet state.
             function getState(constraints) {
-                if (!self.isEnabled()) {
-                    return;
-                }
-                var query = buildQuery(constraints);
+                var query = buildQuery(constraints.constraint);
 
                 var promise = self.endpoint.getObjects(query);
                 return promise.then(function(results) {
                     var res = facetMapperService.makeObjectList(results);
-                    $log.log('Results', res);
                     return _.first(res);
                 });
             }
 
             function getTriplePattern() {
-                $log.log('Selected value', self.selectedValue);
-                if (!self.selectedValue.value) {
+                var result = '';
+                if (!self.selectedValue) {
                     return;
                 }
-                var result = '';
                 if (_.isArray(self.selectedValue)) {
                     self.selectedValue.forEach(function(value) {
                         result = result + ' ?s ' + self.predicate + ' ' + value.value + ' . ';
                     });
                     return result;
                 }
-                return ' ?s ' + self.predicate + ' ' + self.selectedValue.value + ' . ';
+                if (self.selectedValue.value) {
+                    return ' ?s ' + self.predicate + ' ' + self.selectedValue.value + ' . ';
+                }
             }
 
             // Build the facet query
@@ -192,15 +215,15 @@
                 constraints = constraints || [];
                 var query = queryTemplate
                     .replace(/<OTHER_SERVICES>/g, buildServiceUnions(self.config.services))
-                    .replace(/<DESELECTION>/g, buildDeselectUnion(constraints, self.getConstraint()))
+                    .replace(/<DESELECTION>/g, buildDeselectUnion(constraints))
                     .replace(/<SELECTIONS>/g, constraints.join(' '))
                     .replace(/<PREF_LANG>/g, self.config.preferredLang);
 
                 return query;
             }
 
-            function buildDeselectUnion(constraints, ownConstraint) {
-                $log.log('Deselection', constraints, ownConstraint);
+            function buildDeselectUnion(constraints) {
+                var ownConstraint = self.getConstraint();
                 var deselections = _.reject(constraints, function(v) { return v === ownConstraint; });
                 return deselectUnionTemplate.replace('<SELECTIONS>', deselections.join(' '));
             }
@@ -247,12 +270,6 @@
                     template = template.replace(s.placeHolder, s.value);
                 });
                 return template;
-            }
-
-
-            function constraintFromUrlParam(val) {
-                var vals = _(val).map('value').compact().value();
-                return vals;
             }
 
             /* Utilities */
