@@ -992,10 +992,9 @@
 
                 var constVal = options.initialConstraints.facets[self.getFacetUri()];
                 if (constVal && constVal.value) {
+                    self._isEnabled = true;
                     self.selectedValue = { value: constVal.value };
                 }
-
-                $log.warn(self.getName(), _.cloneDeep(self.getSelectedValue()));
             }
 
             /* Public API functions */
@@ -1098,7 +1097,6 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
-    "          {{ vm.getFacet().selectedValue }}\n" +
     "          <h5 class=\"facet-name pull-left\">{{ vm.getFacetName() }}</h5>\n" +
     "          <button\n" +
     "            ng-disabled=\"vm.isLoading()\"\n" +
