@@ -74,7 +74,7 @@
                 }
                 self.previousVal = _.clone(val);
                 var args = {
-                    id: self.facet.facetUri,
+                    id: self.facet.getFacetUri(),
                     constraint: self.facet.getConstraint(),
                     value: val
                 };
