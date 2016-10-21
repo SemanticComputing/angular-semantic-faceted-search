@@ -25,6 +25,7 @@
             /* Implementation */
 
             self.previousConstraints;
+            self.state = {};
 
             self.labelPart =
             ' { ' +
@@ -124,7 +125,6 @@
                 self.buildQuery = facet.buildQueryTemplate || buildQuery;
                 self.buildDeselectUnion = facet.buildDeselectUnion || buildDeselectUnion;
                 self.buildServiceUnions = facet.buildServiceUnions || buildServiceUnions;
-                self.getState = facet.getState || getState;
                 self.getTriplePattern = facet.getTriplePattern || getTriplePattern;
                 self.getConstraint = facet.getConstraint || getConstraint;
                 self.getPredicate = facet.getPredicate || getPredicate;
@@ -133,6 +133,10 @@
 
                 self.setBusy = facet.setBusy || setBusy;
                 self.isBusy = facet.isBusy || isBusy;
+
+                self.setState = facet.setState || setState;
+                self.getState = facet.getState || getState;
+                self.fetchState = facet.fetchState || fetchState;
 
                 self.queryTemplate = self.buildQueryTemplate(self.getQueryTemplate());
                 self.deselectUnionTemplate = self.buildQueryTemplate(self.getDeselectUnionTemplate());
@@ -152,16 +156,23 @@
 
                 self.setBusy(true);
 
-                return self.getState(constraints).then(function(state) {
+                return self.fetchState(constraints).then(function(state) {
                     if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
                         return $q.reject('Facet state changed');
                     }
-                    self.facet.state = state;
+                    self.setState(state);
                     self.setBusy(false);
-                    self.facet.isBusy = false;
 
                     return state;
                 });
+            }
+
+            function setState(state) {
+                self.state = state;
+            }
+
+            function getState() {
+                return self.state;
             }
 
             function isBusy() {
@@ -173,7 +184,7 @@
             }
 
             // Build a query with the facet selection and use it to get the facet state.
-            function getState(constraints) {
+            function fetchState(constraints) {
                 var query = self.buildQuery(constraints.constraint);
 
                 return self.endpoint.getObjects(query).then(function(results) {
@@ -187,7 +198,6 @@
             }
 
             function getConstraint() {
-                $log.warn(self.getName(), 'Get constraint', self.getSelectedValue());
                 if (!self.getSelectedValue()) {
                     return;
                 }

@@ -568,6 +568,7 @@
             /* Implementation */
 
             self.previousConstraints;
+            self.state = {};
 
             self.labelPart =
             ' { ' +
@@ -667,7 +668,6 @@
                 self.buildQuery = facet.buildQueryTemplate || buildQuery;
                 self.buildDeselectUnion = facet.buildDeselectUnion || buildDeselectUnion;
                 self.buildServiceUnions = facet.buildServiceUnions || buildServiceUnions;
-                self.getState = facet.getState || getState;
                 self.getTriplePattern = facet.getTriplePattern || getTriplePattern;
                 self.getConstraint = facet.getConstraint || getConstraint;
                 self.getPredicate = facet.getPredicate || getPredicate;
@@ -676,6 +676,10 @@
 
                 self.setBusy = facet.setBusy || setBusy;
                 self.isBusy = facet.isBusy || isBusy;
+
+                self.setState = facet.setState || setState;
+                self.getState = facet.getState || getState;
+                self.fetchState = facet.fetchState || fetchState;
 
                 self.queryTemplate = self.buildQueryTemplate(self.getQueryTemplate());
                 self.deselectUnionTemplate = self.buildQueryTemplate(self.getDeselectUnionTemplate());
@@ -695,16 +699,23 @@
 
                 self.setBusy(true);
 
-                return self.getState(constraints).then(function(state) {
+                return self.fetchState(constraints).then(function(state) {
                     if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
                         return $q.reject('Facet state changed');
                     }
-                    self.facet.state = state;
+                    self.setState(state);
                     self.setBusy(false);
-                    self.facet.isBusy = false;
 
                     return state;
                 });
+            }
+
+            function setState(state) {
+                self.state = state;
+            }
+
+            function getState() {
+                return self.state;
             }
 
             function isBusy() {
@@ -716,7 +727,7 @@
             }
 
             // Build a query with the facet selection and use it to get the facet state.
-            function getState(constraints) {
+            function fetchState(constraints) {
                 var query = self.buildQuery(constraints.constraint);
 
                 return self.endpoint.getObjects(query).then(function(results) {
@@ -730,7 +741,6 @@
             }
 
             function getConstraint() {
-                $log.warn(self.getName(), 'Get constraint', self.getSelectedValue());
                 if (!self.getSelectedValue()) {
                     return;
                 }
@@ -868,9 +878,7 @@
                     self.selectedValue = { value: constVal.value };
                 }
 
-                self.super = new AbstractFacet(self, options);
-
-                self = angular.extend(self, self.super);
+                self = angular.extend(self, new AbstractFacet(self, options));
             }
 
             /* Public API functions */
@@ -899,7 +907,7 @@
             }
 
             function isLoading() {
-                return self.super.isBusy();
+                return self.isBusy();
             }
         }
     }
@@ -909,122 +917,133 @@
     'use strict';
 
     angular.module('seco.facetedSearch')
-
-        .factory('BasicFacetService', BasicFacetService);
+    .controller('AbstractFacetController', AbstractFacetController);
 
     /* @ngInject */
-    function BasicFacetService($log, $q, _, EVENT_FACET_CONSTRAINTS,
-            EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS) {
+    function AbstractFacetController($scope, $log, $q, _, EVENT_FACET_CONSTRAINTS,
+            EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS,
+            FacetImpl) {
 
-        return BasicFacetServiceConstructor;
+        var vm = this;
 
-        function BasicFacetServiceConstructor(scope, Facet) {
-            var self = this;
+        vm.isLoading = isLoading;
+        vm.changed = changed;
 
-            self.isDisabled = isDisabled;
-            self.changed = changed;
+        vm.disableFacet = disableFacet;
+        vm.enableFacet = enableFacet;
 
-            self.disableFacet = disableFacet;
-            self.enableFacet = enableFacet;
-            self.getFacet = getFacet;
+        vm.getFacet = getFacet;
+        vm.getFacetName = getFacetName;
+        vm.getFacetValues = getFacetValues;
+        vm.isFacetEnabled = isFacetEnabled;
 
-            self.getFacetSize = getFacetSize;
+        vm.getFacetSize = getFacetSize;
 
-            self.facet;
+        vm.listener = function() { };
 
-            self.listener = function() { };
+        init(FacetImpl);
 
-            init();
-
-            function init() {
-                var initListener = scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                    $log.debug(scope.options.name, 'Init');
-                    var initial = _.cloneDeep(scope.options);
-                    initial.initialConstraints = cons;
-                    self.facet = new Facet(initial);
-                    if (self.facet.isEnabled()) {
-                        listen();
-                        changed();
-                    }
-                    // Unregister initListener
-                    initListener();
-                });
-                scope.$emit(EVENT_REQUEST_CONSTRAINTS);
-            }
-
-            function getFacet() {
-                return self.facet;
-            }
-
-            function listen() {
-                self.listener = scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
-                    $log.debug(self.facet.name, 'Receive constraints', _.cloneDeep(cons));
+        function init(Facet) {
+            var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
+                $log.debug($scope.options.name, 'Init');
+                var initial = _.cloneDeep($scope.options);
+                initial.initialConstraints = cons;
+                vm.facet = new Facet(initial);
+                if (vm.facet.isEnabled()) {
+                    listen();
                     update(cons);
-                });
-            }
-
-            function update(constraints) {
-                self.isLoadingFacet = true;
-                return self.facet.update(constraints).then(handleUpdateSuccess, handleError);
-            }
-
-            function isDisabled() {
-                return self.isLoadingFacet || self.facet.isLoading();
-            }
-
-            function emitChange() {
-                var val = self.facet.getSelectedValue();
-                if (self.previousVal && _.isEqual(self.previousVal, val)) {
-                    $log.debug(self.facet.name, 'Skip emit');
-                    self.isLoadingFacet = false;
-                    return;
                 }
-                self.previousVal = _.clone(val);
-                var args = {
-                    id: self.facet.getFacetUri(),
-                    constraint: self.facet.getConstraint(),
-                    value: val
-                };
-                $log.debug(self.facet.name, 'Emit', args);
-                scope.$emit(EVENT_FACET_CHANGED, args);
-            }
+                // Unregister initListener
+                initListener();
+            });
+            $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
+        }
 
-            function changed() {
-                $log.debug(self.facet.name, 'Changed');
-                self.isLoadingFacet = true;
-                emitChange();
-            }
+        function getFacet() {
+            return vm.facet;
+        }
 
-            function enableFacet() {
-                listen();
-                self.isLoadingFacet = true;
-                self.facet.enable();
-                emitChange();
-            }
+        function getFacetName() {
+            return vm.getFacet().getName();
+        }
 
-            function disableFacet() {
-                self.listener();
-                self.facet.disable();
-                emitChange();
-            }
+        function getFacetValues() {
+            return vm.getFacet().getState().values;
+        }
 
-            function handleUpdateSuccess() {
-                $log.debug(self.facet.name, 'Success');
-                self.isLoadingFacet = false;
-            }
+        function isFacetEnabled() {
+            return vm.getFacet().isEnabled();
+        }
 
-            function handleError(error) {
-                self.isLoadingFacet = false;
-                $log.error(self.facet.facetUri, error);
-                self.error = error;
-            }
+        function listen() {
+            vm.listener = $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
+                $log.debug(vm.facet.name, 'Receive constraints', _.cloneDeep(cons));
+                update(cons);
+            });
+        }
 
-            function getFacetSize( facetStates ) {
-                if (facetStates) {
-                    return Math.min(facetStates.length + 2, 10).toString();
-                }
-                return '10';
+        function update(constraints) {
+            vm.isLoadingFacet = true;
+            return vm.facet.update(constraints).then(handleUpdateSuccess, handleError);
+        }
+
+        function isLoading() {
+            return vm.isLoadingFacet || vm.getFacet().isLoading();
+        }
+
+        function emitChange(forced) {
+            var val = vm.facet.getSelectedValue();
+            if (!forced && _.isEqual(vm.previousVal, val)) {
+                $log.warn(vm.facet.name, 'Skip emit');
+                vm.isLoadingFacet = false;
+                return;
             }
+            vm.previousVal = _.clone(val);
+            var args = {
+                id: vm.facet.getFacetUri(),
+                constraint: vm.facet.getConstraint(),
+                value: val
+            };
+            $log.log(vm.facet.name, 'Emit', args);
+            $scope.$emit(EVENT_FACET_CHANGED, args);
+        }
+
+        function changed() {
+            $log.debug(vm.facet.name, 'Changed');
+            vm.isLoadingFacet = true;
+            emitChange();
+        }
+
+        function enableFacet() {
+            listen();
+            vm.isLoadingFacet = true;
+            vm.facet.enable();
+            emitChange(true);
+        }
+
+        function disableFacet() {
+            vm.listener();
+            vm.facet.disable();
+            var forced = vm.facet.getSelectedValue() ? true : false;
+            emitChange(forced);
+        }
+
+        function handleUpdateSuccess() {
+            $log.debug(vm.facet.name, 'Success');
+            vm.isLoadingFacet = false;
+        }
+
+        function handleError(error) {
+            vm.isLoadingFacet = false;
+            $log.error(vm.facet.facetUri, error);
+            vm.error = error;
+        }
+
+        function getFacetSize(facetStates) {
+            if (facetStates) {
+                return Math.min(facetStates.length + 2, 10).toString();
+            }
+            return '10';
         }
     }
 })();
@@ -1036,17 +1055,10 @@
     .controller('BasicFacetController', BasicFacetController);
 
     /* ngInject */
-    function BasicFacetController($scope, $log, $q, _, BasicFacet, BasicFacetService) {
-
+    function BasicFacetController($scope, $controller, $log, $q, _, BasicFacet) {
         var vm = this;
-        var service = new BasicFacetService($scope, BasicFacet);
-
-        vm.isDisabled = service.isDisabled;
-        vm.changed = service.changed;
-        vm.enableFacet = service.enableFacet;
-        vm.disableFacet = service.disableFacet;
-        vm.getFacetSize = service.getFacetSize;
-        vm.getFacet = service.getFacet;
+        var args = { $scope: $scope, FacetImpl: BasicFacet };
+        angular.extend(vm, $controller('AbstractFacetController', args));
     }
 })();
 
@@ -1099,15 +1111,15 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "  }\n" +
     "</style>\n" +
     "<div class=\"facet-wrapper\">\n" +
-    "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoadingFacet\"></span>\n" +
-    "  <div class=\"facet\" ng-if=vm.getFacet().isEnabled()>\n" +
+    "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoading()\"></span>\n" +
+    "  <div class=\"facet\" ng-if=vm.isFacetEnabled()>\n" +
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
-    "          <h5 class=\"facet-name pull-left\">{{ vm.getFacet().name }}</h5>\n" +
+    "          <h5 class=\"facet-name pull-left\">{{ vm.getFacetName() }}</h5>\n" +
     "          <button\n" +
-    "            ng-disabled=\"vm.isDisabled()\"\n" +
-    "            ng-click=\"vm.disableFacet(id)\"\n" +
+    "            ng-disabled=\"vm.isLoading()\"\n" +
+    "            ng-click=\"vm.disableFacet()\"\n" +
     "            class=\"btn btn-danger btn-xs pull-right glyphicon glyphicon-remove\">\n" +
     "          </button>\n" +
     "        </div>\n" +
@@ -1115,34 +1127,34 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "      <div class=\"facet-input-container\">\n" +
     "        <div>\n" +
     "          <input\n" +
-    "            ng-disabled=\"vm.isDisabled()\"\n" +
+    "            ng-disabled=\"vm.isLoading()\"\n" +
     "            type=\"text\"\n" +
     "            class=\"form-control\"\n" +
     "            ng-model=\"textFilter\" />\n" +
     "          <select\n" +
     "            ng-change=\"vm.changed(id)\"\n" +
-    "            ng-disabled=\"vm.isDisabled()\"\n" +
-    "            ng-attr-size=\"{{ vm.getFacetSize(vm.getFacet().state.values) }}\"\n" +
+    "            ng-disabled=\"vm.isLoading()\"\n" +
+    "            ng-attr-size=\"{{ vm.getFacetSize(vm.getFacetValues()) }}\"\n" +
     "            id=\"{{ ::vm.getFacet().name + '_select' }}\"\n" +
     "            class=\"selector form-control\"\n" +
-    "            ng-options=\"value as (value.text + ' (' + value.count + ')') for value in vm.getFacet().state.values | textWithSelection:textFilter:vm.getFacet().selectedValue track by value.value\"\n" +
+    "            ng-options=\"value as (value.text + ' (' + value.count + ')') for value in vm.getFacetValues() | textWithSelection:textFilter:vm.getFacet().selectedValue track by value.value\"\n" +
     "            ng-model=\"vm.getFacet().selectedValue\">\n" +
     "          </select>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +
-    "  <div class=\"facet\" ng-if=!vm.getFacet().isEnabled()>\n" +
+    "  <div class=\"facet\" ng-if=!vm.isFacetEnabled()>\n" +
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12\">\n" +
     "          <div class=\"row vertical-align\">\n" +
     "            <div class=\"col-xs-10 text-left\">\n" +
-    "              <h5 class=\"facet-name\">{{ vm.getFacet().name }}</h5>\n" +
+    "              <h5 class=\"facet-name\">{{ vm.getFacetName() }}</h5>\n" +
     "            </div>\n" +
     "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
     "              <button\n" +
-    "                ng-disabled=\"vm.isDisabled()\"\n" +
+    "                ng-disabled=\"vm.isLoading()\"\n" +
     "                ng-click=\"vm.enableFacet(id)\"\n" +
     "                class=\"facet-enable-btn btn btn-default btn-xs pull-right glyphicon glyphicon-plus\">\n" +
     "              </button>\n" +

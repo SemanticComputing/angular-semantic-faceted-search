@@ -38,9 +38,7 @@
                     self.selectedValue = { value: constVal.value };
                 }
 
-                self.super = new AbstractFacet(self, options);
-
-                self = angular.extend(self, self.super);
+                self = angular.extend(self, new AbstractFacet(self, options));
             }
 
             /* Public API functions */
@@ -69,7 +67,7 @@
             }
 
             function isLoading() {
-                return self.super.isBusy();
+                return self.isBusy();
             }
         }
     }
