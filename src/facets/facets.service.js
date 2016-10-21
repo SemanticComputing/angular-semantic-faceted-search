@@ -9,8 +9,9 @@
     .factory('Facets', Facets);
 
     /* ngInject */
-    function Facets($log, $rootScope, $location, $q, _, EVENT_FACET_CONSTRAINTS,
-                EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS) {
+    function Facets($log, $rootScope, $location, _, facetUrlStateHandlerService,
+            EVENT_FACET_CONSTRAINTS, EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS,
+            EVENT_INITIAL_CONSTRAINTS) {
 
         return FacetHandler;
 
@@ -29,7 +30,8 @@
                 self.state = { facets: {} };
 
                 var defaultConfig = {
-                    preferredLang: 'en'
+                    preferredLang: 'en',
+                    urlHandler: facetUrlStateHandlerService
                 };
 
                 self.config = angular.extend({}, defaultConfig, config);
@@ -37,13 +39,23 @@
                 self.changeListener = $rootScope.$on(EVENT_FACET_CHANGED, update);
                 self.initListener = $rootScope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastInitial);
 
-                self.state.facets = getFacetValuesFromUrlParams();
+                if (!self.config.urlHandler) {
+                    var noop = function() { };
+                    var noopUrlHandler = {
+                        getFacetValuesFromUrlParams: noop,
+                        updateUrlParams: noop
+                    };
+                    self.urlHandler = noopUrlHandler;
+                } else {
+                    self.urlHandler = self.config.urlHandler;
+                }
+
+                self.state.facets = self.urlHandler.getFacetValuesFromUrlParams();
                 if (self.config.constraint) {
                     self.state.default = getInitialConstraints(self.config);
                 }
                 $log.log('Initial state', self.state);
             }
-
 
             // Update state, and broadcast them to listening facets.
             function update(event, constraint) {
@@ -57,7 +69,7 @@
             }
 
             function broadCastConstraints(event) {
-                updateUrlParams();
+                self.urlHandler.updateUrlParams(self.state.facets);
                 var constraint = getConstraint();
                 constraint.push(self.state.default);
                 var data = { facets: self.state.facets, constraint: constraint };
@@ -69,28 +81,6 @@
 
             function getConstraint() {
                 return _(self.state.facets).values().map('constraint').compact().value();
-            }
-
-            function updateUrlParams() {
-                var params = {};
-                _(self.state.facets).forOwn(function(val, id) {
-                    if (val && val.value) {
-                        params[id] = angular.toJson({ value: val.value, constraint: val.constraint });
-                    }
-                });
-                $location.search(params);
-            }
-
-            /* Initialization */
-
-            function getFacetValuesFromUrlParams() {
-                $log.log('URL params', $location.search());
-                var params = $location.search() || {};
-                var res = {};
-                _.forOwn(params, function(val, id) {
-                    res[id] = angular.fromJson(val);
-                });
-                return res;
             }
 
             // Combine the possible RDF class and constraint definitions in the config.

@@ -32,47 +32,36 @@
         this.updateUrlParams = updateUrlParams;
         this.getFacetValuesFromUrlParams = getFacetValuesFromUrlParams;
 
-        function updateUrlParams(facetSelections) {
-            var values = getFacetValues(facetSelections);
-            $location.search(values);
+        function updateUrlParams(facets) {
+            var params = {};
+            _(facets).forOwn(function(val, id) {
+                if (val && val.value) {
+                    params[id] = { value: val.value, constraint: val.constraint };
+                }
+            });
+            if (!_.isEmpty(params)) {
+                $location.search('facets', angular.toJson(params));
+            }
         }
 
         function getFacetValuesFromUrlParams() {
-            return $location.search();
-        }
+            var res = {};
 
-        function getFacetValues(facetSelections) {
-            var values = {};
-            _.forOwn(facetSelections, function(val, id) {
-                if (_.isArray(val)) {
-                    // Basic facet (with multiselect)
-                    var vals = _(val).map('value').compact().value();
-                    if (vals.length) {
-                        values[id] = vals;
-                    }
-                } else if (_.isObject(val.value)) {
-                    // Timespan facet
-                    var span = val.value;
-                    if (span.start && span.end) {
-                        var timespan = {
-                            start: parseValue(val.value.start),
-                            end: parseValue(val.value.end)
-                        };
-                        values[id] = angular.toJson(timespan);
-                    }
-                } else if (val.value) {
-                    // Text facet
-                    values[id] = val.value;
-                }
-            });
-            return values;
-        }
-
-        function parseValue(value) {
-            if (Date.parse(value)) {
-                return value.toISOString().slice(0, 10);
+            var params = ($location.search() || {}).facets;
+            if (!params) {
+                return res;
             }
-            return value;
+            try {
+                params = angular.fromJson(params);
+            }
+            catch(e) {
+                $location.search('facets', '');
+                return res;
+            }
+            _.forOwn(params, function(val, id) {
+                res[id] = val;
+            });
+            return res;
         }
     }
 })();
@@ -419,8 +408,9 @@
     .factory('Facets', Facets);
 
     /* ngInject */
-    function Facets($log, $rootScope, $location, $q, _, EVENT_FACET_CONSTRAINTS,
-                EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS) {
+    function Facets($log, $rootScope, $location, _, facetUrlStateHandlerService,
+            EVENT_FACET_CONSTRAINTS, EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS,
+            EVENT_INITIAL_CONSTRAINTS) {
 
         return FacetHandler;
 
@@ -439,7 +429,8 @@
                 self.state = { facets: {} };
 
                 var defaultConfig = {
-                    preferredLang: 'en'
+                    preferredLang: 'en',
+                    urlHandler: facetUrlStateHandlerService
                 };
 
                 self.config = angular.extend({}, defaultConfig, config);
@@ -447,13 +438,23 @@
                 self.changeListener = $rootScope.$on(EVENT_FACET_CHANGED, update);
                 self.initListener = $rootScope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastInitial);
 
-                self.state.facets = getFacetValuesFromUrlParams();
+                if (!self.config.urlHandler) {
+                    var noop = function() { };
+                    var noopUrlHandler = {
+                        getFacetValuesFromUrlParams: noop,
+                        updateUrlParams: noop
+                    };
+                    self.urlHandler = noopUrlHandler;
+                } else {
+                    self.urlHandler = self.config.urlHandler;
+                }
+
+                self.state.facets = self.urlHandler.getFacetValuesFromUrlParams();
                 if (self.config.constraint) {
                     self.state.default = getInitialConstraints(self.config);
                 }
                 $log.log('Initial state', self.state);
             }
-
 
             // Update state, and broadcast them to listening facets.
             function update(event, constraint) {
@@ -467,7 +468,7 @@
             }
 
             function broadCastConstraints(event) {
-                updateUrlParams();
+                self.urlHandler.updateUrlParams(self.state.facets);
                 var constraint = getConstraint();
                 constraint.push(self.state.default);
                 var data = { facets: self.state.facets, constraint: constraint };
@@ -479,28 +480,6 @@
 
             function getConstraint() {
                 return _(self.state.facets).values().map('constraint').compact().value();
-            }
-
-            function updateUrlParams() {
-                var params = {};
-                _(self.state.facets).forOwn(function(val, id) {
-                    if (val && val.value) {
-                        params[id] = angular.toJson({ value: val.value, constraint: val.constraint });
-                    }
-                });
-                $location.search(params);
-            }
-
-            /* Initialization */
-
-            function getFacetValuesFromUrlParams() {
-                $log.log('URL params', $location.search());
-                var params = $location.search() || {};
-                var res = {};
-                _.forOwn(params, function(val, id) {
-                    res[id] = angular.fromJson(val);
-                });
-                return res;
             }
 
             // Combine the possible RDF class and constraint definitions in the config.
@@ -875,6 +854,7 @@
                 initial.initialConstraints = cons;
                 vm.facet = new Facet(initial);
                 if (vm.facet.isEnabled()) {
+                    vm.previousVal = vm.facet.getSelectedValue();
                     listen();
                     update(cons);
                 }
@@ -919,7 +899,7 @@
         function emitChange(forced) {
             var val = vm.facet.getSelectedValue();
             if (!forced && _.isEqual(vm.previousVal, val)) {
-                $log.warn(vm.facet.name, 'Skip emit');
+                $log.warn(vm.facet.name, 'Skip emit', val);
                 vm.isLoadingFacet = false;
                 return;
             }
@@ -984,7 +964,7 @@
     .factory('BasicFacet', BasicFacet);
 
     /* ngInject */
-    function BasicFacet(_, AbstractFacet) {
+    function BasicFacet($log, _, AbstractFacet) {
 
         return BasicFacetConstructor;
 
@@ -1008,12 +988,14 @@
 
             function init(options) {
                 // Initial value
-                var constVal = options.initialConstraints.facets[self.facetUri];
+                self = angular.extend(self, new AbstractFacet(self, options));
+
+                var constVal = options.initialConstraints.facets[self.getFacetUri()];
                 if (constVal && constVal.value) {
                     self.selectedValue = { value: constVal.value };
                 }
 
-                self = angular.extend(self, new AbstractFacet(self, options));
+                $log.warn(self.getName(), _.cloneDeep(self.getSelectedValue()));
             }
 
             /* Public API functions */
@@ -1116,6 +1098,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
+    "          {{ vm.getFacet().selectedValue }}\n" +
     "          <h5 class=\"facet-name pull-left\">{{ vm.getFacetName() }}</h5>\n" +
     "          <button\n" +
     "            ng-disabled=\"vm.isLoading()\"\n" +

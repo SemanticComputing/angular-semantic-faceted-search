@@ -9,7 +9,7 @@
     .factory('BasicFacet', BasicFacet);
 
     /* ngInject */
-    function BasicFacet(_, AbstractFacet) {
+    function BasicFacet($log, _, AbstractFacet) {
 
         return BasicFacetConstructor;
 
@@ -33,12 +33,12 @@
 
             function init(options) {
                 // Initial value
-                var constVal = options.initialConstraints.facets[self.facetUri];
+                self = angular.extend(self, new AbstractFacet(self, options));
+
+                var constVal = options.initialConstraints.facets[self.getFacetUri()];
                 if (constVal && constVal.value) {
                     self.selectedValue = { value: constVal.value };
                 }
-
-                self = angular.extend(self, new AbstractFacet(self, options));
             }
 
             /* Public API functions */
