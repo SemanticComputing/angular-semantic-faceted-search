@@ -35,6 +35,7 @@
                 initial.initialConstraints = cons;
                 vm.facet = new Facet(initial);
                 if (vm.facet.isEnabled()) {
+                    vm.previousVal = vm.facet.getSelectedValue();
                     listen();
                     update(cons);
                 }
@@ -79,7 +80,7 @@
         function emitChange(forced) {
             var val = vm.facet.getSelectedValue();
             if (!forced && _.isEqual(vm.previousVal, val)) {
-                $log.warn(vm.facet.name, 'Skip emit');
+                $log.warn(vm.facet.name, 'Skip emit', val);
                 vm.isLoadingFacet = false;
                 return;
             }

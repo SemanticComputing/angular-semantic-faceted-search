@@ -16,47 +16,36 @@
         this.updateUrlParams = updateUrlParams;
         this.getFacetValuesFromUrlParams = getFacetValuesFromUrlParams;
 
-        function updateUrlParams(facetSelections) {
-            var values = getFacetValues(facetSelections);
-            $location.search(values);
+        function updateUrlParams(facets) {
+            var params = {};
+            _(facets).forOwn(function(val, id) {
+                if (val && val.value) {
+                    params[id] = { value: val.value, constraint: val.constraint };
+                }
+            });
+            if (!_.isEmpty(params)) {
+                $location.search('facets', angular.toJson(params));
+            }
         }
 
         function getFacetValuesFromUrlParams() {
-            return $location.search();
-        }
+            var res = {};
 
-        function getFacetValues(facetSelections) {
-            var values = {};
-            _.forOwn(facetSelections, function(val, id) {
-                if (_.isArray(val)) {
-                    // Basic facet (with multiselect)
-                    var vals = _(val).map('value').compact().value();
-                    if (vals.length) {
-                        values[id] = vals;
-                    }
-                } else if (_.isObject(val.value)) {
-                    // Timespan facet
-                    var span = val.value;
-                    if (span.start && span.end) {
-                        var timespan = {
-                            start: parseValue(val.value.start),
-                            end: parseValue(val.value.end)
-                        };
-                        values[id] = angular.toJson(timespan);
-                    }
-                } else if (val.value) {
-                    // Text facet
-                    values[id] = val.value;
-                }
-            });
-            return values;
-        }
-
-        function parseValue(value) {
-            if (Date.parse(value)) {
-                return value.toISOString().slice(0, 10);
+            var params = ($location.search() || {}).facets;
+            if (!params) {
+                return res;
             }
-            return value;
+            try {
+                params = angular.fromJson(params);
+            }
+            catch(e) {
+                $location.search('facets', '');
+                return res;
+            }
+            _.forOwn(params, function(val, id) {
+                res[id] = val;
+            });
+            return res;
         }
     }
 })();
