@@ -5,16 +5,9 @@
     .controller('BasicFacetController', BasicFacetController);
 
     /* ngInject */
-    function BasicFacetController($scope, $log, $q, _, BasicFacet, BasicFacetService) {
-
+    function BasicFacetController($scope, $controller, $log, $q, _, BasicFacet) {
         var vm = this;
-        var service = new BasicFacetService($scope, BasicFacet);
-
-        vm.isDisabled = service.isDisabled;
-        vm.changed = service.changed;
-        vm.enableFacet = service.enableFacet;
-        vm.disableFacet = service.disableFacet;
-        vm.getFacetSize = service.getFacetSize;
-        vm.getFacet = service.getFacet;
+        var args = { $scope: $scope, FacetImpl: BasicFacet };
+        angular.extend(vm, $controller('AbstractFacetController', args));
     }
 })();
