@@ -37,6 +37,7 @@
 
                 var constVal = options.initialConstraints.facets[self.getFacetUri()];
                 if (constVal && constVal.value) {
+                    self._isEnabled = true;
                     self.selectedValue = { value: constVal.value };
                 }
             }
