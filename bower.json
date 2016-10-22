@@ -11,14 +11,14 @@
   "license": "MIT",
   "homepage": "",
   "dependencies": {
-    "angular": "~1.4.8",
+    "angular": "^1.4.8",
     "lodash": "^4.0.1",
-    "angular-paging-sparql-service": "^0.1.0",
-    "angular-spinner": "~0.8.1",
-    "angular-bootstrap": "~1.2.1"
+    "angular-paging-sparql-service": ">=0.4.0",
+    "angular-spinner": "^0.8.1",
+    "angular-bootstrap": "^1.2.1"
   },
   "devDependencies": {
-      "angular-mocks": "~1.4.8"
+      "angular-mocks": "^1.4.8"
   },
   "ignore": [
     "**/.*",
