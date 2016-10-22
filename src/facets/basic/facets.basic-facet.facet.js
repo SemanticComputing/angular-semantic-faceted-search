@@ -40,6 +40,8 @@
                     self._isEnabled = true;
                     self.selectedValue = { value: constVal.value };
                 }
+
+                self.initTemplates();
             }
 
             /* Public API functions */

@@ -66,9 +66,7 @@
             '    {' +
             '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value {' +
             '      <GRAPH_START> ' +
-            '       { ' +
-            '        <SELECTIONS> ' +
-            '       } ' +
+            '       <SELECTIONS> ' +
             '       <FACET_PATTERN> ' +
             '       BIND(<ID> AS ?id) ' +
             '      <GRAPH_END> ' +
@@ -122,7 +120,7 @@
                 self.getDeselectUnionTemplate = facet.getDeselectUnionTemplate || getDeselectUnionTemplate;
 
                 self.buildQueryTemplate = facet.buildQueryTemplate || buildQueryTemplate;
-                self.buildQuery = facet.buildQueryTemplate || buildQuery;
+                self.buildQuery = facet.buildQuery || buildQuery;
                 self.buildDeselectUnion = facet.buildDeselectUnion || buildDeselectUnion;
                 self.buildServiceUnions = facet.buildServiceUnions || buildServiceUnions;
                 self.getTriplePattern = facet.getTriplePattern || getTriplePattern;
@@ -138,6 +136,10 @@
                 self.getState = facet.getState || getState;
                 self.fetchState = facet.fetchState || fetchState;
 
+                self.initTemplates = facet.initTemplates || initTemplates;
+            }
+
+            function initTemplates() {
                 self.queryTemplate = self.buildQueryTemplate(self.getQueryTemplate());
                 self.deselectUnionTemplate = self.buildQueryTemplate(self.getDeselectUnionTemplate());
             }

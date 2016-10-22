@@ -25,6 +25,9 @@ module.exports = function(grunt) {
                     'src/facets/basic/facets.basic-facet.facet.js',
                     'src/facets/basic/facets.basic-facet.controller.js',
                     'src/facets/basic/facets.basic-facet.directive.js',
+                    'src/facets/hierarchy/facets.hierarchy-facet.facet.js',
+                    'src/facets/hierarchy/facets.hierarchy-facet.controller.js',
+                    'src/facets/hierarchy/facets.hierarchy-facet.directive.js',
                     'dist/templates.js'
                 ],
                 dest: 'dist/semantic-faceted-search.js'
