@@ -11,120 +11,151 @@
     /* ngInject */
     function HierarchyFacet($log, _, AbstractFacet) {
 
+        HierarchyFacetConstructor.prototype = Object.create(AbstractFacet.prototype);
+
+        HierarchyFacetConstructor.prototype.disable = disable;
+        HierarchyFacetConstructor.prototype.enable = enable;
+        HierarchyFacetConstructor.prototype.isLoading = isLoading;
+        HierarchyFacetConstructor.prototype.isEnabled = isEnabled;
+        HierarchyFacetConstructor.prototype.getSelectedValue = getSelectedValue;
+        HierarchyFacetConstructor.prototype.getConstraint = getConstraint;
+        HierarchyFacetConstructor.prototype.getTriplePattern = getTriplePattern;
+        HierarchyFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
+        HierarchyFacetConstructor.prototype.getHierarchyClasses = getHierarchyClasses;
+
         return HierarchyFacetConstructor;
 
         function HierarchyFacetConstructor(options) {
-            var self = this;
 
-            var queryTemplate =
-            ' SELECT DISTINCT ?cnt ?id ?value ?facet_text {' +
-            '  { ' +
-            '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?class {' +
-            '    BIND(<ID> AS ?id) ' +
-            '    VALUES ?class { ' +
-            '     <HIERARCHY_CLASSES> ' +
+            AbstractFacet.call(this, options);
+
+            this.queryTemplate =
+            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
+            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
+            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
+            ' SELECT DISTINCT ?cnt ?id ?facet_text ?value WHERE {' +
+            '  <DESELECTION> ' +
+            '  {' +
+            '   SELECT DISTINCT ?cnt ?id ?value ?facet_text {' +
+            '    {' +
+            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?class {' +
+            '      BIND(<ID> AS ?id) ' +
+            '      VALUES ?class { ' +
+            '       <HIERARCHY_CLASSES> ' +
+            '      } ' +
+            '      ?value <PROPERTY> ?class . ' +
+            '      ?h <PROPERTY> ?value . ' +
+            '      ?s ?id ?h .' +
+            '      <SELECTIONS> ' +
+            '     } GROUP BY ?class ?value ?id' +
             '    } ' +
-            '    ?value <PROPERTY> ?class . ' +
-            '    ?h <PROPERTY> ?value . ' +
-            '    ?s ?id ?h .' +
-            '    <SELECTIONS> ' +
-            '   } GROUP BY ?class ?value ?id' +
+            '    FILTER(BOUND(?id))' +
+            '    <LABEL_PART> ' +
+            '    BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
+            '    BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
+            '    BIND(IF(?value = ?class, 0, 1) as ?order)' +
+            '   } ORDER BY ?class ?order ?facet_text' +
             '  } ' +
-            '  FILTER(BOUND(?id))' +
-            '  <LABEL_PART> ' +
-            '  BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
-            '  BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
-            '  BIND(IF(?value = ?class, 0, 1) as ?order)' +
-            ' } ORDER BY ?class ?order ?facet_text';
+            ' } ';
 
-            /* Public API */
+            this.selectedValue = {};
 
-            self.disable = disable;
-            self.enable = enable;
-            self.isLoading = isLoading;
-            self.isEnabled = isEnabled;
-            self.getSelectedValue = getSelectedValue;
-            self.getConstraint = getConstraint;
-            self.getTriplePattern = getTriplePattern;
+            // Initial value
+            var constVal = options.initialConstraints.facets[this.getFacetUri()];
+            if (constVal && constVal.value) {
+                this._isEnabled = true;
+                this.selectedValue = { value: constVal.value };
+            }
 
-            // Properties
-            self.selectedValue = {};
+            this.initTemplates();
+        }
 
-            /* Implementation */
-
-            init(options);
-
-            function init(options) {
-
-                self = angular.extend(self, new AbstractFacet(self, options));
-                // Initial value
-                var constVal = options.initialConstraints.facets[self.getFacetUri()];
-                if (constVal && constVal.value) {
-                    self._isEnabled = true;
-                    self.selectedValue = { value: constVal.value };
+        function buildQueryTemplate(template) {
+            var templateSubs = [
+                {
+                    placeHolder: /<ID>/g,
+                    value: this.getFacetUri()
+                },
+                {
+                    placeHolder: /<PROPERTY>/g,
+                    value: this.config.predicate
+                },
+                {
+                    placeHolder: /<HIERARCHY_CLASSES>/g,
+                    value: this.getHierarchyClasses().join(' ')
+                },
+                {
+                    placeHolder: /<LABEL_PART>/g,
+                    value: this.getLabelPart()
                 }
+            ];
 
-                self.initTemplates();
+            templateSubs.forEach(function(s) {
+                template = template.replace(s.placeHolder, s.value);
+            });
+            return template;
+        }
 
+        function getHierarchyClasses() {
+            return this.config.classes || [];
+        }
+
+        function getTriplePattern() {
+            var res =
+            (' VALUES ?class { ' +
+            '  <HIERARCHY_CLASSES> ' +
+            ' } ' +
+            ' ?value <PROPERTY> ?class . ' +
+            ' ?h <PROPERTY> ?value . ' +
+            ' ?s <ID> ?h .')
+            .replace(/<PROPERTY>/g, this.getPredicate())
+            .replace(/<ID>/g, this.getFacetUri())
+            .replace(/<HIERARCHY_CLASSES>/g, this.getHierarchyClasses().join(' '));
+
+            return res;
+        }
+
+        function getConstraint() {
+            if (!this.getSelectedValue()) {
+                return;
             }
+            var res =
+            (' VALUES ?class { ' +
+            '  <HIERARCHY_CLASSES> ' +
+            ' } ' +
+            ' ?value <PROPERTY> ?class . ' +
+            ' ?h <PROPERTY> ?value . ' +
+            ' ?s <ID> ?h .')
+            .replace(/<PROPERTY>/g, this.getPredicate())
+            .replace(/<ID>/g, this.getFacetUri())
+            .replace(/<HIERARCHY_CLASSES>/g, this.getSelectedValue());
 
-            function getTriplePattern() {
-                var res =
-                (' VALUES ?class { ' +
-                '  <HIERARCHY_CLASSES> ' +
-                ' } ' +
-                ' ?value <PROPERTY> ?class . ' +
-                ' ?h <PROPERTY> ?value . ' +
-                ' ?s <ID> ?h .')
-                .replace(/<PROPERTY>/g, self.getPredicate())
-                .replace(/<ID>/g, self.getFacetUri())
-                .replace(/<HIERARCHY_CLASSES>/g, self.config.classes.join(' '));
+            return res;
+        }
 
-                return res;
+        function getSelectedValue() {
+            var val;
+            if (this.selectedValue) {
+                val = this.selectedValue.value;
             }
+            return val;
+        }
 
-            function getConstraint() {
-                if (!self.getSelectedValue()) {
-                    return;
-                }
-                var res =
-                (' VALUES ?class { ' +
-                '  <HIERARCHY_CLASSES> ' +
-                ' } ' +
-                ' ?value <PROPERTY> ?class . ' +
-                ' ?h <PROPERTY> ?value . ' +
-                ' ?s <ID> ?h .')
-                .replace(/<PROPERTY>/g, self.getPredicate())
-                .replace(/<ID>/g, self.getFacetUri())
-                .replace(/<HIERARCHY_CLASSES>/g, self.getSelectedValue());
+        function isEnabled() {
+            return this._isEnabled;
+        }
 
-                return res;
-            }
+        function enable() {
+            this._isEnabled = true;
+        }
 
-            function getSelectedValue() {
-                var val;
-                if (self.selectedValue) {
-                    val = self.selectedValue.value;
-                }
-                return val;
-            }
+        function disable() {
+            this.selectedValue = {};
+            this._isEnabled = false;
+        }
 
-            function isEnabled() {
-                return self._isEnabled;
-            }
-
-            function enable() {
-                self._isEnabled = true;
-            }
-
-            function disable() {
-                self.selectedValue = {};
-                self._isEnabled = false;
-            }
-
-            function isLoading() {
-                return self.isBusy();
-            }
+        function isLoading() {
+            return this.isBusy();
         }
     }
 })();

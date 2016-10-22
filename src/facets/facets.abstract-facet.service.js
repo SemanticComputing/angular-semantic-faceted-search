@@ -12,22 +12,36 @@
     function AbstractFacet($q, $log, _, SparqlService, facetMapperService,
             NO_SELECTION_STRING) {
 
+        AbstractFacetConstructor.prototype.update = update;
+        AbstractFacetConstructor.prototype.setState = setState;
+        AbstractFacetConstructor.prototype.getState = getState;
+        AbstractFacetConstructor.prototype.fetchState = fetchState;
+        AbstractFacetConstructor.prototype.getConstraint = getConstraint;
+        AbstractFacetConstructor.prototype.getTriplePattern = getTriplePattern;
+        AbstractFacetConstructor.prototype.getFacetUri = getFacetUri;
+        AbstractFacetConstructor.prototype.getLabelPart = getLabelPart;
+        AbstractFacetConstructor.prototype.getName = getName;
+        AbstractFacetConstructor.prototype.getPredicate = getPredicate;
+        AbstractFacetConstructor.prototype.isBusy = isBusy;
+        AbstractFacetConstructor.prototype.setBusy = setBusy;
+        AbstractFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
+        AbstractFacetConstructor.prototype.buildQuery = buildQuery;
+        AbstractFacetConstructor.prototype.getQueryTemplate = getQueryTemplate;
+        AbstractFacetConstructor.prototype.buildServiceUnions = buildServiceUnions;
+        AbstractFacetConstructor.prototype.buildDeselectUnion = buildDeselectUnion;
+        AbstractFacetConstructor.prototype.getDeselectUnionTemplate = getDeselectUnionTemplate;
+        AbstractFacetConstructor.prototype.initTemplates = initTemplates;
+
         return AbstractFacetConstructor;
 
-        function AbstractFacetConstructor(facet, options) {
-
-            var self = this;
-
-            /* Public API */
-
-            self.update = update;
+        function AbstractFacetConstructor(options) {
 
             /* Implementation */
 
-            self.previousConstraints;
-            self.state = {};
+            this.previousConstraints;
+            this.state = {};
 
-            self.labelPart =
+            this.labelPart =
             ' { ' +
             '  ?value skos:prefLabel|rdfs:label [] . ' +
             '  OPTIONAL {' +
@@ -54,7 +68,7 @@
             '  FILTER(BOUND(?lbl)) ' +
             ' } ';
 
-            self.queryTemplate =
+            this.queryTemplate =
             ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
             ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
@@ -65,11 +79,9 @@
             '   SELECT DISTINCT ?cnt ?id ?value ?facet_text { ' +
             '    {' +
             '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value {' +
-            '      <GRAPH_START> ' +
-            '       <SELECTIONS> ' +
-            '       <FACET_PATTERN> ' +
-            '       BIND(<ID> AS ?id) ' +
-            '      <GRAPH_END> ' +
+            '      <SELECTIONS> ' +
+            '      <FACET_PATTERN> ' +
+            '      BIND(<ID> AS ?id) ' +
             '     } GROUP BY ?id ?value ' +
             '    } ' +
             '    FILTER(BOUND(?id)) ' +
@@ -81,218 +93,180 @@
             '  }' +
             ' } ';
 
-            self.deselectUnionTemplate =
+            this.deselectUnionTemplate =
             ' { ' +
             '  { ' +
             '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ' +
             '   WHERE { ' +
-            '    <GRAPH_START> ' +
-            '     <SELECTIONS> ' +
-            '    <GRAPH_END> ' +
+            '    <SELECTIONS> ' +
             '   } ' +
             '  } ' +
             '  BIND("' + NO_SELECTION_STRING + '" AS ?facet_text) ' +
             '  BIND(<ID> AS ?id) ' +
             ' } UNION ';
 
-            init(facet, options);
+            var defaultConfig = {
+                preferredLang: 'fi'
+            };
 
-            function init(facet, options) {
-                var defaultConfig = {
-                    preferredLang: 'fi'
-                };
+            this.config = angular.extend({}, defaultConfig, options);
 
-                self.facet = facet;
-
-                self.config = angular.extend({}, defaultConfig, options);
-
-                self.name = self.config.name;
-                self.facetUri = self.config.facetUri;
-                self.predicate = self.config.predicate;
-                self._isEnabled = self.config.enabled;
-
-                self.endpoint = new SparqlService(self.config.endpointUrl);
-
-                self.getSelectedValue = facet.getSelectedValue;
-
-                self.getLabelPart = facet.getLabelPart || getLabelPart;
-                self.getQueryTemplate = facet.getQueryTemplate || getQueryTemplate;
-                self.getDeselectUnionTemplate = facet.getDeselectUnionTemplate || getDeselectUnionTemplate;
-
-                self.buildQueryTemplate = facet.buildQueryTemplate || buildQueryTemplate;
-                self.buildQuery = facet.buildQuery || buildQuery;
-                self.buildDeselectUnion = facet.buildDeselectUnion || buildDeselectUnion;
-                self.buildServiceUnions = facet.buildServiceUnions || buildServiceUnions;
-                self.getTriplePattern = facet.getTriplePattern || getTriplePattern;
-                self.getConstraint = facet.getConstraint || getConstraint;
-                self.getPredicate = facet.getPredicate || getPredicate;
-                self.getFacetUri = facet.getFacetUri || getFacetUri;
-                self.getName = facet.getName || getName;
-
-                self.setBusy = facet.setBusy || setBusy;
-                self.isBusy = facet.isBusy || isBusy;
-
-                self.setState = facet.setState || setState;
-                self.getState = facet.getState || getState;
-                self.fetchState = facet.fetchState || fetchState;
-
-                self.initTemplates = facet.initTemplates || initTemplates;
+            this.name = this.config.name;
+            this.facetUri = this.config.facetUri;
+            this.predicate = this.config.predicate;
+            if (this.config.enabled) {
+                this.enable();
+            } else {
+                this.disable();
             }
 
-            function initTemplates() {
-                self.queryTemplate = self.buildQueryTemplate(self.getQueryTemplate());
-                self.deselectUnionTemplate = self.buildQueryTemplate(self.getDeselectUnionTemplate());
+            this.endpoint = new SparqlService(this.config.endpointUrl);
+        }
+
+        function initTemplates() {
+            this.queryTemplate = this.buildQueryTemplate(this.getQueryTemplate());
+            this.deselectUnionTemplate = this.buildQueryTemplate(this.getDeselectUnionTemplate());
+        }
+
+        function update(constraints) {
+            var self = this;
+            if (!self.isEnabled()) {
+                return $q.when();
             }
+            if (self.previousConstraints && _.isEqual(constraints.constraint,
+                    self.previousConstraints)) {
+                return $q.when();
+            }
+            self.previousConstraints = _.clone(constraints.constraint);
 
-            /* Public API functions */
+            self.setBusy(true);
 
-            function update(constraints) {
-                if (!self.facet.isEnabled()) {
-                    return $q.when();
+            return self.fetchState(constraints).then(function(state) {
+                if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
+                    return $q.reject('Facet state changed');
                 }
-                if (self.previousConstraints && _.isEqual(constraints.constraint,
-                        self.previousConstraints)) {
-                    return $q.when();
+                self.setState(state);
+                self.setBusy(false);
+
+                return state;
+            });
+        }
+
+        function setState(state) {
+            this.state = state;
+        }
+
+        function getState() {
+            return this.state;
+        }
+
+        function isBusy() {
+            return this._isBusy;
+        }
+
+        function setBusy(val) {
+            this._isBusy = val;
+        }
+
+        // Build a query with the facet selection and use it to get the facet state.
+        function fetchState(constraints) {
+            var query = this.buildQuery(constraints.constraint);
+
+            return this.endpoint.getObjects(query).then(function(results) {
+                var res = facetMapperService.makeObjectList(results);
+                return _.first(res);
+            });
+        }
+
+        function getTriplePattern() {
+            return '?s ' + this.getPredicate() + ' ?value . ';
+        }
+
+        function getConstraint() {
+            if (!this.getSelectedValue()) {
+                return;
+            }
+            if (this.getSelectedValue()) {
+                return ' ?s ' + this.getPredicate() + ' ' + this.getSelectedValue() + ' . ';
+            }
+        }
+
+        function getPredicate() {
+            return this.predicate;
+        }
+
+        function getFacetUri() {
+            return this.facetUri;
+        }
+
+        function getName() {
+            return this.name;
+        }
+
+        function getLabelPart() {
+            return this.labelPart;
+        }
+
+        function getDeselectUnionTemplate() {
+            return this.deselectUnionTemplate;
+        }
+
+        function getQueryTemplate() {
+            return this.queryTemplate;
+        }
+
+        // Build the facet query
+        function buildQuery(constraints) {
+            constraints = constraints || [];
+            var query = this.getQueryTemplate()
+                .replace(/<OTHER_SERVICES>/g, this.buildServiceUnions(this.config.services))
+                .replace(/<DESELECTION>/g, this.buildDeselectUnion(constraints))
+                .replace(/<SELECTIONS>/g, constraints.join(' '))
+                .replace(/<PREF_LANG>/g, this.config.preferredLang);
+
+            return query;
+        }
+
+        function buildDeselectUnion(constraints) {
+            var ownConstraint = this.getConstraint();
+            var deselections = _.reject(constraints, function(v) { return v === ownConstraint; });
+            return this.getDeselectUnionTemplate().replace('<SELECTIONS>', deselections.join(' '));
+        }
+
+        function buildServiceUnions(services) {
+            var unions = '';
+            _.forEach(services, function(service) {
+                unions = unions +
+                ' UNION { ' +
+                '  SERVICE ' + service + ' { ' +
+                    this.getLabelPart() +
+                '  } ' +
+                ' } ';
+            });
+            return unions;
+        }
+
+        // Replace placeholders in the query template using the configuration.
+        function buildQueryTemplate(template) {
+            var templateSubs = [
+                {
+                    placeHolder: /<ID>/g,
+                    value: this.getFacetUri()
+                },
+                {
+                    placeHolder: /<FACET_PATTERN>/g,
+                    value: this.getTriplePattern()
+                },
+                {
+                    placeHolder: /<LABEL_PART>/g,
+                    value: this.getLabelPart()
                 }
-                self.previousConstraints = _.clone(constraints.constraint);
+            ];
 
-                self.setBusy(true);
-
-                return self.fetchState(constraints).then(function(state) {
-                    if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
-                        return $q.reject('Facet state changed');
-                    }
-                    self.setState(state);
-                    self.setBusy(false);
-
-                    return state;
-                });
-            }
-
-            function setState(state) {
-                self.state = state;
-            }
-
-            function getState() {
-                return self.state;
-            }
-
-            function isBusy() {
-                return self._isBusy;
-            }
-
-            function setBusy(val) {
-                self._isBusy = val;
-            }
-
-            // Build a query with the facet selection and use it to get the facet state.
-            function fetchState(constraints) {
-                var query = self.buildQuery(constraints.constraint);
-
-                return self.endpoint.getObjects(query).then(function(results) {
-                    var res = facetMapperService.makeObjectList(results);
-                    return _.first(res);
-                });
-            }
-
-            function getTriplePattern() {
-                return '?s ' + self.getPredicate() + ' ?value . ';
-            }
-
-            function getConstraint() {
-                if (!self.getSelectedValue()) {
-                    return;
-                }
-                if (self.getSelectedValue()) {
-                    return ' ?s ' + self.getPredicate() + ' ' + self.getSelectedValue() + ' . ';
-                }
-            }
-
-            function getPredicate() {
-                return self.predicate;
-            }
-
-            function getFacetUri() {
-                return self.facetUri;
-            }
-
-            function getName() {
-                return self.name;
-            }
-
-            function getLabelPart() {
-                return self.labelPart;
-            }
-
-            function getDeselectUnionTemplate() {
-                return self.deselectUnionTemplate;
-            }
-
-            function getQueryTemplate() {
-                return self.queryTemplate;
-            }
-
-            // Build the facet query
-            function buildQuery(constraints) {
-                constraints = constraints || [];
-                var query = self.getQueryTemplate()
-                    .replace(/<OTHER_SERVICES>/g, self.buildServiceUnions(self.config.services))
-                    .replace(/<DESELECTION>/g, self.buildDeselectUnion(constraints))
-                    .replace(/<SELECTIONS>/g, constraints.join(' '))
-                    .replace(/<PREF_LANG>/g, self.config.preferredLang);
-
-                return query;
-            }
-
-            function buildDeselectUnion(constraints) {
-                var ownConstraint = self.getConstraint();
-                var deselections = _.reject(constraints, function(v) { return v === ownConstraint; });
-                return self.getDeselectUnionTemplate().replace('<SELECTIONS>', deselections.join(' '));
-            }
-
-            function buildServiceUnions(services) {
-                var unions = '';
-                _.forEach(services, function(service) {
-                    unions = unions +
-                    ' UNION { ' +
-                    '  SERVICE ' + service + ' { ' +
-                        self.getLabelPart() +
-                    '  } ' +
-                    ' } ';
-                });
-                return unions;
-            }
-
-            // Replace placeholders in the query template using the configuration.
-            function buildQueryTemplate(template) {
-                var templateSubs = [
-                    {
-                        placeHolder: '<GRAPH_START>',
-                        value: (self.config.graph ? ' GRAPH ' + self.config.graph + ' { ' : '')
-                    },
-                    {
-                        placeHolder: '<GRAPH_END>',
-                        value: (self.config.graph ? ' } ' : '')
-                    },
-                    {
-                        placeHolder: /<ID>/g,
-                        value: self.getFacetUri()
-                    },
-                    {
-                        placeHolder: /<FACET_PATTERN>/g,
-                        value: self.getTriplePattern()
-                    },
-                    {
-                        placeHolder: /<LABEL_PART>/g,
-                        value: self.getLabelPart()
-                    }
-                ];
-
-                templateSubs.forEach(function(s) {
-                    template = template.replace(s.placeHolder, s.value);
-                });
-                return template;
-            }
+            templateSubs.forEach(function(s) {
+                template = template.replace(s.placeHolder, s.value);
+            });
+            return template;
         }
     }
 })();
