@@ -59,7 +59,9 @@
 
             // Update state, and broadcast them to listening facets.
             function update(event, constraint) {
+                $log.debug('Update', constraint);
                 self.state.facets[constraint.id] = constraint;
+                self.urlHandler.updateUrlParams(self.state.facets);
                 broadCastConstraints(EVENT_FACET_CONSTRAINTS);
             }
 
@@ -69,7 +71,6 @@
             }
 
             function broadCastConstraints(event) {
-                self.urlHandler.updateUrlParams(self.state.facets);
                 var constraint = getConstraint();
                 constraint.push(self.state.default);
                 var data = { facets: self.state.facets, constraint: constraint };

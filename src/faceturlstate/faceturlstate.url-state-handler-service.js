@@ -23,9 +23,7 @@
                     params[id] = { value: val.value, constraint: val.constraint };
                 }
             });
-            if (!_.isEmpty(params)) {
-                $location.search('facets', angular.toJson(params));
-            }
+            $location.search('facets', angular.toJson(params));
         }
 
         function getFacetValuesFromUrlParams() {

@@ -138,8 +138,6 @@
         // Build the facet query
         function buildQuery(constraints) {
             constraints = constraints || [];
-            var sel = this.buildSelections(constraints);
-            $log.warn(this.getName(), sel);
             var query = this.queryTemplate
                 .replace(/<SELECTIONS>/g, this.buildSelections(constraints))
                 .replace(/<HIERARCHY_CLASSES>/g, this.getSelectedValue())
