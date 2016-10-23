@@ -9,7 +9,7 @@
     .factory('HierarchyFacet', HierarchyFacet);
 
     /* ngInject */
-    function HierarchyFacet($log, _, BasicFacet) {
+    function HierarchyFacet(_, BasicFacet) {
 
         HierarchyFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 

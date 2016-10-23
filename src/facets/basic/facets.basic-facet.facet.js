@@ -9,7 +9,7 @@
     .factory('BasicFacet', BasicFacet);
 
     /* ngInject */
-    function BasicFacet($q, $log, _, SparqlService, facetMapperService, NO_SELECTION_STRING) {
+    function BasicFacet($q, _, SparqlService, facetMapperService, NO_SELECTION_STRING) {
 
         BasicFacetConstructor.prototype.update = update;
         BasicFacetConstructor.prototype.getState = getState;
@@ -131,7 +131,6 @@
 
         function update(constraints) {
             var self = this;
-            $log.warn(self.getName(), constraints.constraint, self.previousConstraints);
             if (!self.isEnabled()) {
                 return $q.when();
             }
@@ -147,7 +146,6 @@
                 if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
                     return $q.reject('Facet state changed');
                 }
-                $log.warn(self.getName(), state);
                 self.state = state;
                 self._isBusy = false;
 
@@ -166,8 +164,6 @@
         // Build a query with the facet selection and use it to get the facet state.
         function fetchState(constraints) {
             var query = this.buildQuery(constraints.constraint);
-
-            $log.warn(this.getName(), query);
 
             return this.endpoint.getObjects(query).then(function(results) {
                 return facetMapperService.makeObjectListNoGrouping(results);
