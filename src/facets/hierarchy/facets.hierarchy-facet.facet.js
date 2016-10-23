@@ -9,33 +9,36 @@
     .factory('HierarchyFacet', HierarchyFacet);
 
     /* ngInject */
-    function HierarchyFacet($log, _, AbstractFacet) {
+    function HierarchyFacet($log, _, BasicFacet) {
 
-        HierarchyFacetConstructor.prototype = Object.create(AbstractFacet.prototype);
+        HierarchyFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
-        HierarchyFacetConstructor.prototype.disable = disable;
-        HierarchyFacetConstructor.prototype.enable = enable;
-        HierarchyFacetConstructor.prototype.isLoading = isLoading;
-        HierarchyFacetConstructor.prototype.isEnabled = isEnabled;
         HierarchyFacetConstructor.prototype.getSelectedValue = getSelectedValue;
         HierarchyFacetConstructor.prototype.getConstraint = getConstraint;
         HierarchyFacetConstructor.prototype.getTriplePattern = getTriplePattern;
         HierarchyFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         HierarchyFacetConstructor.prototype.buildQuery = buildQuery;
         HierarchyFacetConstructor.prototype.getHierarchyClasses = getHierarchyClasses;
+        HierarchyFacetConstructor.prototype.buildSelections = buildSelections;
 
         return HierarchyFacetConstructor;
 
         function HierarchyFacetConstructor(options) {
 
-            AbstractFacet.call(this, options);
-
-            this.queryTemplate =
+            var queryTemplate =
             ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
             ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
             ' SELECT DISTINCT ?cnt ?id ?facet_text ?value WHERE {' +
-            '  <DESELECTION> ' +
+            ' { ' +
+            '  { ' +
+            '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) { ' +
+            '    <OTHER_SELECTIONS> ' +
+            '   } ' +
+            '  } ' +
+            '  BIND("<NO_SELECTION_STRING>" AS ?facet_text) ' +
+            '  BIND(<ID> AS ?id) ' +
+            ' } UNION ' +
             '  {' +
             '   SELECT DISTINCT ?cnt ?id ?value ?facet_text {' +
             '    {' +
@@ -53,6 +56,10 @@
             '  } ' +
             ' } ';
 
+            options.queryTemplate = options.queryTemplate || queryTemplate;
+
+            BasicFacet.call(this, options);
+
             this.selectedValue = {};
 
             // Initial value
@@ -62,7 +69,15 @@
                 this.selectedValue = { value: constVal.value };
             }
 
-            this.initTemplates();
+            var triplePatternTemplate =
+            ' VALUES ?class { ' +
+            '  <HIERARCHY_CLASSES> ' +
+            ' } ' +
+            ' ?value <PROPERTY> ?class . ' +
+            ' ?h <PROPERTY> ?value . ' +
+            ' ?s <ID> ?h .';
+
+            this.triplePatternTemplate = buildQueryTemplate(triplePatternTemplate);
         }
 
         function buildQueryTemplate(template) {
@@ -78,6 +93,10 @@
                 {
                     placeHolder: /<LABEL_PART>/g,
                     value: this.getLabelPart()
+                },
+                {
+                    placeHolder: /<NO_SELECTION_STRING>/g,
+                    value: this.config.noSelectionString
                 }
             ];
 
@@ -92,16 +111,8 @@
         }
 
         function getTriplePattern() {
-            var res =
-            (' VALUES ?class { ' +
-            '  <HIERARCHY_CLASSES> ' +
-            ' } ' +
-            ' ?value <PROPERTY> ?class . ' +
-            ' ?h <PROPERTY> ?value . ' +
-            ' ?s <ID> ?h .')
-            .replace(/<PROPERTY>/g, this.getPredicate())
-            .replace(/<ID>/g, this.getFacetUri())
-            .replace(/<HIERARCHY_CLASSES>/g, this.getHierarchyClasses().join(' '));
+            var res = this.triplePatternTemplate
+                .replace(/<HIERARCHY_CLASSES>/g, this.getHierarchyClasses().join(' '));
 
             return res;
         }
@@ -110,16 +121,8 @@
             if (!this.getSelectedValue()) {
                 return;
             }
-            var res =
-            (' VALUES ?class { ' +
-            '  <HIERARCHY_CLASSES> ' +
-            ' } ' +
-            ' ?value <PROPERTY> ?class . ' +
-            ' ?h <PROPERTY> ?value . ' +
-            ' ?s <ID> ?h .')
-            .replace(/<PROPERTY>/g, this.getPredicate())
-            .replace(/<ID>/g, this.getFacetUri())
-            .replace(/<HIERARCHY_CLASSES>/g, this.getSelectedValue());
+            var res = this.triplePatternTemplate
+                .replace(/<HIERARCHY_CLASSES>/g, this.getSelectedValue());
 
             return res;
         }
@@ -137,8 +140,7 @@
             constraints = constraints || [];
             var sel = this.buildSelections(constraints);
             $log.warn(this.getName(), sel);
-            var query = this.getQueryTemplate()
-                .replace(/<DESELECTION>/g, this.buildDeselectUnion(constraints))
+            var query = this.queryTemplate
                 .replace(/<SELECTIONS>/g, this.buildSelections(constraints))
                 .replace(/<HIERARCHY_CLASSES>/g, this.getSelectedValue())
                 .replace(/<PREF_LANG>/g, this.getPreferredLang());
@@ -146,21 +148,13 @@
             return query;
         }
 
-        function isEnabled() {
-            return this._isEnabled;
-        }
-
-        function enable() {
-            this._isEnabled = true;
-        }
-
-        function disable() {
-            this.selectedValue = {};
-            this._isEnabled = false;
-        }
-
-        function isLoading() {
-            return this.isBusy();
+        function buildSelections(constraints) {
+            constraints = constraints.join(' ');
+            if (this.getSelectedValue()) {
+                // The constraints already include this facet's triple pattern
+                return constraints;
+            }
+            return constraints + ' ' + this.getTriplePattern();
         }
     }
 })();
