@@ -21,6 +21,7 @@
         HierarchyFacetConstructor.prototype.getConstraint = getConstraint;
         HierarchyFacetConstructor.prototype.getTriplePattern = getTriplePattern;
         HierarchyFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
+        HierarchyFacetConstructor.prototype.buildQuery = buildQuery;
         HierarchyFacetConstructor.prototype.getHierarchyClasses = getHierarchyClasses;
 
         return HierarchyFacetConstructor;
@@ -39,14 +40,8 @@
             '   SELECT DISTINCT ?cnt ?id ?value ?facet_text {' +
             '    {' +
             '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?class {' +
-            '      BIND(<ID> AS ?id) ' +
-            '      VALUES ?class { ' +
-            '       <HIERARCHY_CLASSES> ' +
-            '      } ' +
-            '      ?value <PROPERTY> ?class . ' +
-            '      ?h <PROPERTY> ?value . ' +
-            '      ?s ?id ?h .' +
             '      <SELECTIONS> ' +
+            '      BIND(<ID> AS ?id) ' +
             '     } GROUP BY ?class ?value ?id' +
             '    } ' +
             '    FILTER(BOUND(?id))' +
@@ -79,10 +74,6 @@
                 {
                     placeHolder: /<PROPERTY>/g,
                     value: this.config.predicate
-                },
-                {
-                    placeHolder: /<HIERARCHY_CLASSES>/g,
-                    value: this.getHierarchyClasses().join(' ')
                 },
                 {
                     placeHolder: /<LABEL_PART>/g,
@@ -139,6 +130,20 @@
                 val = this.selectedValue.value;
             }
             return val;
+        }
+
+        // Build the facet query
+        function buildQuery(constraints) {
+            constraints = constraints || [];
+            var sel = this.buildSelections(constraints);
+            $log.warn(this.getName(), sel);
+            var query = this.getQueryTemplate()
+                .replace(/<DESELECTION>/g, this.buildDeselectUnion(constraints))
+                .replace(/<SELECTIONS>/g, this.buildSelections(constraints))
+                .replace(/<HIERARCHY_CLASSES>/g, this.getSelectedValue())
+                .replace(/<PREF_LANG>/g, this.getPreferredLang());
+
+            return query;
         }
 
         function isEnabled() {
