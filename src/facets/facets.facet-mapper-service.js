@@ -13,7 +13,6 @@
     /* ngInject */
     function facetMapperService(_, objectMapperService) {
         FacetMapper.prototype.makeObject = makeObject;
-        FacetMapper.prototype.mergeObjects = mergeObjects;
         FacetMapper.prototype.postProcess = postProcess;
 
         var proto = Object.getPrototypeOf(objectMapperService);
@@ -28,20 +27,11 @@
         function makeObject(obj) {
             var o = new this.objectClass();
 
-            o.id = '<' + obj.id.value + '>';
-
-            o.values = [{
-                value: parseValue(obj.value),
-                text: obj.facet_text.value,
-                count: parseInt(obj.cnt.value)
-            }];
+            o.value = parseValue(obj.value);
+            o.text = obj.facet_text.value;
+            o.count = parseInt(obj.cnt.value);
 
             return o;
-        }
-
-        function mergeObjects(first, second) {
-            first.values.push(second.values[0]);
-            return first;
         }
 
         function postProcess(objs) {

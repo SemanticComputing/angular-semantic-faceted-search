@@ -74,7 +74,7 @@
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
             ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
 
-            ' SELECT DISTINCT ?cnt ?id ?facet_text ?value WHERE {' +
+            ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
             '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) { ' +
@@ -82,22 +82,20 @@
             '   } ' +
             '  } ' +
             '  BIND("<NO_SELECTION_STRING>" AS ?facet_text) ' +
-            '  BIND(<ID> AS ?id) ' +
             ' } UNION ' +
             '  {' +
-            '   SELECT DISTINCT ?cnt ?id ?value ?facet_text { ' +
+            '   SELECT DISTINCT ?cnt ?value ?facet_text { ' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value {' +
+            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?value {' +
             '      <SELECTIONS> ' +
-            '      BIND(<ID> AS ?id) ' +
-            '     } GROUP BY ?id ?value ' +
+            '     } GROUP BY ?value ' +
             '    } ' +
-            '    FILTER(BOUND(?id)) ' +
+            '    FILTER(BOUND(?value)) ' +
             '    <LABEL_PART> ' +
             '    <OTHER_SERVICES> ' +
             '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value),' +
             '     "^.+/(.+?)$", "$1"), STR(?value))) AS ?facet_text)' +
-            '   } ORDER BY ?id ?facet_text ' +
+            '   } ORDER BY ?facet_text ' +
             '  }' +
             ' } ';
 
@@ -172,8 +170,7 @@
             $log.warn(this.getName(), query);
 
             return this.endpoint.getObjects(query).then(function(results) {
-                var res = facetMapperService.makeObjectList(results);
-                return _.first(res);
+                return facetMapperService.makeObjectListNoGrouping(results);
             });
         }
 
