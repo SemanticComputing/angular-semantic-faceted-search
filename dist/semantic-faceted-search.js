@@ -39,9 +39,7 @@
                     params[id] = { value: val.value, constraint: val.constraint };
                 }
             });
-            if (!_.isEmpty(params)) {
-                $location.search('facets', angular.toJson(params));
-            }
+            $location.search('facets', angular.toJson(params));
         }
 
         function getFacetValuesFromUrlParams() {
@@ -458,7 +456,9 @@
 
             // Update state, and broadcast them to listening facets.
             function update(event, constraint) {
+                $log.debug('Update', constraint);
                 self.state.facets[constraint.id] = constraint;
+                self.urlHandler.updateUrlParams(self.state.facets);
                 broadCastConstraints(EVENT_FACET_CONSTRAINTS);
             }
 
@@ -468,7 +468,6 @@
             }
 
             function broadCastConstraints(event) {
-                self.urlHandler.updateUrlParams(self.state.facets);
                 var constraint = getConstraint();
                 constraint.push(self.state.default);
                 var data = { facets: self.state.facets, constraint: constraint };
@@ -1126,8 +1125,6 @@
         // Build the facet query
         function buildQuery(constraints) {
             constraints = constraints || [];
-            var sel = this.buildSelections(constraints);
-            $log.warn(this.getName(), sel);
             var query = this.queryTemplate
                 .replace(/<SELECTIONS>/g, this.buildSelections(constraints))
                 .replace(/<HIERARCHY_CLASSES>/g, this.getSelectedValue())
@@ -1215,7 +1212,6 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
-    "          {{ vm.getFacet().selectedValue }}\n" +
     "          <h5 class=\"facet-name pull-left\">{{ vm.getFacetName() }}</h5>\n" +
     "          <button\n" +
     "            ng-disabled=\"vm.isLoading()\"\n" +
