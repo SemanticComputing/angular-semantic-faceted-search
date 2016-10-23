@@ -19,7 +19,6 @@
         HierarchyFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         HierarchyFacetConstructor.prototype.buildQuery = buildQuery;
         HierarchyFacetConstructor.prototype.getHierarchyClasses = getHierarchyClasses;
-        HierarchyFacetConstructor.prototype.buildSelections = buildSelections;
 
         return HierarchyFacetConstructor;
 
@@ -43,8 +42,14 @@
             '   SELECT DISTINCT ?cnt ?id ?value ?facet_text {' +
             '    {' +
             '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?class {' +
-            '      <SELECTIONS> ' +
-            '      BIND(<ID> AS ?id) ' +
+            '      BIND(STR(<ID>) AS ?id) ' +
+            '      VALUES ?class { ' +
+            '       <HIERARCHY_CLASSES> ' +
+            '      } ' +
+            '      ?value <PROPERTY> ?class . ' +
+            '      ?h <PROPERTY> ?value . ' +
+            '      ?s <ID> ?h .' +
+            '      <OTHER_SELECTIONS> ' +
             '     } GROUP BY ?class ?value ?id' +
             '    } ' +
             '    FILTER(BOUND(?id))' +
@@ -73,11 +78,11 @@
             ' VALUES ?class { ' +
             '  <HIERARCHY_CLASSES> ' +
             ' } ' +
-            ' ?value <PROPERTY> ?class . ' +
-            ' ?h <PROPERTY> ?value . ' +
+            ' ?hv <PROPERTY> ?class . ' +
+            ' ?h <PROPERTY> ?hv . ' +
             ' ?s <ID> ?h .';
 
-            this.triplePatternTemplate = buildQueryTemplate(triplePatternTemplate);
+            this.triplePatternTemplate = this.buildQueryTemplate(triplePatternTemplate);
         }
 
         function buildQueryTemplate(template) {
@@ -92,7 +97,7 @@
                 },
                 {
                     placeHolder: /<LABEL_PART>/g,
-                    value: this.getLabelPart()
+                    value: this.config.labelPart
                 },
                 {
                     placeHolder: /<NO_SELECTION_STRING>/g,
@@ -139,20 +144,12 @@
         function buildQuery(constraints) {
             constraints = constraints || [];
             var query = this.queryTemplate
-                .replace(/<SELECTIONS>/g, this.buildSelections(constraints))
-                .replace(/<HIERARCHY_CLASSES>/g, this.getSelectedValue())
+                .replace(/<OTHER_SELECTIONS>/g, this.getOtherSelections(constraints))
+                .replace(/<HIERARCHY_CLASSES>/g,
+                    this.getSelectedValue() || this.getHierarchyClasses().join(' '))
                 .replace(/<PREF_LANG>/g, this.getPreferredLang());
 
             return query;
-        }
-
-        function buildSelections(constraints) {
-            constraints = constraints.join(' ');
-            if (this.getSelectedValue()) {
-                // The constraints already include this facet's triple pattern
-                return constraints;
-            }
-            return constraints + ' ' + this.getTriplePattern();
         }
     }
 })();

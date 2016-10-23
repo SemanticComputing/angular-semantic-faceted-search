@@ -143,7 +143,6 @@
     /* ngInject */
     function facetMapperService(_, objectMapperService) {
         FacetMapper.prototype.makeObject = makeObject;
-        FacetMapper.prototype.mergeObjects = mergeObjects;
         FacetMapper.prototype.postProcess = postProcess;
 
         var proto = Object.getPrototypeOf(objectMapperService);
@@ -158,20 +157,11 @@
         function makeObject(obj) {
             var o = new this.objectClass();
 
-            o.id = '<' + obj.id.value + '>';
-
-            o.values = [{
-                value: parseValue(obj.value),
-                text: obj.facet_text.value,
-                count: parseInt(obj.cnt.value)
-            }];
+            o.value = parseValue(obj.value);
+            o.text = obj.facet_text.value;
+            o.count = parseInt(obj.cnt.value);
 
             return o;
-        }
-
-        function mergeObjects(first, second) {
-            first.values.push(second.values[0]);
-            return first;
         }
 
         function postProcess(objs) {
@@ -573,7 +563,7 @@
         }
 
         function getFacetValues() {
-            return vm.getFacet().getState().values;
+            return vm.getFacet().getState();
         }
 
         function isFacetEnabled() {
@@ -729,7 +719,7 @@
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
             ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
 
-            ' SELECT DISTINCT ?cnt ?id ?facet_text ?value WHERE {' +
+            ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
             '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) { ' +
@@ -737,22 +727,20 @@
             '   } ' +
             '  } ' +
             '  BIND("<NO_SELECTION_STRING>" AS ?facet_text) ' +
-            '  BIND(<ID> AS ?id) ' +
             ' } UNION ' +
             '  {' +
-            '   SELECT DISTINCT ?cnt ?id ?value ?facet_text { ' +
+            '   SELECT DISTINCT ?cnt ?value ?facet_text { ' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value {' +
+            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?value {' +
             '      <SELECTIONS> ' +
-            '      BIND(<ID> AS ?id) ' +
-            '     } GROUP BY ?id ?value ' +
+            '     } GROUP BY ?value ' +
             '    } ' +
-            '    FILTER(BOUND(?id)) ' +
+            '    FILTER(BOUND(?value)) ' +
             '    <LABEL_PART> ' +
             '    <OTHER_SERVICES> ' +
             '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value),' +
             '     "^.+/(.+?)$", "$1"), STR(?value))) AS ?facet_text)' +
-            '   } ORDER BY ?id ?facet_text ' +
+            '   } ORDER BY ?facet_text ' +
             '  }' +
             ' } ';
 
@@ -827,8 +815,7 @@
             $log.warn(this.getName(), query);
 
             return this.endpoint.getObjects(query).then(function(results) {
-                var res = facetMapperService.makeObjectList(results);
-                return _.first(res);
+                return facetMapperService.makeObjectListNoGrouping(results);
             });
         }
 
@@ -1006,7 +993,6 @@
         HierarchyFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         HierarchyFacetConstructor.prototype.buildQuery = buildQuery;
         HierarchyFacetConstructor.prototype.getHierarchyClasses = getHierarchyClasses;
-        HierarchyFacetConstructor.prototype.buildSelections = buildSelections;
 
         return HierarchyFacetConstructor;
 
@@ -1030,8 +1016,14 @@
             '   SELECT DISTINCT ?cnt ?id ?value ?facet_text {' +
             '    {' +
             '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?class {' +
-            '      <SELECTIONS> ' +
-            '      BIND(<ID> AS ?id) ' +
+            '      BIND(STR(<ID>) AS ?id) ' +
+            '      VALUES ?class { ' +
+            '       <HIERARCHY_CLASSES> ' +
+            '      } ' +
+            '      ?value <PROPERTY> ?class . ' +
+            '      ?h <PROPERTY> ?value . ' +
+            '      ?s <ID> ?h .' +
+            '      <OTHER_SELECTIONS> ' +
             '     } GROUP BY ?class ?value ?id' +
             '    } ' +
             '    FILTER(BOUND(?id))' +
@@ -1060,11 +1052,11 @@
             ' VALUES ?class { ' +
             '  <HIERARCHY_CLASSES> ' +
             ' } ' +
-            ' ?value <PROPERTY> ?class . ' +
-            ' ?h <PROPERTY> ?value . ' +
+            ' ?hv <PROPERTY> ?class . ' +
+            ' ?h <PROPERTY> ?hv . ' +
             ' ?s <ID> ?h .';
 
-            this.triplePatternTemplate = buildQueryTemplate(triplePatternTemplate);
+            this.triplePatternTemplate = this.buildQueryTemplate(triplePatternTemplate);
         }
 
         function buildQueryTemplate(template) {
@@ -1079,7 +1071,7 @@
                 },
                 {
                     placeHolder: /<LABEL_PART>/g,
-                    value: this.getLabelPart()
+                    value: this.config.labelPart
                 },
                 {
                     placeHolder: /<NO_SELECTION_STRING>/g,
@@ -1126,20 +1118,12 @@
         function buildQuery(constraints) {
             constraints = constraints || [];
             var query = this.queryTemplate
-                .replace(/<SELECTIONS>/g, this.buildSelections(constraints))
-                .replace(/<HIERARCHY_CLASSES>/g, this.getSelectedValue())
+                .replace(/<OTHER_SELECTIONS>/g, this.getOtherSelections(constraints))
+                .replace(/<HIERARCHY_CLASSES>/g,
+                    this.getSelectedValue() || this.getHierarchyClasses().join(' '))
                 .replace(/<PREF_LANG>/g, this.getPreferredLang());
 
             return query;
-        }
-
-        function buildSelections(constraints) {
-            constraints = constraints.join(' ');
-            if (this.getSelectedValue()) {
-                // The constraints already include this facet's triple pattern
-                return constraints;
-            }
-            return constraints + ' ' + this.getTriplePattern();
         }
     }
 })();

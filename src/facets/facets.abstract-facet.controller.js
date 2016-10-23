@@ -54,7 +54,7 @@
         }
 
         function getFacetValues() {
-            return vm.getFacet().getState().values;
+            return vm.getFacet().getState();
         }
 
         function isFacetEnabled() {
