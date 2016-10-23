@@ -77,8 +77,6 @@
                 $rootScope.$broadcast(event, data);
             }
 
-            /* Private functions */
-
             function getConstraint() {
                 return _(self.state.facets).values().map('constraint').compact().value();
             }
