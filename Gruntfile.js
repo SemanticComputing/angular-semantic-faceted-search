@@ -6,7 +6,10 @@ module.exports = function(grunt) {
     grunt.initConfig({
         ngtemplates: {
             'seco.facetedSearch': {
-                src: ['src/facets/basic/facets.basic-facet.directive.html'],
+                src: [
+                    'src/facets/basic/facets.basic-facet.directive.html',
+                    'src/facets/text/facets.text-facet.directive.html'
+                ],
                 dest: 'dist/templates.js'
             }
         },
@@ -24,6 +27,9 @@ module.exports = function(grunt) {
                     'src/facets/basic/facets.basic-facet.facet.js',
                     'src/facets/basic/facets.basic-facet.controller.js',
                     'src/facets/basic/facets.basic-facet.directive.js',
+                    'src/facets/text/facets.text-facet.facet.js',
+                    'src/facets/text/facets.text-facet.controller.js',
+                    'src/facets/text/facets.text-facet.directive.js',
                     'src/facets/hierarchy/facets.hierarchy-facet.facet.js',
                     'src/facets/hierarchy/facets.hierarchy-facet.controller.js',
                     'src/facets/hierarchy/facets.hierarchy-facet.directive.js',
