@@ -28,6 +28,7 @@
     <div class="well well-sm">
       <div class="row">
         <div class="col-xs-12 text-left">
+          {{ vm.getFacet().selectedValue }}
           <h5 class="facet-name pull-left">{{ vm.getFacetName() }}</h5>
           <button
             ng-disabled="vm.isLoading()"

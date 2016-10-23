@@ -9,8 +9,7 @@
     .factory('AbstractFacet', AbstractFacet);
 
     /* ngInject */
-    function AbstractFacet($q, $log, _, SparqlService, facetMapperService,
-            NO_SELECTION_STRING) {
+    function AbstractFacet($q, $log, _, SparqlService, facetMapperService, NO_SELECTION_STRING) {
 
         AbstractFacetConstructor.prototype.update = update;
         AbstractFacetConstructor.prototype.setState = setState;
@@ -22,12 +21,14 @@
         AbstractFacetConstructor.prototype.getLabelPart = getLabelPart;
         AbstractFacetConstructor.prototype.getName = getName;
         AbstractFacetConstructor.prototype.getPredicate = getPredicate;
+        AbstractFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         AbstractFacetConstructor.prototype.isBusy = isBusy;
         AbstractFacetConstructor.prototype.setBusy = setBusy;
         AbstractFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         AbstractFacetConstructor.prototype.buildQuery = buildQuery;
         AbstractFacetConstructor.prototype.getQueryTemplate = getQueryTemplate;
         AbstractFacetConstructor.prototype.buildServiceUnions = buildServiceUnions;
+        AbstractFacetConstructor.prototype.buildSelections = buildSelections;
         AbstractFacetConstructor.prototype.buildDeselectUnion = buildDeselectUnion;
         AbstractFacetConstructor.prototype.getDeselectUnionTemplate = getDeselectUnionTemplate;
         AbstractFacetConstructor.prototype.initTemplates = initTemplates;
@@ -80,7 +81,6 @@
             '    {' +
             '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?id ?value {' +
             '      <SELECTIONS> ' +
-            '      <FACET_PATTERN> ' +
             '      BIND(<ID> AS ?id) ' +
             '     } GROUP BY ?id ?value ' +
             '    } ' +
@@ -130,6 +130,7 @@
 
         function update(constraints) {
             var self = this;
+            $log.warn(self.getName(), constraints.constraint, self.previousConstraints);
             if (!self.isEnabled()) {
                 return $q.when();
             }
@@ -145,6 +146,7 @@
                 if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
                     return $q.reject('Facet state changed');
                 }
+                $log.warn(self.getName(), state);
                 self.setState(state);
                 self.setBusy(false);
 
@@ -171,6 +173,8 @@
         // Build a query with the facet selection and use it to get the facet state.
         function fetchState(constraints) {
             var query = this.buildQuery(constraints.constraint);
+
+            $log.warn(this.getName(), query);
 
             return this.endpoint.getObjects(query).then(function(results) {
                 var res = facetMapperService.makeObjectList(results);
@@ -215,16 +219,29 @@
             return this.queryTemplate;
         }
 
+        function getPreferredLang() {
+            return this.config.preferredLang;
+        }
+
         // Build the facet query
         function buildQuery(constraints) {
             constraints = constraints || [];
             var query = this.getQueryTemplate()
                 .replace(/<OTHER_SERVICES>/g, this.buildServiceUnions(this.config.services))
                 .replace(/<DESELECTION>/g, this.buildDeselectUnion(constraints))
-                .replace(/<SELECTIONS>/g, constraints.join(' '))
-                .replace(/<PREF_LANG>/g, this.config.preferredLang);
+                .replace(/<SELECTIONS>/g, this.buildSelections(constraints))
+                .replace(/<PREF_LANG>/g, this.getPreferredLang());
 
             return query;
+        }
+
+        function buildSelections(constraints) {
+            constraints = constraints.join(' ');
+            if (this.getSelectedValue()) {
+                // The constraints already include this facet's selection
+                return constraints;
+            }
+            return constraints + ' ' + this.getTriplePattern();
         }
 
         function buildDeselectUnion(constraints) {
@@ -252,10 +269,6 @@
                 {
                     placeHolder: /<ID>/g,
                     value: this.getFacetUri()
-                },
-                {
-                    placeHolder: /<FACET_PATTERN>/g,
-                    value: this.getTriplePattern()
                 },
                 {
                     placeHolder: /<LABEL_PART>/g,

@@ -70,7 +70,6 @@
 
         function update(constraints) {
             vm.isLoadingFacet = true;
-            $log.warn(_.cloneDeep(vm.facet));
             return vm.facet.update(constraints).then(handleUpdateSuccess, handleError);
         }
 
