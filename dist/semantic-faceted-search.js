@@ -594,7 +594,7 @@
             }
             vm.previousVal = _.clone(val);
             var args = {
-                id: vm.facet.facetUri,
+                id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
                 value: val
             };
@@ -629,7 +629,7 @@
 
         function handleError(error) {
             vm.isLoadingFacet = false;
-            $log.error(vm.facet.facetUri, error);
+            $log.error(vm.facet.facetId, error);
             vm.error = error;
         }
 
@@ -750,7 +750,7 @@
             this.config = angular.extend({}, defaultConfig, options);
 
             this.name = this.config.name;
-            this.facetUri = this.config.facetUri;
+            this.facetId = this.config.facetId;
             this.predicate = this.config.predicate;
             if (this.config.enabled) {
                 this.enable();
@@ -761,7 +761,7 @@
             this.endpoint = new SparqlService(this.config.endpointUrl);
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.facetUri];
+            var constVal = options.initialConstraints.facets[this.facetId];
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
@@ -874,7 +874,7 @@
             var templateSubs = [
                 {
                     placeHolder: /<ID>/g,
-                    value: this.facetUri
+                    value: this.facetId
                 },
                 {
                     placeHolder: /<LABEL_PART>/g,
@@ -986,7 +986,7 @@
             this.config = angular.extend({}, defaultConfig, options);
 
             this.name = this.config.name;
-            this.facetUri = this.config.facetUri;
+            this.facetId = this.config.facetId;
             this.predicate = this.config.predicate;
             if (this.config.enabled) {
                 this.enable();
@@ -995,7 +995,7 @@
             }
 
             // Initial value
-            var initial = options.initialConstraints.facets[this.facetUri];
+            var initial = options.initialConstraints.facets[this.facetId];
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
@@ -1083,7 +1083,7 @@
         function emitChange() {
             var val = vm.facet.getSelectedValue();
             var args = {
-                id: vm.facet.facetUri,
+                id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
                 value: val
             };
@@ -1177,7 +1177,7 @@
             this.varSuffix = this.config.makeUnique ? _.uniqueId() : '';
 
             this.name = this.config.name;
-            this.facetUri = this.config.facetUri;
+            this.facetId = this.config.facetId;
             this.startPredicate = this.config.startPredicate;
             this.endPredicate = this.config.endPredicate;
             this.min = this.config.min;
@@ -1189,7 +1189,7 @@
             }
 
             // Initial value
-            var initial = options.initialConstraints.facets[this.facetUri];
+            var initial = options.initialConstraints.facets[this.facetId];
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
@@ -1310,7 +1310,7 @@
         function emitChange() {
             var val = vm.facet.getSelectedValue();
             var args = {
-                id: vm.facet.facetUri,
+                id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
                 value: val
             };
@@ -1392,7 +1392,7 @@
             ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
             ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
-            ' SELECT DISTINCT ?cnt ?id ?facet_text ?value WHERE {' +
+            ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
             '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) { ' +
@@ -1400,13 +1400,11 @@
             '   } ' +
             '  } ' +
             '  BIND("<NO_SELECTION_STRING>" AS ?facet_text) ' +
-            '  BIND(<ID> AS ?id) ' +
             ' } UNION ' +
             '  {' +
-            '   SELECT DISTINCT ?cnt ?id ?value ?facet_text {' +
+            '   SELECT DISTINCT ?cnt ?value ?facet_text {' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?class {' +
-            '      BIND(STR(<ID>) AS ?id) ' +
+            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?value ?class {' +
             '      VALUES ?class { ' +
             '       <HIERARCHY_CLASSES> ' +
             '      } ' +
@@ -1414,9 +1412,9 @@
             '      ?h <PROPERTY> ?value . ' +
             '      ?s <ID> ?h .' +
             '      <OTHER_SELECTIONS> ' +
-            '     } GROUP BY ?class ?value ?id' +
+            '     } GROUP BY ?class ?value ' +
             '    } ' +
-            '    FILTER(BOUND(?id))' +
+            '    FILTER(BOUND(?value))' +
             '    <LABEL_PART> ' +
             '    BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
             '    BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
@@ -1432,7 +1430,7 @@
             this.selectedValue = {};
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.facetUri];
+            var constVal = options.initialConstraints.facets[this.facetId];
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
@@ -1453,11 +1451,11 @@
             var templateSubs = [
                 {
                     placeHolder: /<ID>/g,
-                    value: this.facetUri
+                    value: this.predicate
                 },
                 {
                     placeHolder: /<PROPERTY>/g,
-                    value: this.config.predicate
+                    value: this.config.hierarchy
                 },
                 {
                     placeHolder: /<LABEL_PART>/g,

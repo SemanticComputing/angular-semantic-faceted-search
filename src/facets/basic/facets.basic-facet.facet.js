@@ -106,7 +106,7 @@
             this.config = angular.extend({}, defaultConfig, options);
 
             this.name = this.config.name;
-            this.facetUri = this.config.facetUri;
+            this.facetId = this.config.facetId;
             this.predicate = this.config.predicate;
             if (this.config.enabled) {
                 this.enable();
@@ -117,7 +117,7 @@
             this.endpoint = new SparqlService(this.config.endpointUrl);
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.facetUri];
+            var constVal = options.initialConstraints.facets[this.facetId];
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
@@ -230,7 +230,7 @@
             var templateSubs = [
                 {
                     placeHolder: /<ID>/g,
-                    value: this.facetUri
+                    value: this.facetId
                 },
                 {
                     placeHolder: /<LABEL_PART>/g,

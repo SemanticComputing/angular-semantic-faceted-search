@@ -32,7 +32,7 @@
             this.config = angular.extend({}, defaultConfig, options);
 
             this.name = this.config.name;
-            this.facetUri = this.config.facetUri;
+            this.facetId = this.config.facetId;
             this.predicate = this.config.predicate;
             if (this.config.enabled) {
                 this.enable();
@@ -41,7 +41,7 @@
             }
 
             // Initial value
-            var initial = options.initialConstraints.facets[this.facetUri];
+            var initial = options.initialConstraints.facets[this.facetId];
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;

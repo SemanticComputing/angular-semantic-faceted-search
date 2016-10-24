@@ -28,7 +28,7 @@
             ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
             ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
             ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
-            ' SELECT DISTINCT ?cnt ?id ?facet_text ?value WHERE {' +
+            ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
             '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) { ' +
@@ -36,13 +36,11 @@
             '   } ' +
             '  } ' +
             '  BIND("<NO_SELECTION_STRING>" AS ?facet_text) ' +
-            '  BIND(<ID> AS ?id) ' +
             ' } UNION ' +
             '  {' +
-            '   SELECT DISTINCT ?cnt ?id ?value ?facet_text {' +
+            '   SELECT DISTINCT ?cnt ?value ?facet_text {' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?id ?value ?class {' +
-            '      BIND(STR(<ID>) AS ?id) ' +
+            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?value ?class {' +
             '      VALUES ?class { ' +
             '       <HIERARCHY_CLASSES> ' +
             '      } ' +
@@ -50,9 +48,9 @@
             '      ?h <PROPERTY> ?value . ' +
             '      ?s <ID> ?h .' +
             '      <OTHER_SELECTIONS> ' +
-            '     } GROUP BY ?class ?value ?id' +
+            '     } GROUP BY ?class ?value ' +
             '    } ' +
-            '    FILTER(BOUND(?id))' +
+            '    FILTER(BOUND(?value))' +
             '    <LABEL_PART> ' +
             '    BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
             '    BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
@@ -68,7 +66,7 @@
             this.selectedValue = {};
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.facetUri];
+            var constVal = options.initialConstraints.facets[this.facetId];
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
@@ -89,11 +87,11 @@
             var templateSubs = [
                 {
                     placeHolder: /<ID>/g,
-                    value: this.facetUri
+                    value: this.predicate
                 },
                 {
                     placeHolder: /<PROPERTY>/g,
-                    value: this.config.predicate
+                    value: this.config.hierarchy
                 },
                 {
                     placeHolder: /<LABEL_PART>/g,

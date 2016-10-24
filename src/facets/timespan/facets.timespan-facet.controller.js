@@ -31,7 +31,7 @@
         function emitChange() {
             var val = vm.facet.getSelectedValue();
             var args = {
-                id: vm.facet.facetUri,
+                id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
                 value: val
             };

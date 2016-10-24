@@ -77,7 +77,7 @@
             }
             vm.previousVal = _.clone(val);
             var args = {
-                id: vm.facet.facetUri,
+                id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
                 value: val
             };
@@ -112,7 +112,7 @@
 
         function handleError(error) {
             vm.isLoadingFacet = false;
-            $log.error(vm.facet.facetUri, error);
+            $log.error(vm.facet.facetId, error);
             vm.error = error;
         }
 
