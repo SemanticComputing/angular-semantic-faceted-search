@@ -1,0 +1,111 @@
+<style>
+  .vertical-align {
+    display: flex;
+    flex-direction: row;
+  }
+  .vertical-align > [class^="col-"],
+  .vertical-align > [class*=" col-"] {
+    display: flex;
+    align-items: center;
+  }
+  .facet-enable-btn-container {
+    justify-content: center;
+  }
+  .row.no-gutter {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .row.no-gutter [class*='col-']:not(:first-child),
+  .row.no-gutter [class*='col-']:not(:last-child) {
+    padding-right: 0;
+    padding-left: 0;
+  }
+</style>
+<div class="facet-wrapper">
+  <span us-spinner="{radius:30, width:8, length: 40}" ng-if="vm.isLoading()"></span>
+  <div class="facet" ng-if=vm.isFacetEnabled()>
+    <div class="well well-sm">
+      <div class="row">
+        <div class="col-xs-12 text-left">
+          <h5 class="facet-name pull-left">{{ vm.facet.name }}</h5>
+          <button
+            ng-disabled="vm.isLoading()"
+            ng-click="vm.disableFacet()"
+            class="btn btn-danger btn-xs pull-right glyphicon glyphicon-remove">
+          </button>
+        </div>
+      </div>
+      <div class="row no-gutter">
+        <div class="col-md-6 facet-date-left">
+          <span class="input-group">
+            <span class="input-group-btn">
+              <button type="button" class="btn btn-default"
+                ng-click="startDate.opened = !startDate.opened">
+                <i class="glyphicon glyphicon-calendar"></i>
+              </button>
+            </span>
+            <input type="text" class="form-control"
+            uib-datepicker-popup=""
+            ng-disabled="vm.isDisabled()"
+            ng-change="vm.changed()"
+            ng-readonly="true"
+            ng-model="vm.facet.selectedValue.start"
+            is-open="startDate.opened"
+            min-date="vm.facet.min"
+            max-date="vm.facet.max"
+            init-date="vm.facet.min"
+            show-button-bar="false"
+            starting-day="1"
+            ng-required="true"
+            close-text="Close" />
+          </span>
+        </div>
+        <div class="col-md-6 facet-date-right">
+          <span class="input-group">
+            <span class="input-group-btn">
+              <button type="button" class="btn btn-default"
+                ng-click="endDate.opened = !endDate.opened">
+                <i class="glyphicon glyphicon-calendar"></i>
+              </button>
+            </span>
+            <input type="text" class="form-control"
+            uib-datepicker-popup=""
+            ng-disabled="vm.isDisabled()"
+            ng-readonly="true"
+            ng-change="vm.changed(id)"
+            ng-model="vm.facet.selectedValue.end"
+            is-open="endDate.opened"
+            min-date="vm.facet.selectedValue.start || vm.facet.min"
+            max-date="vm.facet.max"
+            init-date="vm.facet.selectedValue.start || vm.facet.min"
+            show-button-bar="false"
+            starting-day="1"
+            ng-required="true"
+            close-text="Close" />
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="facet" ng-if=!vm.isFacetEnabled()>
+    <div class="well well-sm">
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="row vertical-align">
+            <div class="col-xs-10 text-left">
+              <h5 class="facet-name">{{ vm.facet.name }}</h5>
+            </div>
+            <div class="facet-enable-btn-container col-xs-2 text-right">
+              <button
+                ng-disabled="vm.isLoading()"
+                ng-click="vm.enableFacet(id)"
+                class="facet-enable-btn btn btn-default btn-xs pull-right glyphicon glyphicon-plus">
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
