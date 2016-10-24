@@ -398,10 +398,10 @@
 
     angular.module('seco.facetedSearch')
 
-    .factory('Facets', Facets);
+    .factory('FacetHandler', FacetHandler);
 
     /* ngInject */
-    function Facets($log, $location, _, facetUrlStateHandlerService,
+    function FacetHandler($log, $location, _, facetUrlStateHandlerService,
             EVENT_FACET_CONSTRAINTS, EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS,
             EVENT_INITIAL_CONSTRAINTS) {
 

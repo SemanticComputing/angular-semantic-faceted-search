@@ -22,7 +22,7 @@ module.exports = function(grunt) {
                     'src/results/results.service.js',
                     'src/facets/facets.facet-mapper-service.js',
                     'src/facets/facets.facet-selection-formatter.js',
-                    'src/facets/facets.service.js',
+                    'src/facets/facets.facet-handler.service.js',
                     'src/facets/facets.text-with-selection.filter.js',
                     'src/facets/facets.abstract-facet.controller.js',
                     'src/facets/basic/facets.basic-facet.facet.js',
