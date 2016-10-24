@@ -1597,20 +1597,6 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
 
 
   $templateCache.put('src/facets/text/facets.text-facet.directive.html',
-    "<style>\n" +
-    "  .vertical-align {\n" +
-    "    display: flex;\n" +
-    "    flex-direction: row;\n" +
-    "  }\n" +
-    "  .vertical-align > [class^=\"col-\"],\n" +
-    "  .vertical-align > [class*=\" col-\"] {\n" +
-    "    display: flex;\n" +
-    "    align-items: center;\n" +
-    "  }\n" +
-    "  .facet-enable-btn-container {\n" +
-    "    justify-content: center;\n" +
-    "  }\n" +
-    "</style>\n" +
     "<div class=\"facet-wrapper\">\n" +
     "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoading()\"></span>\n" +
     "  <div class=\"facet\" ng-if=vm.isFacetEnabled()>\n" +
@@ -1673,30 +1659,6 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
 
 
   $templateCache.put('src/facets/timespan/facets.timespan-facet.directive.html',
-    "<style>\n" +
-    "  .vertical-align {\n" +
-    "    display: flex;\n" +
-    "    flex-direction: row;\n" +
-    "  }\n" +
-    "  .vertical-align > [class^=\"col-\"],\n" +
-    "  .vertical-align > [class*=\" col-\"] {\n" +
-    "    display: flex;\n" +
-    "    align-items: center;\n" +
-    "  }\n" +
-    "  .facet-enable-btn-container {\n" +
-    "    justify-content: center;\n" +
-    "  }\n" +
-    "  .row.no-gutter {\n" +
-    "    margin-left: 0;\n" +
-    "    margin-right: 0;\n" +
-    "  }\n" +
-    "\n" +
-    "  .row.no-gutter [class*='col-']:not(:first-child),\n" +
-    "  .row.no-gutter [class*='col-']:not(:last-child) {\n" +
-    "    padding-right: 0;\n" +
-    "    padding-left: 0;\n" +
-    "  }\n" +
-    "</style>\n" +
     "<div class=\"facet-wrapper\">\n" +
     "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoading()\"></span>\n" +
     "  <div class=\"facet\" ng-if=vm.isFacetEnabled()>\n" +
