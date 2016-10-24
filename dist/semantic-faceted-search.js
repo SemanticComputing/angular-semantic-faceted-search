@@ -969,6 +969,7 @@
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         TextFacetConstructor.prototype.disable = disable;
         TextFacetConstructor.prototype.enable = enable;
+        TextFacetConstructor.prototype.clear = clear;
         TextFacetConstructor.prototype.isEnabled = isEnabled;
         TextFacetConstructor.prototype.getSelectedValue = getSelectedValue;
 
@@ -1029,6 +1030,10 @@
             return this.selectedValue;
         }
 
+        function clear() {
+            this.selectedValue = undefined;
+        }
+
         function isEnabled() {
             return this._isEnabled;
         }
@@ -1056,6 +1061,7 @@
         var vm = this;
 
         vm.changed = changed;
+        vm.clear = clear;
         vm.enableFacet = enableFacet;
         vm.disableFacet = disableFacet;
         vm.isFacetEnabled = isFacetEnabled;
@@ -1087,6 +1093,11 @@
 
         function changed() {
             $log.debug(vm.facet.name, 'Changed');
+            emitChange();
+        }
+
+        function clear() {
+            vm.facet.clear();
             emitChange();
         }
 
@@ -1629,7 +1640,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            <span class=\"input-group-btn\">\n" +
     "              <button type=\"button\" class=\"btn btn-default\"\n" +
     "                ng-disabled=\"vm.isDisabled()\"\n" +
-    "                ng-click=\"vm.clearTextFacet(id)\">\n" +
+    "                ng-click=\"vm.clear()\">\n" +
     "                <i class=\"glyphicon glyphicon-remove\"></i>\n" +
     "              </button>\n" +
     "            </span>\n" +
