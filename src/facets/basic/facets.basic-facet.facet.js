@@ -16,9 +16,6 @@
         BasicFacetConstructor.prototype.fetchState = fetchState;
         BasicFacetConstructor.prototype.getConstraint = getConstraint;
         BasicFacetConstructor.prototype.getTriplePattern = getTriplePattern;
-        BasicFacetConstructor.prototype.getFacetUri = getFacetUri;
-        BasicFacetConstructor.prototype.getName = getName;
-        BasicFacetConstructor.prototype.getPredicate = getPredicate;
         BasicFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         BasicFacetConstructor.prototype.isBusy = isBusy;
         BasicFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
@@ -120,7 +117,7 @@
             this.endpoint = new SparqlService(this.config.endpointUrl);
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.getFacetUri()];
+            var constVal = options.initialConstraints.facets[this.facetUri];
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
@@ -171,7 +168,7 @@
         }
 
         function getTriplePattern() {
-            return '?s ' + this.getPredicate() + ' ?value . ';
+            return '?s ' + this.predicate + ' ?value . ';
         }
 
         function getConstraint() {
@@ -179,20 +176,8 @@
                 return;
             }
             if (this.getSelectedValue()) {
-                return ' ?s ' + this.getPredicate() + ' ' + this.getSelectedValue() + ' . ';
+                return ' ?s ' + this.predicate + ' ' + this.getSelectedValue() + ' . ';
             }
-        }
-
-        function getPredicate() {
-            return this.predicate;
-        }
-
-        function getFacetUri() {
-            return this.facetUri;
-        }
-
-        function getName() {
-            return this.name;
         }
 
         function getDeselectUnionTemplate() {
@@ -207,7 +192,7 @@
         function buildQuery(constraints) {
             constraints = constraints || [];
             var query = this.queryTemplate
-                .replace(/<OTHER_SERVICES>/g, this.buildServiceUnions(this.config.services))
+                .replace(/<OTHER_SERVICES>/g, this.buildServiceUnions())
                 .replace(/<OTHER_SELECTIONS>/g, this.getOtherSelections(constraints))
                 .replace(/<SELECTIONS>/g, this.buildSelections(constraints))
                 .replace(/<PREF_LANG>/g, this.getPreferredLang());
@@ -226,13 +211,14 @@
             return deselections.join(' ');
         }
 
-        function buildServiceUnions(services) {
+        function buildServiceUnions() {
+            var self = this;
             var unions = '';
-            _.forEach(services, function(service) {
+            _.forEach(self.config.services, function(service) {
                 unions = unions +
                 ' UNION { ' +
                 '  SERVICE ' + service + ' { ' +
-                    this.config.labelPart +
+                    self.config.labelPart +
                 '  } ' +
                 ' } ';
             });

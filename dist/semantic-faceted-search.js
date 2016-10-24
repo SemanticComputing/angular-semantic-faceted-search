@@ -396,7 +396,7 @@
     .factory('Facets', Facets);
 
     /* ngInject */
-    function Facets($log, $rootScope, $location, _, facetUrlStateHandlerService,
+    function Facets($log, $location, _, facetUrlStateHandlerService,
             EVENT_FACET_CONSTRAINTS, EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS,
             EVENT_INITIAL_CONSTRAINTS) {
 
@@ -423,8 +423,8 @@
 
                 self.config = angular.extend({}, defaultConfig, config);
 
-                self.changeListener = $rootScope.$on(EVENT_FACET_CHANGED, update);
-                self.initListener = $rootScope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastInitial);
+                self.changeListener = self.config.scope.$on(EVENT_FACET_CHANGED, update);
+                self.initListener = self.config.scope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastInitial);
 
                 if (!self.config.urlHandler) {
                     var noop = function() { };
@@ -442,17 +442,20 @@
                     self.state.default = getInitialConstraints(self.config);
                 }
                 $log.log('Initial state', self.state);
+                broadCastConstraints(EVENT_INITIAL_CONSTRAINTS);
             }
 
             // Update state, and broadcast them to listening facets.
             function update(event, constraint) {
+                event.stopPropagation();
                 $log.debug('Update', constraint);
                 self.state.facets[constraint.id] = constraint;
                 self.urlHandler.updateUrlParams(self.state.facets);
                 broadCastConstraints(EVENT_FACET_CONSTRAINTS);
             }
 
-            function broadCastInitial() {
+            function broadCastInitial(event) {
+                event.stopPropagation();
                 $log.debug('Broadcast initial');
                 broadCastConstraints(EVENT_INITIAL_CONSTRAINTS);
             }
@@ -462,7 +465,7 @@
                 constraint.push(self.state.default);
                 var data = { facets: self.state.facets, constraint: constraint };
                 $log.log('Broadcast', data);
-                $rootScope.$broadcast(event, data);
+                self.config.scope.$broadcast(event, data);
             }
 
             function getConstraint() {
@@ -526,12 +529,9 @@
         vm.disableFacet = disableFacet;
         vm.enableFacet = enableFacet;
 
-        vm.getFacet = getFacet;
-        vm.getFacetName = getFacetName;
-        vm.getFacetValues = getFacetValues;
-        vm.isFacetEnabled = isFacetEnabled;
-
         vm.getFacetSize = getFacetSize;
+
+        vm.getFacet = function() { return vm.facet; };
 
         vm.listener = function() { };
 
@@ -548,26 +548,12 @@
                     listen();
                     update(cons);
                 }
+                $log.debug(vm.facet.name, vm.facet);
                 // Unregister initListener
                 initListener();
             });
+            $log.debug($scope.options.name, 'Listening for init');
             $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
-        }
-
-        function getFacet() {
-            return vm.facet;
-        }
-
-        function getFacetName() {
-            return vm.getFacet().getName();
-        }
-
-        function getFacetValues() {
-            return vm.getFacet().getState();
-        }
-
-        function isFacetEnabled() {
-            return vm.getFacet().isEnabled();
         }
 
         function listen() {
@@ -583,7 +569,7 @@
         }
 
         function isLoading() {
-            return vm.isLoadingFacet || vm.getFacet().isLoading();
+            return vm.isLoadingFacet || !vm.facet || vm.facet.isLoading();
         }
 
         function emitChange(forced) {
@@ -595,7 +581,7 @@
             }
             vm.previousVal = _.clone(val);
             var args = {
-                id: vm.facet.getFacetUri(),
+                id: vm.facet.facetUri,
                 constraint: vm.facet.getConstraint(),
                 value: val
             };
@@ -661,9 +647,6 @@
         BasicFacetConstructor.prototype.fetchState = fetchState;
         BasicFacetConstructor.prototype.getConstraint = getConstraint;
         BasicFacetConstructor.prototype.getTriplePattern = getTriplePattern;
-        BasicFacetConstructor.prototype.getFacetUri = getFacetUri;
-        BasicFacetConstructor.prototype.getName = getName;
-        BasicFacetConstructor.prototype.getPredicate = getPredicate;
         BasicFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         BasicFacetConstructor.prototype.isBusy = isBusy;
         BasicFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
@@ -765,7 +748,7 @@
             this.endpoint = new SparqlService(this.config.endpointUrl);
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.getFacetUri()];
+            var constVal = options.initialConstraints.facets[this.facetUri];
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
@@ -816,7 +799,7 @@
         }
 
         function getTriplePattern() {
-            return '?s ' + this.getPredicate() + ' ?value . ';
+            return '?s ' + this.predicate + ' ?value . ';
         }
 
         function getConstraint() {
@@ -824,20 +807,8 @@
                 return;
             }
             if (this.getSelectedValue()) {
-                return ' ?s ' + this.getPredicate() + ' ' + this.getSelectedValue() + ' . ';
+                return ' ?s ' + this.predicate + ' ' + this.getSelectedValue() + ' . ';
             }
-        }
-
-        function getPredicate() {
-            return this.predicate;
-        }
-
-        function getFacetUri() {
-            return this.facetUri;
-        }
-
-        function getName() {
-            return this.name;
         }
 
         function getDeselectUnionTemplate() {
@@ -852,7 +823,7 @@
         function buildQuery(constraints) {
             constraints = constraints || [];
             var query = this.queryTemplate
-                .replace(/<OTHER_SERVICES>/g, this.buildServiceUnions(this.config.services))
+                .replace(/<OTHER_SERVICES>/g, this.buildServiceUnions())
                 .replace(/<OTHER_SELECTIONS>/g, this.getOtherSelections(constraints))
                 .replace(/<SELECTIONS>/g, this.buildSelections(constraints))
                 .replace(/<PREF_LANG>/g, this.getPreferredLang());
@@ -871,13 +842,14 @@
             return deselections.join(' ');
         }
 
-        function buildServiceUnions(services) {
+        function buildServiceUnions() {
+            var self = this;
             var unions = '';
-            _.forEach(services, function(service) {
+            _.forEach(self.config.services, function(service) {
                 unions = unions +
                 ' UNION { ' +
                 '  SERVICE ' + service + ' { ' +
-                    this.config.labelPart +
+                    self.config.labelPart +
                 '  } ' +
                 ' } ';
             });
@@ -942,9 +914,8 @@
 
     /* ngInject */
     function BasicFacetController($scope, $controller, $log, $q, _, BasicFacet) {
-        var vm = this;
         var args = { $scope: $scope, FacetImpl: BasicFacet };
-        angular.extend(vm, $controller('AbstractFacetController', args));
+        return $controller('AbstractFacetController', args);
     }
 })();
 
@@ -982,9 +953,6 @@
     function TextFacet($log) {
 
         TextFacetConstructor.prototype.getConstraint = getConstraint;
-        TextFacetConstructor.prototype.getFacetUri = getFacetUri;
-        TextFacetConstructor.prototype.getName = getName;
-        TextFacetConstructor.prototype.getPredicate = getPredicate;
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         TextFacetConstructor.prototype.disable = disable;
         TextFacetConstructor.prototype.enable = enable;
@@ -1013,10 +981,10 @@
             }
 
             // Initial value
-            var initial = options.initialConstraints.facets[this.getFacetUri()];
-            if (initial) {
+            var initial = options.initialConstraints.facets[this.facetUri];
+            if (initial && initial.value) {
                 this._isEnabled = true;
-                this.selectedValue = initial;
+                this.selectedValue = initial.value;
             }
         }
 
@@ -1027,7 +995,7 @@
             }
             var result = this.useJenaText ? ' ?s text:query "' + value + '*" . ' : '';
             var textVar = '?text' + 0;
-            result = result + ' ?s ' + this.getPredicate() + ' ' + textVar + ' . ';
+            result = result + ' ?s ' + this.predicate + ' ' + textVar + ' . ';
             var words = value.replace(/[?,._*'\\/-]/g, ' ');
 
             words.split(' ').forEach(function(word) {
@@ -1038,18 +1006,6 @@
             $log.warn(result);
 
             return result;
-        }
-
-        function getPredicate() {
-            return this.predicate;
-        }
-
-        function getFacetUri() {
-            return this.facetUri;
-        }
-
-        function getName() {
-            return this.name;
         }
 
         function getPreferredLang() {
@@ -1069,7 +1025,7 @@
         }
 
         function disable() {
-            this.selectedValue = {};
+            this.selectedValue = undefined;
             this._isEnabled = false;
         }
     }
@@ -1108,7 +1064,7 @@
         function emitChange() {
             var val = vm.facet.getSelectedValue();
             var args = {
-                id: vm.facet.getFacetUri(),
+                id: vm.facet.facetUri,
                 constraint: vm.facet.getConstraint(),
                 value: val
             };
@@ -1123,7 +1079,6 @@
 
         function enableFacet() {
             vm.facet.enable();
-            emitChange(true);
         }
 
         function disableFacet() {
@@ -1132,6 +1087,9 @@
         }
 
         function isFacetEnabled() {
+            if (!vm.facet) {
+                return false;
+            }
             return vm.facet.isEnabled();
         }
 
@@ -1228,7 +1186,7 @@
             this.selectedValue = {};
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.getFacetUri()];
+            var constVal = options.initialConstraints.facets[this.facetUri];
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
@@ -1249,7 +1207,7 @@
             var templateSubs = [
                 {
                     placeHolder: /<ID>/g,
-                    value: this.getFacetUri()
+                    value: this.facetUri
                 },
                 {
                     placeHolder: /<PROPERTY>/g,
@@ -1322,9 +1280,8 @@
 
     /* ngInject */
     function HierarchyFacetController($scope, $controller, HierarchyFacet) {
-        var vm = this;
         var args = { $scope: $scope, FacetImpl: HierarchyFacet };
-        angular.extend(vm, $controller('AbstractFacetController', args));
+        return $controller('AbstractFacetController', args);
     }
 })();
 
@@ -1378,11 +1335,11 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "</style>\n" +
     "<div class=\"facet-wrapper\">\n" +
     "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoading()\"></span>\n" +
-    "  <div class=\"facet\" ng-if=vm.isFacetEnabled()>\n" +
+    "  <div class=\"facet\" ng-if=vm.facet.isEnabled()>\n" +
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
-    "          <h5 class=\"facet-name pull-left\">{{ vm.getFacetName() }}</h5>\n" +
+    "          <h5 class=\"facet-name pull-left\">{{ vm.facet.name }}</h5>\n" +
     "          <button\n" +
     "            ng-disabled=\"vm.isLoading()\"\n" +
     "            ng-click=\"vm.disableFacet()\"\n" +
@@ -1400,23 +1357,23 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "          <select\n" +
     "            ng-change=\"vm.changed()\"\n" +
     "            ng-disabled=\"vm.isLoading()\"\n" +
-    "            ng-attr-size=\"{{ vm.getFacetSize(vm.getFacetValues()) }}\"\n" +
-    "            id=\"{{ ::vm.getFacet().name + '_select' }}\"\n" +
+    "            ng-attr-size=\"{{ vm.getFacetSize(vm.facet.getState()) }}\"\n" +
+    "            id=\"{{ ::vm.facet.name + '_select' }}\"\n" +
     "            class=\"selector form-control\"\n" +
-    "            ng-options=\"value as (value.text + ' (' + value.count + ')') for value in vm.getFacetValues() | textWithSelection:textFilter:vm.getFacet().selectedValue track by value.value\"\n" +
-    "            ng-model=\"vm.getFacet().selectedValue\">\n" +
+    "            ng-options=\"value as (value.text + ' (' + value.count + ')') for value in vm.facet.getState() | textWithSelection:textFilter:vm.facet.selectedValue track by value.value\"\n" +
+    "            ng-model=\"vm.facet.selectedValue\">\n" +
     "          </select>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +
-    "  <div class=\"facet\" ng-if=!vm.isFacetEnabled()>\n" +
+    "  <div class=\"facet\" ng-if=!vm.facet.isEnabled()>\n" +
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12\">\n" +
     "          <div class=\"row vertical-align\">\n" +
     "            <div class=\"col-xs-10 text-left\">\n" +
-    "              <h5 class=\"facet-name\">{{ vm.getFacetName() }}</h5>\n" +
+    "              <h5 class=\"facet-name\">{{ vm.facet.name }}</h5>\n" +
     "            </div>\n" +
     "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
     "              <button\n" +

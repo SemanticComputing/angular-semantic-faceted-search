@@ -31,7 +31,7 @@
         function emitChange() {
             var val = vm.facet.getSelectedValue();
             var args = {
-                id: vm.facet.getFacetUri(),
+                id: vm.facet.facetUri,
                 constraint: vm.facet.getConstraint(),
                 value: val
             };
@@ -46,7 +46,6 @@
 
         function enableFacet() {
             vm.facet.enable();
-            emitChange(true);
         }
 
         function disableFacet() {
@@ -55,6 +54,9 @@
         }
 
         function isFacetEnabled() {
+            if (!vm.facet) {
+                return false;
+            }
             return vm.facet.isEnabled();
         }
 

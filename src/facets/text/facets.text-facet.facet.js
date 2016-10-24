@@ -12,9 +12,6 @@
     function TextFacet($log) {
 
         TextFacetConstructor.prototype.getConstraint = getConstraint;
-        TextFacetConstructor.prototype.getFacetUri = getFacetUri;
-        TextFacetConstructor.prototype.getName = getName;
-        TextFacetConstructor.prototype.getPredicate = getPredicate;
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         TextFacetConstructor.prototype.disable = disable;
         TextFacetConstructor.prototype.enable = enable;
@@ -43,10 +40,10 @@
             }
 
             // Initial value
-            var initial = options.initialConstraints.facets[this.getFacetUri()];
-            if (initial) {
+            var initial = options.initialConstraints.facets[this.facetUri];
+            if (initial && initial.value) {
                 this._isEnabled = true;
-                this.selectedValue = initial;
+                this.selectedValue = initial.value;
             }
         }
 
@@ -57,7 +54,7 @@
             }
             var result = this.useJenaText ? ' ?s text:query "' + value + '*" . ' : '';
             var textVar = '?text' + 0;
-            result = result + ' ?s ' + this.getPredicate() + ' ' + textVar + ' . ';
+            result = result + ' ?s ' + this.predicate + ' ' + textVar + ' . ';
             var words = value.replace(/[?,._*'\\/-]/g, ' ');
 
             words.split(' ').forEach(function(word) {
@@ -68,18 +65,6 @@
             $log.warn(result);
 
             return result;
-        }
-
-        function getPredicate() {
-            return this.predicate;
-        }
-
-        function getFacetUri() {
-            return this.facetUri;
-        }
-
-        function getName() {
-            return this.name;
         }
 
         function getPreferredLang() {
@@ -99,7 +84,7 @@
         }
 
         function disable() {
-            this.selectedValue = {};
+            this.selectedValue = undefined;
             this._isEnabled = false;
         }
     }
