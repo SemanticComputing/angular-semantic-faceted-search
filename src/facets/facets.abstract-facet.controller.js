@@ -17,12 +17,9 @@
         vm.disableFacet = disableFacet;
         vm.enableFacet = enableFacet;
 
-        vm.getFacet = getFacet;
-        vm.getFacetName = getFacetName;
-        vm.getFacetValues = getFacetValues;
-        vm.isFacetEnabled = isFacetEnabled;
-
         vm.getFacetSize = getFacetSize;
+
+        vm.getFacet = function() { return vm.facet; };
 
         vm.listener = function() { };
 
@@ -39,26 +36,12 @@
                     listen();
                     update(cons);
                 }
+                $log.debug(vm.facet.name, vm.facet);
                 // Unregister initListener
                 initListener();
             });
+            $log.debug($scope.options.name, 'Listening for init');
             $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
-        }
-
-        function getFacet() {
-            return vm.facet;
-        }
-
-        function getFacetName() {
-            return vm.getFacet().getName();
-        }
-
-        function getFacetValues() {
-            return vm.getFacet().getState();
-        }
-
-        function isFacetEnabled() {
-            return vm.getFacet().isEnabled();
         }
 
         function listen() {
@@ -74,7 +57,7 @@
         }
 
         function isLoading() {
-            return vm.isLoadingFacet || vm.getFacet().isLoading();
+            return vm.isLoadingFacet || !vm.facet || vm.facet.isLoading();
         }
 
         function emitChange(forced) {
@@ -86,7 +69,7 @@
             }
             vm.previousVal = _.clone(val);
             var args = {
-                id: vm.facet.getFacetUri(),
+                id: vm.facet.facetUri,
                 constraint: vm.facet.getConstraint(),
                 value: val
             };

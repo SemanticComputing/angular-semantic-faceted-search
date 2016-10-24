@@ -9,7 +9,7 @@
     .factory('Facets', Facets);
 
     /* ngInject */
-    function Facets($log, $rootScope, $location, _, facetUrlStateHandlerService,
+    function Facets($log, $location, _, facetUrlStateHandlerService,
             EVENT_FACET_CONSTRAINTS, EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS,
             EVENT_INITIAL_CONSTRAINTS) {
 
@@ -36,8 +36,8 @@
 
                 self.config = angular.extend({}, defaultConfig, config);
 
-                self.changeListener = $rootScope.$on(EVENT_FACET_CHANGED, update);
-                self.initListener = $rootScope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastInitial);
+                self.changeListener = self.config.scope.$on(EVENT_FACET_CHANGED, update);
+                self.initListener = self.config.scope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastInitial);
 
                 if (!self.config.urlHandler) {
                     var noop = function() { };
@@ -55,17 +55,20 @@
                     self.state.default = getInitialConstraints(self.config);
                 }
                 $log.log('Initial state', self.state);
+                broadCastConstraints(EVENT_INITIAL_CONSTRAINTS);
             }
 
             // Update state, and broadcast them to listening facets.
             function update(event, constraint) {
+                event.stopPropagation();
                 $log.debug('Update', constraint);
                 self.state.facets[constraint.id] = constraint;
                 self.urlHandler.updateUrlParams(self.state.facets);
                 broadCastConstraints(EVENT_FACET_CONSTRAINTS);
             }
 
-            function broadCastInitial() {
+            function broadCastInitial(event) {
+                event.stopPropagation();
                 $log.debug('Broadcast initial');
                 broadCastConstraints(EVENT_INITIAL_CONSTRAINTS);
             }
@@ -75,7 +78,7 @@
                 constraint.push(self.state.default);
                 var data = { facets: self.state.facets, constraint: constraint };
                 $log.log('Broadcast', data);
-                $rootScope.$broadcast(event, data);
+                self.config.scope.$broadcast(event, data);
             }
 
             function getConstraint() {

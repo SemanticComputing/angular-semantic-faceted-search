@@ -68,7 +68,7 @@
             this.selectedValue = {};
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.getFacetUri()];
+            var constVal = options.initialConstraints.facets[this.facetUri];
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
@@ -89,7 +89,7 @@
             var templateSubs = [
                 {
                     placeHolder: /<ID>/g,
-                    value: this.getFacetUri()
+                    value: this.facetUri
                 },
                 {
                     placeHolder: /<PROPERTY>/g,

@@ -5,9 +5,8 @@
     .controller('BasicFacetController', BasicFacetController);
 
     /* ngInject */
-    function BasicFacetController($scope, $controller, $log, $q, _, BasicFacet) {
-        var vm = this;
+    function BasicFacetController($scope, $controller, BasicFacet) {
         var args = { $scope: $scope, FacetImpl: BasicFacet };
-        angular.extend(vm, $controller('AbstractFacetController', args));
+        return $controller('AbstractFacetController', args);
     }
 })();
