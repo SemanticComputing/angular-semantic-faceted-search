@@ -19,9 +19,9 @@
 
         vm.getFacetSize = getFacetSize;
 
-        vm.getFacet = function() { return vm.facet; };
-
         vm.listener = function() { };
+
+        vm.getSpinnerKey = getSpinnerKey;
 
         init(FacetImpl);
 
@@ -42,6 +42,14 @@
             });
             $log.debug($scope.options.name, 'Listening for init');
             $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
+        }
+
+        var spinnerKey;
+        function getSpinnerKey() {
+            if (!spinnerKey) {
+                spinnerKey = _.uniqueId('spinner');
+            }
+            return spinnerKey;
         }
 
         function listen() {

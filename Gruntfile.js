@@ -8,7 +8,8 @@ module.exports = function(grunt) {
             'seco.facetedSearch': {
                 src: [
                     'src/facets/basic/facets.basic-facet.directive.html',
-                    'src/facets/text/facets.text-facet.directive.html'
+                    'src/facets/text/facets.text-facet.directive.html',
+                    'src/facets/timespan/facets.timespan-facet.directive.html'
                 ],
                 dest: 'dist/templates.js'
             }
@@ -30,6 +31,9 @@ module.exports = function(grunt) {
                     'src/facets/text/facets.text-facet.facet.js',
                     'src/facets/text/facets.text-facet.controller.js',
                     'src/facets/text/facets.text-facet.directive.js',
+                    'src/facets/timespan/facets.timespan-facet.facet.js',
+                    'src/facets/timespan/facets.timespan-facet.controller.js',
+                    'src/facets/timespan/facets.timespan-facet.directive.js',
                     'src/facets/hierarchy/facets.hierarchy-facet.facet.js',
                     'src/facets/hierarchy/facets.hierarchy-facet.controller.js',
                     'src/facets/hierarchy/facets.hierarchy-facet.directive.js',

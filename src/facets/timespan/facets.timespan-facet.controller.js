@@ -1,0 +1,64 @@
+(function() {
+    'use strict';
+
+    angular.module('seco.facetedSearch')
+    .controller('TimespanFacetController', TimespanFacetController);
+
+    /* ngInject */
+    function TimespanFacetController($log, $scope, _, EVENT_FACET_CHANGED,
+            EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS, TimespanFacet) {
+        var vm = this;
+
+        vm.changed = changed;
+        vm.enableFacet = enableFacet;
+        vm.disableFacet = disableFacet;
+        vm.isFacetEnabled = isFacetEnabled;
+
+        init();
+
+        function init() {
+            var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
+                $log.debug($scope.options.name, 'Init');
+                var initial = _.cloneDeep($scope.options);
+                initial.initialConstraints = cons;
+                vm.facet = new TimespanFacet(initial);
+                // Unregister initListener
+                initListener();
+            });
+            $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
+        }
+
+        function emitChange() {
+            var val = vm.facet.getSelectedValue();
+            var args = {
+                id: vm.facet.facetUri,
+                constraint: vm.facet.getConstraint(),
+                value: val
+            };
+            $log.log(vm.facet.name, 'Emit', args);
+            $scope.$emit(EVENT_FACET_CHANGED, args);
+        }
+
+        function changed() {
+            $log.debug(vm.facet.name, 'Changed');
+            emitChange();
+        }
+
+        function enableFacet() {
+            vm.facet.enable();
+        }
+
+        function disableFacet() {
+            vm.facet.disable();
+            emitChange();
+        }
+
+        function isFacetEnabled() {
+            if (!vm.facet) {
+                return false;
+            }
+            return vm.facet.isEnabled();
+        }
+
+    }
+})();
