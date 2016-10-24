@@ -73,12 +73,12 @@
             }
 
             var triplePatternTemplate =
-            ' VALUES ?class { ' +
+            ' VALUES ?<CLASS_VAR> { ' +
             '  <HIERARCHY_CLASSES> ' +
             ' } ' +
-            ' ?hv <PROPERTY> ?class . ' +
-            ' ?h <PROPERTY> ?hv . ' +
-            ' ?s <ID> ?h .';
+            ' ?<H_VAR> <PROPERTY> ?<CLASS_VAR> . ' +
+            ' ?<V_VAR> <PROPERTY> ?<H_VAR> . ' +
+            ' ?s <ID> ?<V_VAR> .';
 
             this.triplePatternTemplate = this.buildQueryTemplate(triplePatternTemplate);
         }
@@ -100,6 +100,18 @@
                 {
                     placeHolder: /<NO_SELECTION_STRING>/g,
                     value: this.config.noSelectionString
+                },
+                {
+                    placeHolder: /<H_VAR>/g,
+                    value: 'seco_h_' + this.facetId
+                },
+                {
+                    placeHolder: /<V_VAR>/g,
+                    value: 'seco_v_' + this.facetId
+                },
+                {
+                    placeHolder: /<CLASS_VAR>/g,
+                    value: 'seco_class_' + this.facetId
                 }
             ];
 
