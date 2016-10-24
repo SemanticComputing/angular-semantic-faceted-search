@@ -1,17 +1,3 @@
-<style>
-  .vertical-align {
-    display: flex;
-    flex-direction: row;
-  }
-  .vertical-align > [class^="col-"],
-  .vertical-align > [class*=" col-"] {
-    display: flex;
-    align-items: center;
-  }
-  .facet-enable-btn-container {
-    justify-content: center;
-  }
-</style>
 <div class="facet-wrapper">
   <span us-spinner="{radius:30, width:8, length: 40}" ng-if="vm.isLoading()"></span>
   <div class="facet" ng-if=vm.isFacetEnabled()>

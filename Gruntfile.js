@@ -15,7 +15,7 @@ module.exports = function(grunt) {
             }
         },
         concat: {
-            dist: {
+            js: {
                 src: [
                     'src/facets/facets.module.js',
                     'src/faceturlstate/faceturlstate.url-state-handler-service.js',
@@ -40,6 +40,10 @@ module.exports = function(grunt) {
                     'dist/templates.js'
                 ],
                 dest: 'dist/semantic-faceted-search.js'
+            },
+            css: {
+                src: ['src/css/facets.css'],
+                dest: 'dist/semantic-faceted-search.css'
             }
         },
         clean: {
@@ -53,7 +57,8 @@ module.exports = function(grunt) {
 
     grunt.registerTask('build', [
         'ngtemplates',
-        'concat:dist',
+        'concat:js',
+        'concat:css',
         'clean:templates'
     ]);
 };
