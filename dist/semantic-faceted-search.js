@@ -963,7 +963,7 @@
     .factory('TextFacet', TextFacet);
 
     /* ngInject */
-    function TextFacet() {
+    function TextFacet(_) {
 
         TextFacetConstructor.prototype.getConstraint = getConstraint;
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
@@ -995,7 +995,7 @@
             }
 
             // Initial value
-            var initial = options.initialConstraints.facets[this.facetId];
+            var initial = _.get(options, 'initialConstraints.facets[this.facetId]');
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
@@ -1185,7 +1185,7 @@
             this.varSuffix = this.facetId;
 
             // Initial value
-            var initial = options.initialConstraints.facets[this.facetId];
+            var initial = _.get(options, 'initialConstraints.facets[this.facetId]');
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
@@ -1209,10 +1209,10 @@
             ' ?s <END_PROPERTY> <VAR> . ' +
             ' FILTER(<VAR> <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
 
-            var startVar = '?start' + this.varSuffix;
-            var endVar = '?end' + this.varSuffix;
+            var startVar = '?start_' + this.varSuffix;
+            var endVar = '?end_' + this.varSuffix;
 
-            if (this.start === this.end) {
+            if (this.startPredicate === this.endPredicate) {
                 endVar = startVar;
             }
 
