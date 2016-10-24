@@ -963,7 +963,7 @@
     .factory('TextFacet', TextFacet);
 
     /* ngInject */
-    function TextFacet($log) {
+    function TextFacet() {
 
         TextFacetConstructor.prototype.getConstraint = getConstraint;
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
@@ -1008,7 +1008,7 @@
                 return;
             }
             var result = this.useJenaText ? ' ?s text:query "' + value + '*" . ' : '';
-            var textVar = '?text' + 0;
+            var textVar = '?' + this.facetId;
             result = result + ' ?s ' + this.predicate + ' ' + textVar + ' . ';
             var words = value.replace(/[?,._*'\\/-]/g, ' ');
 
@@ -1016,8 +1016,6 @@
                 result = result + ' FILTER(CONTAINS(LCASE(' + textVar + '), "' +
                         word.toLowerCase() + '")) ';
             });
-
-            $log.warn(result);
 
             return result;
         }
@@ -1151,7 +1149,7 @@
     .factory('TimespanFacet', TimespanFacet);
 
     /* ngInject */
-    function TimespanFacet($log, _) {
+    function TimespanFacet(_) {
 
         TimespanFacetConstructor.prototype.getConstraint = getConstraint;
         TimespanFacetConstructor.prototype.getPreferredLang = getPreferredLang;
@@ -1167,14 +1165,10 @@
             /* Implementation */
 
             var defaultConfig = {
-                preferredLang: 'fi',
-                makeUnique: true
+                preferredLang: 'fi'
             };
 
-
             this.config = angular.extend({}, defaultConfig, options);
-
-            this.varSuffix = this.config.makeUnique ? _.uniqueId() : '';
 
             this.name = this.config.name;
             this.facetId = this.config.facetId;
@@ -1187,6 +1181,8 @@
             } else {
                 this.disable();
             }
+
+            this.varSuffix = this.facetId;
 
             // Initial value
             var initial = options.initialConstraints.facets[this.facetId];
@@ -1222,8 +1218,6 @@
 
             startFilter = startFilter.replace(/<VAR>/g, startVar);
             endFilter = endFilter.replace(/<VAR>/g, endVar);
-
-            $log.warn(this.name, startFilter, endFilter);
 
             if (start) {
                 start.setHours(12, 0, 0);

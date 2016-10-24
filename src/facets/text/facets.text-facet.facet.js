@@ -9,7 +9,7 @@
     .factory('TextFacet', TextFacet);
 
     /* ngInject */
-    function TextFacet($log) {
+    function TextFacet() {
 
         TextFacetConstructor.prototype.getConstraint = getConstraint;
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
@@ -54,7 +54,7 @@
                 return;
             }
             var result = this.useJenaText ? ' ?s text:query "' + value + '*" . ' : '';
-            var textVar = '?text' + 0;
+            var textVar = '?' + this.facetId;
             result = result + ' ?s ' + this.predicate + ' ' + textVar + ' . ';
             var words = value.replace(/[?,._*'\\/-]/g, ' ');
 
@@ -62,8 +62,6 @@
                 result = result + ' FILTER(CONTAINS(LCASE(' + textVar + '), "' +
                         word.toLowerCase() + '")) ';
             });
-
-            $log.warn(result);
 
             return result;
         }
