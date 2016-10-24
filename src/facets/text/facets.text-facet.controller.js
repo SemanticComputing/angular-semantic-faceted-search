@@ -10,6 +10,7 @@
         var vm = this;
 
         vm.changed = changed;
+        vm.clear = clear;
         vm.enableFacet = enableFacet;
         vm.disableFacet = disableFacet;
         vm.isFacetEnabled = isFacetEnabled;
@@ -41,6 +42,11 @@
 
         function changed() {
             $log.debug(vm.facet.name, 'Changed');
+            emitChange();
+        }
+
+        function clear() {
+            vm.facet.clear();
             emitChange();
         }
 

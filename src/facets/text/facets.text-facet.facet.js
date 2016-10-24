@@ -15,6 +15,7 @@
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         TextFacetConstructor.prototype.disable = disable;
         TextFacetConstructor.prototype.enable = enable;
+        TextFacetConstructor.prototype.clear = clear;
         TextFacetConstructor.prototype.isEnabled = isEnabled;
         TextFacetConstructor.prototype.getSelectedValue = getSelectedValue;
 
@@ -73,6 +74,10 @@
 
         function getSelectedValue() {
             return this.selectedValue;
+        }
+
+        function clear() {
+            this.selectedValue = undefined;
         }
 
         function isEnabled() {
