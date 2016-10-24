@@ -2,8 +2,8 @@
 /* global inject, module  */
 
 describe('BasicFacet', function() {
-    var $rootScope, $q, mock, mockConstructor, BasicFacet, facet,
-        options, response, values;
+    var $rootScope, $q, $timeout, mock, mockConstructor, BasicFacet, facet,
+        options, natResponse, genResponse, genValues, natValues;
 
     beforeEach(module('seco.facetedSearch'));
 
@@ -14,7 +14,12 @@ describe('BasicFacet', function() {
         $provide.value('SparqlService', mockConstructor);
     }));
 
-    beforeEach(inject(function(_$q_, _$rootScope_, _BasicFacet_) {
+    beforeEach(inject(function(){
+        spyOn(mock, 'getObjects').and.callThrough();
+    }));
+
+    beforeEach(inject(function(_$timeout_, _$q_, _$rootScope_, _BasicFacet_) {
+        $timeout = _$timeout_;
         $q = _$q_;
         $rootScope = _$rootScope_;
         BasicFacet = _BasicFacet_;
@@ -29,7 +34,7 @@ describe('BasicFacet', function() {
 
         facet = new BasicFacet(options);
 
-        values = [
+        genValues = [
             {
                 'value': undefined,
                 'text': '-- No Selection --',
@@ -52,7 +57,7 @@ describe('BasicFacet', function() {
             }
         ];
 
-        response = [
+        genResponse = [
             {
                 'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '94696' } ,
                 'facet_text': { 'type': 'literal' , 'value': '-- No Selection --' }
@@ -71,6 +76,41 @@ describe('BasicFacet', function() {
                 'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '94286' } ,
                 'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Mies' } ,
                 'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Mies' }
+            }
+        ];
+
+        natValues = [
+            {
+                'value': undefined,
+                'text': '-- No Selection --',
+                'count': 5
+            },
+            {
+                'value': '<http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Ruotsi>',
+                'text': 'Ruotsi',
+                'count': 1
+            },
+            {
+                'value': '<http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Suomi>',
+                'text': 'Suomi',
+                'count': 4
+            }
+        ];
+
+        natResponse = [
+            {
+                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '5' } ,
+                'facet_text': { 'type': 'literal' , 'value': '-- No Selection --' }
+            },
+            {
+                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '1' } ,
+                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Ruotsi' } ,
+                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Ruotsi' }
+            },
+            {
+                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '4' } ,
+                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Suomi' } ,
+                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Suomi' }
             }
         ];
 
@@ -134,11 +174,66 @@ describe('BasicFacet', function() {
 
             var qryRes;
 
+            mock.response = natResponse;
+
+            facet.update(data).then(function(res) {
+                qryRes = res;
+            });
+
+            expect(mock.getObjects).toHaveBeenCalled();
+
+            $rootScope.$apply();
+
+            expect(qryRes).toEqual(natValues);
+        });
+
+        it('should not fetch results if facet is disabled', function() {
+            var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
+            var data = { facets: {}, constraint: cons };
+
+            var qryRes;
+
+            facet.disable();
+
             facet.update(data).then(function(res) {
                 qryRes = res;
             });
             $rootScope.$apply();
-            expect(qryRes).toEqual(values);
+
+            expect(qryRes).toBeUndefined();
+            expect(mock.getObjects).not.toHaveBeenCalled();
+        });
+
+        it('should abort if it is called again with different constraints', function() {
+            var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
+            var data = { facets: {}, constraint: cons };
+
+            var qryRes;
+
+            mock.wait = true;
+            mock.response = natResponse;
+
+            facet.update(data).then(function() {
+                throw Error;
+            }, function(error) {
+                expect(error).toEqual('Facet state changed');
+            });
+
+            mock.wait = false;
+            mock.response = genResponse;
+
+            var newCons = ['?s ?p ?o .'];
+            var newData = { facets: {}, constraint: newCons };
+
+            facet.update(newData).then(function(res) {
+                qryRes = res;
+            });
+
+            $rootScope.$apply();
+
+            $timeout.flush();
+
+            expect(qryRes).toEqual(genValues);
         });
 
         it('should make the facet busy', function() {
@@ -158,9 +253,15 @@ describe('BasicFacet', function() {
     });
 
     function getResponse() {
+        var response = this.response;
         var deferred = $q.defer();
-        deferred.resolve(response);
-        $rootScope.$apply();
+        if (this.wait) {
+            $timeout(function() {
+                deferred.resolve(response);
+            });
+        } else {
+            deferred.resolve(response);
+        }
 
         return deferred.promise;
     }
