@@ -35,7 +35,7 @@
             this.varSuffix = this.config.makeUnique ? _.uniqueId() : '';
 
             this.name = this.config.name;
-            this.facetUri = this.config.facetUri;
+            this.facetId = this.config.facetId;
             this.startPredicate = this.config.startPredicate;
             this.endPredicate = this.config.endPredicate;
             this.min = this.config.min;
@@ -47,7 +47,7 @@
             }
 
             // Initial value
-            var initial = options.initialConstraints.facets[this.facetUri];
+            var initial = options.initialConstraints.facets[this.facetId];
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
