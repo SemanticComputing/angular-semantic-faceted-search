@@ -9,7 +9,7 @@
     .factory('TextFacet', TextFacet);
 
     /* ngInject */
-    function TextFacet() {
+    function TextFacet(_) {
 
         TextFacetConstructor.prototype.getConstraint = getConstraint;
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
@@ -41,7 +41,7 @@
             }
 
             // Initial value
-            var initial = options.initialConstraints.facets[this.facetId];
+            var initial = _.get(options, 'initialConstraints.facets[this.facetId]');
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
