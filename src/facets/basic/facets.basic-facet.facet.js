@@ -17,7 +17,6 @@
         BasicFacetConstructor.prototype.getConstraint = getConstraint;
         BasicFacetConstructor.prototype.getTriplePattern = getTriplePattern;
         BasicFacetConstructor.prototype.getPreferredLang = getPreferredLang;
-        BasicFacetConstructor.prototype.isBusy = isBusy;
         BasicFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         BasicFacetConstructor.prototype.buildQuery = buildQuery;
         BasicFacetConstructor.prototype.buildServiceUnions = buildServiceUnions;
@@ -117,7 +116,7 @@
             this.endpoint = new SparqlService(this.config.endpointUrl);
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.facetId];
+            var constVal = _.get(options, 'initialConstraints.facets[this.facetId]');
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
@@ -152,10 +151,6 @@
 
         function getState() {
             return this.state;
-        }
-
-        function isBusy() {
-            return this._isBusy;
         }
 
         // Build a query with the facet selection and use it to get the facet state.
@@ -270,7 +265,7 @@
         }
 
         function isLoading() {
-            return this.isBusy();
+            return this._isBusy;
         }
     }
 })();
