@@ -13,7 +13,6 @@
     /* ngInject */
     function facetMapperService(_, objectMapperService) {
         FacetMapper.prototype.makeObject = makeObject;
-        FacetMapper.prototype.postProcess = postProcess;
 
         var proto = Object.getPrototypeOf(objectMapperService);
         FacetMapper.prototype = angular.extend({}, proto, FacetMapper.prototype);
@@ -32,20 +31,6 @@
             o.count = parseInt(obj.cnt.value);
 
             return o;
-        }
-
-        function postProcess(objs) {
-            objs.forEach(function(o) {
-                var noSelectionIndex = _.findIndex(o.values, function(v) {
-                    return angular.isUndefined(v.value);
-                });
-                if (noSelectionIndex > -1) {
-                    var noSel = _.pullAt(o.values, noSelectionIndex);
-                    o.values = noSel.concat(o.values);
-                }
-            });
-
-            return objs;
         }
 
         function parseValue(value) {
