@@ -852,6 +852,10 @@
                 {
                     placeHolder: /<NO_SELECTION_STRING>/g,
                     value: this.config.noSelectionString
+                },
+                {
+                    placeHolder: /\s+/g,
+                    value: ' '
                 }
             ];
 
@@ -878,7 +882,7 @@
         }
 
         function disable() {
-            this.selectedValue = {};
+            this.selectedValue = undefined;
             this._isEnabled = false;
         }
 
@@ -1339,7 +1343,6 @@
 
         HierarchyFacetConstructor.prototype.getSelectedValue = getSelectedValue;
         HierarchyFacetConstructor.prototype.getConstraint = getConstraint;
-        HierarchyFacetConstructor.prototype.getTriplePattern = getTriplePattern;
         HierarchyFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         HierarchyFacetConstructor.prototype.buildQuery = buildQuery;
         HierarchyFacetConstructor.prototype.getHierarchyClasses = getHierarchyClasses;
@@ -1387,7 +1390,7 @@
 
             BasicFacet.call(this, options);
 
-            this.selectedValue = {};
+            this.selectedValue;
 
             // Initial value
             var constVal = _.get(options, 'initialConstraints.facets.' + this.facetId);
@@ -1436,6 +1439,18 @@
                 {
                     placeHolder: /<CLASS_VAR>/g,
                     value: 'seco_class_' + this.facetId
+                },
+                {
+                    placeHolder: /<LABEL_PART>/g,
+                    value: this.config.labelPart
+                },
+                {
+                    placeHolder: /<NO_SELECTION_STRING>/g,
+                    value: this.config.noSelectionString
+                },
+                {
+                    placeHolder: /\s+/g,
+                    value: ' '
                 }
             ];
 
@@ -1447,13 +1462,6 @@
 
         function getHierarchyClasses() {
             return this.config.classes || [];
-        }
-
-        function getTriplePattern() {
-            var res = this.triplePatternTemplate
-                .replace(/<HIERARCHY_CLASSES>/g, this.getHierarchyClasses().join(' '));
-
-            return res;
         }
 
         function getConstraint() {

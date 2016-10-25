@@ -31,6 +31,14 @@ describe('TextFacet', function() {
         expect(facet.isEnabled()).toBe(false);
     });
 
+    it('should get its initial value from config', function() {
+        options.initialConstraints = { facets: { textId: { value: 'value' } } };
+
+        var facet = new TextFacet(options);
+
+        expect(facet.getSelectedValue()).toEqual('value');
+    });
+
     describe('enable', function() {
         it('should enable the facet', function() {
             options.enabled = false;

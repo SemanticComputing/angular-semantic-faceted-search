@@ -1,8 +1,8 @@
 /* eslint-env jasmine */
 /* global inject, module  */
 
-describe('BasicFacet', function() {
-    var $rootScope, $q, $timeout, mock, mockConstructor, BasicFacet, facet,
+describe('HierarchyFacet', function() {
+    var $rootScope, $q, $timeout, mock, mockConstructor, HierarchyFacet, facet,
         options, natResponse, genResponse, genValues, natValues;
 
     beforeEach(module('seco.facetedSearch'));
@@ -18,22 +18,26 @@ describe('BasicFacet', function() {
         spyOn(mock, 'getObjects').and.callThrough();
     }));
 
-    beforeEach(inject(function(_$timeout_, _$q_, _$rootScope_, _BasicFacet_) {
+    beforeEach(inject(function(_$timeout_, _$q_, _$rootScope_, _HierarchyFacet_) {
         $timeout = _$timeout_;
         $q = _$q_;
         $rootScope = _$rootScope_;
-        BasicFacet = _BasicFacet_;
+        HierarchyFacet = _HierarchyFacet_;
 
         options = {
             endpointUrl: 'endpoint',
             name: 'Name',
             facetId: 'textId',
             predicate: '<pred>',
+            hierarchy: '<hierarchy>',
+            classes: ['<class1>', '<class2>'],
             enabled: true
         };
 
-        facet = new BasicFacet(options);
+        facet = new HierarchyFacet(options);
 
+        // These are the same as the ones in BasicFacet tests, but in this regard
+        // the facets work the exact same way.
         genValues = [
             {
                 'value': undefined,
@@ -123,7 +127,7 @@ describe('BasicFacet', function() {
 
     it('should be disabled if config says so', function() {
         options.enabled = false;
-        facet = new BasicFacet(options);
+        facet = new HierarchyFacet(options);
 
         expect(facet.isEnabled()).toBe(false);
     });
@@ -131,7 +135,7 @@ describe('BasicFacet', function() {
     it('should take its initial value from the config if present', function() {
         var iv = 'initial text';
         options.initialConstraints = { facets: { 'textId': { value: iv } } };
-        facet = new BasicFacet(options);
+        facet = new HierarchyFacet(options);
 
         expect(facet.getSelectedValue()).toEqual(iv);
     });
@@ -139,7 +143,7 @@ describe('BasicFacet', function() {
     describe('enable', function() {
         it('should enable the facet', function() {
             options.enabled = false;
-            facet = new BasicFacet(options);
+            facet = new HierarchyFacet(options);
 
             expect(facet.isEnabled()).toBe(false);
 
@@ -171,7 +175,19 @@ describe('BasicFacet', function() {
         it('should return a constraint based on the selected value', function() {
             facet.selectedValue = { value: '<obj>' };
 
-            expect(facet.getConstraint()).toEqual(' ?s <pred> <obj> . ');
+            var expected =
+            ' VALUES ?seco_class_textId { ' +
+            '  <obj> ' +
+            ' } ' +
+            ' ?seco_h_textId <hierarchy> ?seco_class_textId . ' +
+            ' ?seco_v_textId <hierarchy> ?seco_h_textId . ' +
+            ' ?s <pred> ?seco_v_textId .';
+
+            expect(facet.getConstraint()).toEqual(expected.replace(/\s+/g, ' '));
+
+            facet.selectedValue = undefined;
+
+            expect(facet.getConstraint()).toBeUndefined();
         });
     });
 
@@ -193,14 +209,19 @@ describe('BasicFacet', function() {
             '  BIND("-- No Selection --" AS ?facet_text) ' +
             ' } UNION ' +
             '  {' +
-            '   SELECT DISTINCT ?cnt ?value ?facet_text { ' +
+            '   SELECT DISTINCT ?cnt ?value ?facet_text {' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?value {' +
+            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?value ?class {' +
+            '      VALUES ?class { ' +
+            '       <class1> <class2> ' +
+            '      } ' +
+            '      ?value <hierarchy> ?class . ' +
+            '      ?h <hierarchy> ?value . ' +
+            '      ?s <pred> ?h .' +
             '      ?s <p> <o> . ' +
-            '      ?s <pred> ?value . ' +
-            '     } GROUP BY ?value ' +
+            '     } GROUP BY ?class ?value ' +
             '    } ' +
-            '    FILTER(BOUND(?value)) ' +
+            '    FILTER(BOUND(?value))' +
             '    { ' +
             '     ?value skos:prefLabel|rdfs:label [] . ' +
             '     OPTIONAL {' +
@@ -226,15 +247,17 @@ describe('BasicFacet', function() {
             '     BIND(STR(?value) AS ?lbl) ' +
             '     FILTER(BOUND(?lbl)) ' +
             '    } ' +
-            '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value),' +
-            '     "^.+/(.+?)$", "$1"), STR(?value))) AS ?facet_text)' +
-            '   } ORDER BY ?facet_text ' +
-            '  }' +
+            '    BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
+            '    BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
+            '    BIND(IF(?value = ?class, 0, 1) as ?order)' +
+            '   } ORDER BY ?class ?order ?facet_text' +
+            '  } ' +
             ' } ';
 
             expect(facet.buildQuery(cons).replace(/\s+/g, ' ')).toEqual(expected.replace(/\s+/g, ' '));
         });
     });
+
 
     describe('update', function() {
         it('should update the facet state according to query results', function() {

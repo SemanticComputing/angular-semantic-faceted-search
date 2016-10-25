@@ -34,6 +34,16 @@ describe('TimespanFacet', function() {
         expect(facet.isEnabled()).toBe(false);
     });
 
+    it('should get its initial value from config', function() {
+        var d = new Date('1945-02-02');
+        var val = { start: d, end: d };
+        options.initialConstraints = { facets: { spanId: { value: val } } };
+
+        var facet = new TimespanFacet(options);
+
+        expect(facet.getSelectedValue()).toEqual(val);
+    });
+
     describe('enable', function() {
         it('should enable the facet', function() {
             options.enabled = false;

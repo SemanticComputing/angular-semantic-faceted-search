@@ -235,6 +235,10 @@
                 {
                     placeHolder: /<NO_SELECTION_STRING>/g,
                     value: this.config.noSelectionString
+                },
+                {
+                    placeHolder: /\s+/g,
+                    value: ' '
                 }
             ];
 
@@ -261,7 +265,7 @@
         }
 
         function disable() {
-            this.selectedValue = {};
+            this.selectedValue = undefined;
             this._isEnabled = false;
         }
 
