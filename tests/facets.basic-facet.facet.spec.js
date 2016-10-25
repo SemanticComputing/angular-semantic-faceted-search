@@ -128,6 +128,14 @@ describe('BasicFacet', function() {
         expect(facet.isEnabled()).toBe(false);
     });
 
+    it('should take its initial value from the config if present', function() {
+        var iv = 'initial text';
+        options.initialConstraints = { facets: { 'textId': { value: iv } } };
+        facet = new BasicFacet(options);
+
+        expect(facet.getSelectedValue()).toEqual(iv);
+    });
+
     describe('enable', function() {
         it('should enable the facet', function() {
             options.enabled = false;

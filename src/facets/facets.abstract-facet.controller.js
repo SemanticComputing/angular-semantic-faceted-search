@@ -30,6 +30,7 @@
                 $log.debug($scope.options.name, 'Init');
                 var initial = _.cloneDeep($scope.options);
                 initial.initialConstraints = cons;
+                initial.endpointUrl = initial.endpointUrl || cons.config.endpointUrl;
                 vm.facet = new Facet(initial);
                 if (vm.facet.isEnabled()) {
                     vm.previousVal = vm.facet.getSelectedValue();

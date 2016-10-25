@@ -22,14 +22,14 @@ describe('FacetHandler', function() {
 
     it('should broadcast constraints at init', function() {
         var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
-        var data = { facets: {}, constraint: cons };
+        var data = { facets: {}, constraint: cons, config: options };
         new FacetHandler(options);
         expect(scope.$broadcast).toHaveBeenCalledWith('sf-initial-constraints', data);
     });
 
     it('should broadcast initial constraints when requested', function() {
         var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
-        var data = { facets: {}, constraint: cons };
+        var data = { facets: {}, constraint: cons, config: options };
         new FacetHandler(options);
 
         scope.$broadcast.calls.reset();
