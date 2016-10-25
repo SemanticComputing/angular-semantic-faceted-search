@@ -387,20 +387,13 @@
     .factory('FacetHandler', FacetHandler);
 
     /* ngInject */
-    function FacetHandler($log, $location, _, facetUrlStateHandlerService,
-            EVENT_FACET_CONSTRAINTS, EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS,
+    function FacetHandler(_, EVENT_FACET_CONSTRAINTS, EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS,
             EVENT_INITIAL_CONSTRAINTS) {
 
         return FacetHandler;
 
         function FacetHandler(config) {
             var self = this;
-
-            /* Public API */
-
-            self.update = update;
-
-            /* Implementation */
 
             init();
 
@@ -420,14 +413,12 @@
                 if (self.config.constraint) {
                     self.state.default = getInitialConstraints(self.config);
                 }
-                $log.log('Initial state', self.state);
                 broadCastInitial();
             }
 
             // Update state, and broadcast them to listening facets.
             function update(event, constraint) {
                 event.stopPropagation();
-                $log.debug('Update', constraint);
                 self.state.facets[constraint.id] = constraint;
                 broadCastConstraints(EVENT_FACET_CONSTRAINTS);
             }
@@ -436,7 +427,6 @@
                 if (event) {
                     event.stopPropagation();
                 }
-                $log.debug('Broadcast initial');
                 var data = {
                     config: self.config
                 };
@@ -444,7 +434,6 @@
             }
 
             function broadCastConstraints(eventType, data) {
-
                 data = data || {};
 
                 var constraint = getConstraint();
@@ -453,7 +442,6 @@
                 data.facets = self.state.facets;
                 data.constraint = constraint;
 
-                $log.log('Broadcast', data);
                 self.config.scope.$broadcast(eventType, data);
             }
 
