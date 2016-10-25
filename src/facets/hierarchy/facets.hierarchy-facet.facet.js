@@ -66,7 +66,7 @@
             this.selectedValue = {};
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.facetId];
+            var constVal = _.get(options, 'initialConstraints.facets.' + this.facetId);
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
