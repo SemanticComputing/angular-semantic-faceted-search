@@ -494,7 +494,7 @@
     .controller('AbstractFacetController', AbstractFacetController);
 
     /* @ngInject */
-    function AbstractFacetController($scope, $log, $q, _, EVENT_FACET_CONSTRAINTS,
+    function AbstractFacetController($scope, _, EVENT_FACET_CONSTRAINTS,
             EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS,
             FacetImpl) {
 
@@ -516,7 +516,6 @@
 
         function init(Facet) {
             var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                $log.debug($scope.options.name, 'Init');
                 var initial = _.cloneDeep($scope.options);
                 initial.initialConstraints = cons;
                 initial.endpointUrl = initial.endpointUrl || cons.config.endpointUrl;
@@ -526,11 +525,9 @@
                     listen();
                     update(cons);
                 }
-                $log.debug(vm.facet.name, vm.facet);
                 // Unregister initListener
                 initListener();
             });
-            $log.debug($scope.options.name, 'Listening for init');
             $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
         }
 
@@ -544,7 +541,6 @@
 
         function listen() {
             vm.listener = $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
-                $log.debug(vm.facet.name, 'Receive constraints', _.cloneDeep(cons));
                 update(cons);
             });
         }
@@ -561,7 +557,6 @@
         function emitChange(forced) {
             var val = vm.facet.getSelectedValue();
             if (!forced && _.isEqual(vm.previousVal, val)) {
-                $log.warn(vm.facet.name, 'Skip emit', val);
                 vm.isLoadingFacet = false;
                 return;
             }
@@ -571,12 +566,10 @@
                 constraint: vm.facet.getConstraint(),
                 value: val
             };
-            $log.log(vm.facet.name, 'Emit', args);
             $scope.$emit(EVENT_FACET_CHANGED, args);
         }
 
         function changed() {
-            $log.debug(vm.facet.name, 'Changed');
             vm.isLoadingFacet = true;
             emitChange();
         }
@@ -596,13 +589,11 @@
         }
 
         function handleUpdateSuccess() {
-            $log.debug(vm.facet.name, 'Success');
             vm.isLoadingFacet = false;
         }
 
         function handleError(error) {
             vm.isLoadingFacet = false;
-            $log.error(vm.facet.facetId, error);
             vm.error = error;
         }
 
@@ -1248,7 +1239,7 @@
     .controller('TimespanFacetController', TimespanFacetController);
 
     /* ngInject */
-    function TimespanFacetController($log, $scope, _, EVENT_FACET_CHANGED,
+    function TimespanFacetController($scope, _, EVENT_FACET_CHANGED,
             EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS, TimespanFacet) {
         var vm = this;
 
@@ -1261,7 +1252,6 @@
 
         function init() {
             var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                $log.debug($scope.options.name, 'Init');
                 var initial = _.cloneDeep($scope.options);
                 initial.initialConstraints = cons;
                 vm.facet = new TimespanFacet(initial);
@@ -1278,12 +1268,10 @@
                 constraint: vm.facet.getConstraint(),
                 value: val
             };
-            $log.log(vm.facet.name, 'Emit', args);
             $scope.$emit(EVENT_FACET_CHANGED, args);
         }
 
         function changed() {
-            $log.debug(vm.facet.name, 'Changed');
             emitChange();
         }
 

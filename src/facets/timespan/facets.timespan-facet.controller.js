@@ -5,7 +5,7 @@
     .controller('TimespanFacetController', TimespanFacetController);
 
     /* ngInject */
-    function TimespanFacetController($log, $scope, _, EVENT_FACET_CHANGED,
+    function TimespanFacetController($scope, _, EVENT_FACET_CHANGED,
             EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS, TimespanFacet) {
         var vm = this;
 
@@ -18,7 +18,6 @@
 
         function init() {
             var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                $log.debug($scope.options.name, 'Init');
                 var initial = _.cloneDeep($scope.options);
                 initial.initialConstraints = cons;
                 vm.facet = new TimespanFacet(initial);
@@ -35,12 +34,10 @@
                 constraint: vm.facet.getConstraint(),
                 value: val
             };
-            $log.log(vm.facet.name, 'Emit', args);
             $scope.$emit(EVENT_FACET_CHANGED, args);
         }
 
         function changed() {
-            $log.debug(vm.facet.name, 'Changed');
             emitChange();
         }
 
