@@ -116,7 +116,8 @@
             this.endpoint = new SparqlService(this.config.endpointUrl);
 
             // Initial value
-            var constVal = _.get(options, 'initialConstraints.facets[this.facetId]');
+            var constVal = _.get(options, 'initialConstraints.facets.' + this.facetId);
+
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
