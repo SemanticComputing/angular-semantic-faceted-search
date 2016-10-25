@@ -33,6 +33,7 @@
         this.getFacetValuesFromUrlParams = getFacetValuesFromUrlParams;
 
         function updateUrlParams(facets) {
+            facets = facets.facets || facets;
             var params = {};
             _(facets).forOwn(function(val, id) {
                 if (val && val.value) {
@@ -148,7 +149,6 @@
     /* ngInject */
     function facetMapperService(_, objectMapperService) {
         FacetMapper.prototype.makeObject = makeObject;
-        FacetMapper.prototype.postProcess = postProcess;
 
         var proto = Object.getPrototypeOf(objectMapperService);
         FacetMapper.prototype = angular.extend({}, proto, FacetMapper.prototype);
@@ -167,20 +167,6 @@
             o.count = parseInt(obj.cnt.value);
 
             return o;
-        }
-
-        function postProcess(objs) {
-            objs.forEach(function(o) {
-                var noSelectionIndex = _.findIndex(o.values, function(v) {
-                    return angular.isUndefined(v.value);
-                });
-                if (noSelectionIndex > -1) {
-                    var noSel = _.pullAt(o.values, noSelectionIndex);
-                    o.values = noSel.concat(o.values);
-                }
-            });
-
-            return objs;
         }
 
         function parseValue(value) {
@@ -422,8 +408,7 @@
                 self.state = { facets: {} };
 
                 var defaultConfig = {
-                    preferredLang: 'en',
-                    urlHandler: facetUrlStateHandlerService
+                    preferredLang: 'en'
                 };
 
                 self.config = angular.extend({}, defaultConfig, config);
@@ -431,23 +416,12 @@
                 self.changeListener = self.config.scope.$on(EVENT_FACET_CHANGED, update);
                 self.initListener = self.config.scope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastInitial);
 
-                if (!self.config.urlHandler) {
-                    var noop = function() { };
-                    var noopUrlHandler = {
-                        getFacetValuesFromUrlParams: noop,
-                        updateUrlParams: noop
-                    };
-                    self.urlHandler = noopUrlHandler;
-                } else {
-                    self.urlHandler = self.config.urlHandler;
-                }
-
-                self.state.facets = self.urlHandler.getFacetValuesFromUrlParams();
+                self.state.facets = self.config.initialState || {};
                 if (self.config.constraint) {
                     self.state.default = getInitialConstraints(self.config);
                 }
                 $log.log('Initial state', self.state);
-                broadCastConstraints(EVENT_INITIAL_CONSTRAINTS);
+                broadCastInitial();
             }
 
             // Update state, and broadcast them to listening facets.
@@ -455,22 +429,32 @@
                 event.stopPropagation();
                 $log.debug('Update', constraint);
                 self.state.facets[constraint.id] = constraint;
-                self.urlHandler.updateUrlParams(self.state.facets);
                 broadCastConstraints(EVENT_FACET_CONSTRAINTS);
             }
 
             function broadCastInitial(event) {
-                event.stopPropagation();
+                if (event) {
+                    event.stopPropagation();
+                }
                 $log.debug('Broadcast initial');
-                broadCastConstraints(EVENT_INITIAL_CONSTRAINTS);
+                var data = {
+                    config: self.config
+                };
+                broadCastConstraints(EVENT_INITIAL_CONSTRAINTS, data);
             }
 
-            function broadCastConstraints(event) {
+            function broadCastConstraints(eventType, data) {
+
+                data = data || {};
+
                 var constraint = getConstraint();
                 constraint.push(self.state.default);
-                var data = { facets: self.state.facets, constraint: constraint };
+
+                data.facets = self.state.facets;
+                data.constraint = constraint;
+
                 $log.log('Broadcast', data);
-                self.config.scope.$broadcast(event, data);
+                self.config.scope.$broadcast(eventType, data);
             }
 
             function getConstraint() {
@@ -547,6 +531,7 @@
                 $log.debug($scope.options.name, 'Init');
                 var initial = _.cloneDeep($scope.options);
                 initial.initialConstraints = cons;
+                initial.endpointUrl = initial.endpointUrl || cons.config.endpointUrl;
                 vm.facet = new Facet(initial);
                 if (vm.facet.isEnabled()) {
                     vm.previousVal = vm.facet.getSelectedValue();
@@ -661,7 +646,6 @@
         BasicFacetConstructor.prototype.getConstraint = getConstraint;
         BasicFacetConstructor.prototype.getTriplePattern = getTriplePattern;
         BasicFacetConstructor.prototype.getPreferredLang = getPreferredLang;
-        BasicFacetConstructor.prototype.isBusy = isBusy;
         BasicFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         BasicFacetConstructor.prototype.buildQuery = buildQuery;
         BasicFacetConstructor.prototype.buildServiceUnions = buildServiceUnions;
@@ -761,7 +745,8 @@
             this.endpoint = new SparqlService(this.config.endpointUrl);
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.facetId];
+            var constVal = _.get(options, 'initialConstraints.facets.' + this.facetId);
+
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
@@ -796,10 +781,6 @@
 
         function getState() {
             return this.state;
-        }
-
-        function isBusy() {
-            return this._isBusy;
         }
 
         // Build a query with the facet selection and use it to get the facet state.
@@ -914,7 +895,7 @@
         }
 
         function isLoading() {
-            return this.isBusy();
+            return this._isBusy;
         }
     }
 })();
@@ -995,7 +976,7 @@
             }
 
             // Initial value
-            var initial = _.get(options, 'initialConstraints.facets[this.facetId]');
+            var initial = _.get(options, 'initialConstraints.facets.' + this.facetId);
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
@@ -1185,7 +1166,7 @@
             this.varSuffix = this.facetId;
 
             // Initial value
-            var initial = _.get(options, 'initialConstraints.facets[this.facetId]');
+            var initial = _.get(options, 'initialConstraints.facets.' + this.facetId);
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
@@ -1424,7 +1405,7 @@
             this.selectedValue = {};
 
             // Initial value
-            var constVal = options.initialConstraints.facets[this.facetId];
+            var constVal = _.get(options, 'initialConstraints.facets.' + this.facetId);
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };
