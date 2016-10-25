@@ -17,6 +17,7 @@
         this.getFacetValuesFromUrlParams = getFacetValuesFromUrlParams;
 
         function updateUrlParams(facets) {
+            facets = facets.facets || facets;
             var params = {};
             _(facets).forOwn(function(val, id) {
                 if (val && val.value) {
