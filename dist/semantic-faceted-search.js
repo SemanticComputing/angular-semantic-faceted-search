@@ -409,6 +409,8 @@
                 self.changeListener = self.config.scope.$on(EVENT_FACET_CHANGED, update);
                 self.initListener = self.config.scope.$on(EVENT_REQUEST_CONSTRAINTS, broadCastInitial);
 
+                self.removeListeners = removeListeners;
+
                 self.state.facets = self.config.initialState || {};
                 if (self.config.constraint) {
                     self.state.default = getInitialConstraints(self.config);
@@ -454,6 +456,11 @@
                 var state = config.rdfClass ? ' ?s a ' + config.rdfClass + ' . ' : '';
                 state = state + (config.constraint || '');
                 return state;
+            }
+
+            function removeListeners() {
+                self.initListener();
+                self.changeListener();
             }
         }
     }
