@@ -48,17 +48,23 @@ module.exports = function(grunt) {
         },
         clean: {
             templates: ['dist/templates.js']
+        },
+        ngdocs: {
+            all: ['src/**/*.js'],
+            sourceLink: true
         }
     });
 
     grunt.loadNpmTasks('grunt-angular-templates');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-clean');
+    grunt.loadNpmTasks('grunt-ngdocs');
 
     grunt.registerTask('build', [
         'ngtemplates',
         'concat:js',
         'concat:css',
-        'clean:templates'
+        'clean:templates',
+        'ngdocs:all'
     ]);
 };
