@@ -1,4 +1,4 @@
-<a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/edit/master/src/facets/facets.facet-handler.service.js" class="improve-docs"><i class="icon-edit"> </i>Improve this doc</a><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/2f1a0bd/src/facets/facets.facet-handler.service.js#L67" class="view-source"><i class="icon-eye-open"> </i>View source</a><h1><code ng:non-bindable="">FacetHandler</code>
+<a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/edit/master/src/facets/facets.facet-handler.service.js" class="improve-docs"><i class="icon-edit"> </i>Improve this doc</a><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/e1a640c/src/facets/facets.facet-handler.service.js#L62" class="view-source"><i class="icon-eye-open"> </i>View source</a><h1><code ng:non-bindable="">FacetHandler</code>
 <div><span class="hint">service in module <code ng:non-bindable="">seco.facetedSearch</code>
 </span>
 </div>
@@ -51,20 +51,18 @@ faceted. A shorthand for <code>constraint: &#39;?id a &lt;class&gt; .&#39;</code
 <li><strong>[preferredLang]</strong> - <code>{string}</code> - The language tag that is preferred
 when getting labels for facet values, in case the value is a resource.
 The default is &#39;en&#39;.
-This argument can also be given directly to the individual facets.
-Currently only one language can be given. If a label is not found
-in that language, a label without a language tag is taken. If a label
-is still not found, the end part of the resource URI is used.</li>
+Currently only one language can be given.
+This argument can also be given directly to the individual facets.</li>
 <li><strong>[initialState]</strong> - <code>{Object}</code> - The initial state of the facets.
 Used when loading the state from URL parameters, for example.
-See <a href="#/api/seco.facetedSearch.facetUrlStateHandlerService">seco.facetedSearch.facetUrlStateHandlerService</a>.</li>
+See <a href="#/api/seco.facetedSearch.facetUrlStateHandlerService">facetUrlStateHandlerService</a>.</li>
 </ul>
 <p>The object is sent to facets as is, and so any extra fields will be included,
 although the above fields are the only ones used by FacetHandler and the
 built-in facets.</p>
 </div></td></tr></tbody></table></div>
 <div class="member method"><h2 id="methods">Methods</h2>
-<ul class="methods"><li><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/2f1a0bd/src/facets/facets.facet-handler.service.js#L151" class="view-source icon-eye-open"> </a><h3 id="methods_removelisteners">removeListeners()</h3>
+<ul class="methods"><li><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/e1a640c/src/facets/facets.facet-handler.service.js#L146" class="view-source icon-eye-open"> </a><h3 id="methods_removelisteners">removeListeners()</h3>
 <div class="removelisteners"><div class="seco-facetedsearch-facethandler-removelisteners-page"><p>Remove event listeners from the scope.
 Probably only needed if you, for some reason, need to
 use <code>$rootScope</code> as the communication scope.</p>

@@ -1,6 +1,3 @@
-/*
-* Facet handler service.
-*/
 (function() {
     'use strict';
 
@@ -52,13 +49,11 @@
     *   - **[preferredLang]** - `{string}` - The language tag that is preferred
     *   when getting labels for facet values, in case the value is a resource.
     *   The default is 'en'.
+    *   Currently only one language can be given.
     *   This argument can also be given directly to the individual facets.
-    *   Currently only one language can be given. If a label is not found
-    *   in that language, a label without a language tag is taken. If a label
-    *   is still not found, the end part of the resource URI is used.
     *   - **[initialState]** - `{Object}` - The initial state of the facets.
     *   Used when loading the state from URL parameters, for example.
-    *   See {@link seco.facetedSearch.facetUrlStateHandlerService}.
+    *   See {@link seco.facetedSearch.facetUrlStateHandlerService facetUrlStateHandlerService}.
     *
     *   The object is sent to facets as is, and so any extra fields will be included,
     *   although the above fields are the only ones used by FacetHandler and the
