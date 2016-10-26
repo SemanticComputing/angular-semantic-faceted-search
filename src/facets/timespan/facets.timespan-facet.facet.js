@@ -62,11 +62,11 @@
             var end = (this.getSelectedValue() || {}).end;
 
             var startFilter =
-            ' ?s <START_PROPERTY> <VAR> . ' +
+            ' ?id <START_PROPERTY> <VAR> . ' +
             ' FILTER(<VAR> >= "<START_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
 
             var endFilter =
-            ' ?s <END_PROPERTY> <VAR> . ' +
+            ' ?id <END_PROPERTY> <VAR> . ' +
             ' FILTER(<VAR> <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
 
             var startVar = '?start_' + this.varSuffix;

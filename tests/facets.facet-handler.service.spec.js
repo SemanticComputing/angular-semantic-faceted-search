@@ -14,21 +14,21 @@ describe('FacetHandler', function() {
         options = {
             scope: scope,
             rdfClass: '<http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord>',
-            constraint: '?s skos:prefLabel ?name .',
+            constraint: '?id skos:prefLabel ?name .',
             preferredLang : 'fi'
         };
 
     }));
 
     it('should broadcast constraints at init', function() {
-        var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
+        var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
         var data = { facets: {}, constraint: cons, config: options };
         new FacetHandler(options);
         expect(scope.$broadcast).toHaveBeenCalledWith('sf-initial-constraints', data);
     });
 
     it('should broadcast initial constraints when requested', function() {
-        var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
+        var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
         var data = { facets: {}, constraint: cons, config: options };
         new FacetHandler(options);
 
@@ -40,13 +40,13 @@ describe('FacetHandler', function() {
     });
 
     it('should listen for facet changes and broadcast constraints', function() {
-        var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
+        var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
         var data = { facets: {}, constraint: cons };
         new FacetHandler(options);
 
         var args = {
             id: 'facetId',
-            constraint: '?s <pred> <obj> .',
+            constraint: '?id <pred> <obj> .',
             value: '<obj>'
         };
         scope.$emit('sf-facet-changed', args);

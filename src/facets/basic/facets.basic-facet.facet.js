@@ -73,7 +73,7 @@
             ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
-            '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) { ' +
+            '   SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) { ' +
             '    <OTHER_SELECTIONS> ' +
             '   } ' +
             '  } ' +
@@ -82,7 +82,7 @@
             '  {' +
             '   SELECT DISTINCT ?cnt ?value ?facet_text { ' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?value {' +
+            '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value {' +
             '      <SELECTIONS> ' +
             '     } GROUP BY ?value ' +
             '    } ' +
@@ -171,7 +171,7 @@
         }
 
         function getTriplePattern() {
-            return '?s ' + this.predicate + ' ?value . ';
+            return '?id ' + this.predicate + ' ?value . ';
         }
 
         function getConstraint() {
@@ -179,7 +179,7 @@
                 return;
             }
             if (this.getSelectedValue()) {
-                return ' ?s ' + this.predicate + ' ' + this.getSelectedValue() + ' . ';
+                return ' ?id ' + this.predicate + ' ' + this.getSelectedValue() + ' . ';
             }
         }
 
