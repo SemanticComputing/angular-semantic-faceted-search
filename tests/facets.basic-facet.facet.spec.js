@@ -130,7 +130,7 @@ describe('BasicFacet', function() {
 
     it('should take its initial value from the config if present', function() {
         var iv = 'initial text';
-        options.initialConstraints = { facets: { 'textId': { value: iv } } };
+        options.initial = { 'textId': { value: iv } };
         facet = new BasicFacet(options);
 
         expect(facet.getSelectedValue()).toEqual(iv);
@@ -201,6 +201,59 @@ describe('BasicFacet', function() {
             '     } GROUP BY ?value ' +
             '    } ' +
             '    FILTER(BOUND(?value)) ' +
+            '    OPTIONAL {' +
+            '     ?value skos:prefLabel ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "fi")) .' +
+            '    }' +
+            '    OPTIONAL {' +
+            '     ?value rdfs:label ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "fi")) .' +
+            '    }' +
+            '    OPTIONAL {' +
+            '     ?value skos:prefLabel ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "")) .' +
+            '    }' +
+            '    OPTIONAL {' +
+            '     ?value rdfs:label ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "")) .' +
+            '    } ' +
+            '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value),' +
+            '     "^.+/(.+?)$", "$1"), STR(?value))) AS ?facet_text)' +
+            '   } ORDER BY ?facet_text ' +
+            '  }' +
+            ' } ';
+
+            expect(facet.buildQuery(cons).replace(/\s+/g, ' ')).toEqual(expected.replace(/\s+/g, ' '));
+        });
+
+        it('should build a service query when a service is given', function() {
+            var cons = ['?id <p> <o> .'];
+            options.services = ['<service>'];
+
+            facet = new BasicFacet(options);
+
+            var expected =
+            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
+            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
+            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
+            ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
+            ' { ' +
+            '  { ' +
+            '   SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) { ' +
+            '    ?id <p> <o> . ' +
+            '   } ' +
+            '  } ' +
+            '  BIND("-- No Selection --" AS ?facet_text) ' +
+            ' } UNION ' +
+            '  {' +
+            '   SELECT DISTINCT ?cnt ?value ?facet_text { ' +
+            '    {' +
+            '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value {' +
+            '      ?id <p> <o> . ' +
+            '      ?id <pred> ?value . ' +
+            '     } GROUP BY ?value ' +
+            '    } ' +
+            '    FILTER(BOUND(?value)) ' +
             '    { ' +
             '     ?value skos:prefLabel|rdfs:label [] . ' +
             '     OPTIONAL {' +
@@ -225,6 +278,35 @@ describe('BasicFacet', function() {
             '     FILTER(!ISURI(?value)) ' +
             '     BIND(STR(?value) AS ?lbl) ' +
             '     FILTER(BOUND(?lbl)) ' +
+            '    } ' +
+            '    UNION { ' +
+            '     SERVICE <service> { ' +
+            '      { ' +
+            '       ?value skos:prefLabel|rdfs:label [] . ' +
+            '       OPTIONAL {' +
+            '        ?value skos:prefLabel ?lbl . ' +
+            '        FILTER(langMatches(lang(?lbl), "fi")) .' +
+            '       }' +
+            '       OPTIONAL {' +
+            '        ?value rdfs:label ?lbl . ' +
+            '        FILTER(langMatches(lang(?lbl), "fi")) .' +
+            '       }' +
+            '       OPTIONAL {' +
+            '        ?value skos:prefLabel ?lbl . ' +
+            '        FILTER(langMatches(lang(?lbl), "")) .' +
+            '       }' +
+            '       OPTIONAL {' +
+            '        ?value rdfs:label ?lbl . ' +
+            '        FILTER(langMatches(lang(?lbl), "")) .' +
+            '       } ' +
+            '       FILTER(BOUND(?lbl)) ' +
+            '      }' +
+            '      UNION { ' +
+            '       FILTER(!ISURI(?value)) ' +
+            '       BIND(STR(?value) AS ?lbl) ' +
+            '       FILTER(BOUND(?lbl)) ' +
+            '      } ' +
+            '     } ' +
             '    } ' +
             '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value),' +
             '     "^.+/(.+?)$", "$1"), STR(?value))) AS ?facet_text)' +

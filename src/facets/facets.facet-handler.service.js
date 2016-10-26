@@ -88,9 +88,7 @@
                 self.removeListeners = removeListeners;
 
                 self.state.facets = self.config.initialState || {};
-                if (self.config.constraint) {
-                    self.state.default = getInitialConstraints(self.config);
-                }
+                self.state.default = getInitialConstraints(self.config);
                 broadCastInitial();
             }
 

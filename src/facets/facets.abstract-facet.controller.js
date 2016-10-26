@@ -27,10 +27,10 @@
 
         function init(Facet) {
             var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                var initial = _.cloneDeep($scope.options);
-                initial.initialConstraints = cons;
-                initial.endpointUrl = initial.endpointUrl || cons.config.endpointUrl;
-                vm.facet = new Facet(initial);
+                var opts = _.cloneDeep($scope.options);
+                opts = angular.extend({}, cons.config, opts);
+                opts.initial = cons.facets;
+                vm.facet = new Facet(opts);
                 if (vm.facet.isEnabled()) {
                     vm.previousVal = vm.facet.getSelectedValue();
                     listen();

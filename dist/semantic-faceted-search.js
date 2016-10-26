@@ -475,9 +475,7 @@
                 self.removeListeners = removeListeners;
 
                 self.state.facets = self.config.initialState || {};
-                if (self.config.constraint) {
-                    self.state.default = getInitialConstraints(self.config);
-                }
+                self.state.default = getInitialConstraints(self.config);
                 broadCastInitial();
             }
 
@@ -595,10 +593,10 @@
 
         function init(Facet) {
             var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                var initial = _.cloneDeep($scope.options);
-                initial.initialConstraints = cons;
-                initial.endpointUrl = initial.endpointUrl || cons.config.endpointUrl;
-                vm.facet = new Facet(initial);
+                var opts = _.cloneDeep($scope.options);
+                opts = angular.extend({}, cons.config, opts);
+                opts.initial = cons.facets;
+                vm.facet = new Facet(opts);
                 if (vm.facet.isEnabled()) {
                     vm.previousVal = vm.facet.getSelectedValue();
                     listen();
@@ -731,24 +729,27 @@
             this.state = {};
 
             var labelPart =
+            ' OPTIONAL {' +
+            '  ?value skos:prefLabel ?lbl . ' +
+            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            ' }' +
+            ' OPTIONAL {' +
+            '  ?value rdfs:label ?lbl . ' +
+            '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
+            ' }' +
+            ' OPTIONAL {' +
+            '  ?value skos:prefLabel ?lbl . ' +
+            '  FILTER(langMatches(lang(?lbl), "")) .' +
+            ' }' +
+            ' OPTIONAL {' +
+            '  ?value rdfs:label ?lbl . ' +
+            '  FILTER(langMatches(lang(?lbl), "")) .' +
+            ' } ';
+
+            var serviceLabelPart =
             ' { ' +
             '  ?value skos:prefLabel|rdfs:label [] . ' +
-            '  OPTIONAL {' +
-            '   ?value skos:prefLabel ?lbl . ' +
-            '   FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
-            '  }' +
-            '  OPTIONAL {' +
-            '   ?value rdfs:label ?lbl . ' +
-            '   FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
-            '  }' +
-            '  OPTIONAL {' +
-            '   ?value skos:prefLabel ?lbl . ' +
-            '   FILTER(langMatches(lang(?lbl), "")) .' +
-            '  }' +
-            '  OPTIONAL {' +
-            '   ?value rdfs:label ?lbl . ' +
-            '   FILTER(langMatches(lang(?lbl), "")) .' +
-            '  } ' +
+               labelPart +
             '  FILTER(BOUND(?lbl)) ' +
             ' }' +
             ' UNION { ' +
@@ -794,6 +795,10 @@
                 noSelectionString: NO_SELECTION_STRING
             };
 
+            if (options.services) {
+                defaultConfig.labelPart = serviceLabelPart;
+            }
+
             this.config = angular.extend({}, defaultConfig, options);
 
             this.name = this.config.name;
@@ -808,7 +813,7 @@
             this.endpoint = new SparqlService(this.config.endpointUrl);
 
             // Initial value
-            var constVal = _.get(options, 'initialConstraints.facets.' + this.facetId);
+            var constVal = _.get(options, 'initial.' + this.facetId);
 
             if (constVal && constVal.value) {
                 this._isEnabled = true;

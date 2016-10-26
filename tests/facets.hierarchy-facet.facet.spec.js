@@ -134,7 +134,7 @@ describe('HierarchyFacet', function() {
 
     it('should take its initial value from the config if present', function() {
         var iv = 'initial text';
-        options.initialConstraints = { facets: { 'textId': { value: iv } } };
+        options.initial = { 'textId': { value: iv } };
         facet = new HierarchyFacet(options);
 
         expect(facet.getSelectedValue()).toEqual(iv);
@@ -222,30 +222,21 @@ describe('HierarchyFacet', function() {
             '     } GROUP BY ?class ?value ' +
             '    } ' +
             '    FILTER(BOUND(?value))' +
-            '    { ' +
-            '     ?value skos:prefLabel|rdfs:label [] . ' +
-            '     OPTIONAL {' +
-            '      ?value skos:prefLabel ?lbl . ' +
-            '      FILTER(langMatches(lang(?lbl), "fi")) .' +
-            '     }' +
-            '     OPTIONAL {' +
-            '      ?value rdfs:label ?lbl . ' +
-            '      FILTER(langMatches(lang(?lbl), "fi")) .' +
-            '     }' +
-            '     OPTIONAL {' +
-            '      ?value skos:prefLabel ?lbl . ' +
-            '      FILTER(langMatches(lang(?lbl), "")) .' +
-            '     }' +
-            '     OPTIONAL {' +
-            '      ?value rdfs:label ?lbl . ' +
-            '      FILTER(langMatches(lang(?lbl), "")) .' +
-            '     } ' +
-            '     FILTER(BOUND(?lbl)) ' +
+            '    OPTIONAL {' +
+            '     ?value skos:prefLabel ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "fi")) .' +
             '    }' +
-            '    UNION { ' +
-            '     FILTER(!ISURI(?value)) ' +
-            '     BIND(STR(?value) AS ?lbl) ' +
-            '     FILTER(BOUND(?lbl)) ' +
+            '    OPTIONAL {' +
+            '     ?value rdfs:label ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "fi")) .' +
+            '    }' +
+            '    OPTIONAL {' +
+            '     ?value skos:prefLabel ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "")) .' +
+            '    }' +
+            '    OPTIONAL {' +
+            '     ?value rdfs:label ?lbl . ' +
+            '     FILTER(langMatches(lang(?lbl), "")) .' +
             '    } ' +
             '    BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
             '    BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
