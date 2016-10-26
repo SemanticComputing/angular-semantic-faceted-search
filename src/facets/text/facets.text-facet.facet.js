@@ -53,9 +53,9 @@
             if (!value) {
                 return;
             }
-            var result = this.useJenaText ? ' ?s text:query "' + value + '*" . ' : '';
+            var result = this.useJenaText ? ' ?id text:query "' + value + '*" . ' : '';
             var textVar = '?' + this.facetId;
-            result = result + ' ?s ' + this.predicate + ' ' + textVar + ' . ';
+            result = result + ' ?id ' + this.predicate + ' ' + textVar + ' . ';
             var words = value.replace(/[?,._*'\\/-]/g, ' ');
 
             words.split(' ').forEach(function(word) {

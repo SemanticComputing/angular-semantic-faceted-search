@@ -30,7 +30,7 @@
             ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
-            '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) { ' +
+            '   SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) { ' +
             '    <OTHER_SELECTIONS> ' +
             '   } ' +
             '  } ' +
@@ -39,13 +39,13 @@
             '  {' +
             '   SELECT DISTINCT ?cnt ?value ?facet_text {' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?value ?class {' +
+            '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value ?class {' +
             '      VALUES ?class { ' +
             '       <HIERARCHY_CLASSES> ' +
             '      } ' +
             '      ?value <PROPERTY> ?class . ' +
             '      ?h <PROPERTY> ?value . ' +
-            '      ?s <ID> ?h .' +
+            '      ?id <ID> ?h .' +
             '      <OTHER_SELECTIONS> ' +
             '     } GROUP BY ?class ?value ' +
             '    } ' +
@@ -77,7 +77,7 @@
             ' } ' +
             ' ?<H_VAR> <PROPERTY> ?<CLASS_VAR> . ' +
             ' ?<V_VAR> <PROPERTY> ?<H_VAR> . ' +
-            ' ?s <ID> ?<V_VAR> .';
+            ' ?id <ID> ?<V_VAR> .';
 
             this.triplePatternTemplate = this.buildQueryTemplate(triplePatternTemplate);
         }

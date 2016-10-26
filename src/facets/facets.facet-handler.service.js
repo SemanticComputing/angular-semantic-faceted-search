@@ -40,7 +40,7 @@
                 broadCastInitial();
             }
 
-            // Update state, and broadcast them to listening facets.
+            // Update state, and broadcast it to listening facets.
             function update(event, constraint) {
                 event.stopPropagation();
                 self.state.facets[constraint.id] = constraint;
@@ -75,7 +75,7 @@
 
             // Combine the possible RDF class and constraint definitions in the config.
             function getInitialConstraints(config) {
-                var state = config.rdfClass ? ' ?s a ' + config.rdfClass + ' . ' : '';
+                var state = config.rdfClass ? ' ?id a ' + config.rdfClass + ' . ' : '';
                 state = state + (config.constraint || '');
                 return state;
             }

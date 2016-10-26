@@ -39,17 +39,11 @@
 
             var endpoint = new AdvancedSparqlService(endpointUrl, options.mapper);
 
-            var resultSetTemplate =
-            ' <FACET_SELECTIONS> ' +
-            ' BIND(?s AS ?id) ';
-
             // Get results based on the facet selections and the query template.
             // Use paging if defined in the options.
             function getResults(facetSelections, orderBy) {
                 var constraints = facetSelections.constraint.join(' ');
-                var resultSet = resultSetTemplate.replace(/<FACET_SELECTIONS>/g,
-                        constraints);
-                var qry = qryBuilder.buildQuery(options.queryTemplate, resultSet, orderBy);
+                var qry = qryBuilder.buildQuery(options.queryTemplate, constraints, orderBy);
 
                 if (options.paging) {
                     return endpoint.getObjects(qry.query, options.resultsPerPage, qry.resultSetQuery,

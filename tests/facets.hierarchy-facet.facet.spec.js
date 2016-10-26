@@ -181,7 +181,7 @@ describe('HierarchyFacet', function() {
             ' } ' +
             ' ?seco_h_textId <hierarchy> ?seco_class_textId . ' +
             ' ?seco_v_textId <hierarchy> ?seco_h_textId . ' +
-            ' ?s <pred> ?seco_v_textId .';
+            ' ?id <pred> ?seco_v_textId .';
 
             expect(facet.getConstraint()).toEqual(expected.replace(/\s+/g, ' '));
 
@@ -193,7 +193,7 @@ describe('HierarchyFacet', function() {
 
     describe('buildQuery', function() {
         it('should build a valid query', function() {
-            var cons = ['?s <p> <o> .'];
+            var cons = ['?id <p> <o> .'];
 
             var expected =
             ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
@@ -202,8 +202,8 @@ describe('HierarchyFacet', function() {
             ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
-            '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) { ' +
-            '    ?s <p> <o> . ' +
+            '   SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) { ' +
+            '    ?id <p> <o> . ' +
             '   } ' +
             '  } ' +
             '  BIND("-- No Selection --" AS ?facet_text) ' +
@@ -211,14 +211,14 @@ describe('HierarchyFacet', function() {
             '  {' +
             '   SELECT DISTINCT ?cnt ?value ?facet_text {' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?value ?class {' +
+            '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value ?class {' +
             '      VALUES ?class { ' +
             '       <class1> <class2> ' +
             '      } ' +
             '      ?value <hierarchy> ?class . ' +
             '      ?h <hierarchy> ?value . ' +
-            '      ?s <pred> ?h .' +
-            '      ?s <p> <o> . ' +
+            '      ?id <pred> ?h .' +
+            '      ?id <p> <o> . ' +
             '     } GROUP BY ?class ?value ' +
             '    } ' +
             '    FILTER(BOUND(?value))' +
@@ -261,7 +261,7 @@ describe('HierarchyFacet', function() {
 
     describe('update', function() {
         it('should update the facet state according to query results', function() {
-            var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
+            var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
             var data = { facets: {}, constraint: cons };
 
             var qryRes;
@@ -280,7 +280,7 @@ describe('HierarchyFacet', function() {
         });
 
         it('should not fetch results if facet is disabled', function() {
-            var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
+            var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
             var data = { facets: {}, constraint: cons };
 
             var qryRes;
@@ -297,7 +297,7 @@ describe('HierarchyFacet', function() {
         });
 
         it('should abort if it is called again with different constraints', function() {
-            var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
+            var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
             var data = { facets: {}, constraint: cons };
 
             var qryRes;
@@ -314,7 +314,7 @@ describe('HierarchyFacet', function() {
             mock.wait = false;
             mock.response = genResponse;
 
-            var newCons = ['?s ?p ?o .'];
+            var newCons = ['?id ?p ?o .'];
             var newData = { facets: {}, constraint: newCons };
 
             facet.update(newData).then(function(res) {
@@ -329,7 +329,7 @@ describe('HierarchyFacet', function() {
         });
 
         it('should make the facet busy', function() {
-            var cons = [' ?s a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?s skos:prefLabel ?name .'];
+            var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
             var data = { facets: {}, constraint: cons };
 
             expect(facet.isLoading()).toBeFalsy();

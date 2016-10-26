@@ -4,6 +4,163 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc overview
+     * @name index
+     * @description
+     # SPARQL Faceter -- Faceted Search Based on SPARQL
+     *
+     * The module provides a set of directives that work as facets,
+     * and a service that synchronizes them.
+     *
+     * There are four different built-in facet types:
+     *
+     * - {@link seco.facetedSearch.BasicFacet} - A basic select box facet with text filtering
+     * - {@link seco.facetedSearch.HierarchyFacet} - A basic facet with hierarchy support.
+     * - {@link seco.facetedSearch.TextFacet} - A free-text facet.
+     * - {@link seco.facetedSearch.TimespanFacet} - Date range facet.
+     *
+     * Custom facets can be implemented reasonably easily.
+     *
+     ## How it works
+     * Facets are implemented as a directives.
+     * Each facet listens on its scope for changes in other facets,
+     * and emits its state when its value changes.
+     * The facets are responsible for maintaining their own state.
+     *
+     * {@link seco.facetedSearch.FacetHandler} mediates the facet changes
+     * by listening to the facets' change events, and broadcasting the resulting
+     * constraints to all facets in the scope.
+     *
+     * The facets are configured using the `options` attribute of the directive.
+     * Configuration options that are common to all facets are:
+     *
+     * - **facetId** - `{string}` - A friendly id for the facet. Should be unique in the set of facets,
+     *                              and should be usable as a SPARQL variable.
+     * - **predicate** - `{string}` - The predicate or property path that defines the facet values.
+     * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
+     * - **enabled** `{boolean}` - Whether or not the facet is enabled by default.
+     *
+     * For other options, see the facets' individual documentation.
+     *
+     * @example
+     * <pre>
+     * // Define facets
+     * vm.facets = {
+     *     // Text facet
+     *     name: {
+     *         name: 'Name',
+     *         facetId: 'name',
+     *         predicate: '<http://www.w3.org/2004/02/skos/core#prefLabel>',
+     *         enabled: true
+     *     },
+     *     // Date facet
+     *     deathDate: {
+     *         name: 'Time of Death',
+     *         facetId: 'death',
+     *         startPredicate: '<http://ldf.fi/schema/narc-menehtyneet1939-45/kuolinaika>',
+     *         endPredicate: '<http://ldf.fi/schema/narc-menehtyneet1939-45/kuolinaika>',
+     *         min: '1939-10-01',
+     *         max: '1989-12-31',
+     *         enabled: true
+     *     },
+     *     // Basic facet
+     *     profession: {
+     *         name: 'Ammatti',
+     *         facetId: 'occupation',
+     *         predicate: '<http://ldf.fi/schema/narc-menehtyneet1939-45/ammatti>',
+     *         enabled: true
+     *     },
+     *     // Basic facet with property path
+     *     source: {
+     *         name: 'Source',
+     *         facetId: 'source',
+     *         predicate: '^<http://www.cidoc-crm.org/cidoc-crm/P70i_is_documented_in>/<http://purl.org/dc/elements/1.1/source>',
+     *         enabled: true
+     *     },
+     *     // Basic facet with labels in another service.
+     *     birthMunicipality: {
+     *         name: 'Birth Municipality',
+     *         services: ['<http://ldf.fi/pnr/sparql>'],
+     *         facetId: 'birthplace',
+     *         predicate: '<http://ldf.fi/schema/narc-menehtyneet1939-45/synnyinkunta>',
+     *         enabled: false
+     *     },
+     *     // Hierarchical facet
+     *     rank: {
+     *         name: 'Rank',
+     *         facetId: 'rank',
+     *         predicate: '<http://ldf.fi/schema/narc-menehtyneet1939-45/sotilasarvo>',
+     *         hierarchy: '<http://purl.org/dc/terms/isPartOf>*|(<http://rdf.muninn-project.org/ontologies/organization#equalTo>/<http://purl.org/dc/terms/isPartOf>*)',
+     *         enabled: true,
+     *         classes: [
+     *             '<http://ldf.fi/warsa/actors/ranks/Upseeri>',
+     *             '<http://ldf.fi/warsa/actors/ranks/Aliupseeri>',
+     *             '<http://ldf.fi/warsa/actors/ranks/Miehistoe>',
+     *             '<http://ldf.fi/warsa/actors/ranks/Jaeaekaeriarvo>',
+     *             '<http://ldf.fi/warsa/actors/ranks/Virkahenkiloestoe>',
+     *             '<http://ldf.fi/warsa/actors/ranks/Lottahenkiloestoe>',
+     *             '<http://ldf.fi/warsa/actors/ranks/Muu>'
+     *         ]
+     *     }
+     * };
+     *
+     * // Define common options
+     * vm.options = {
+     *     endpointUrl: 'http://ldf.fi/warsa/sparql',
+     *     rdfClass: '<http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord>',
+     *     constraint: '?id skos:prefLabel ?name .',
+     *     preferredLang : 'fi'
+     * };
+     *
+     * // Define a function that handles updates.
+     * // 'dataService' is some service that fetches results based on the facet selections.
+     * function updateResults(event, facetState) {
+     *     dataService.getResults(facetState.constraints).then(function(results) {
+     *         vm.results = results;
+     *     }
+     * }
+     *
+     * // Listen for the update event
+     * $scope.$on('sf-facet-constraints', updateResults);
+     *
+     * // Listen for initial state
+     * var initListener = $scope.$on('sf-initial-constraints', function(event, state) {
+     *     updateResults(event, state);
+     *     // Only listen once for the init event
+     *     initListener();
+     * });
+     *
+     * // Initialize the facet handler:
+     * vm.handler = new FacetHandler(vm.options);
+     * </pre>
+     *
+     * Setup the facets in the template:
+     *
+     * <pre>
+     * <seco-text-facet
+     *   data-options="vm.facets.name">
+     * </seco-text-facet>
+     * <seco-timespan-facet
+     *   data-options="vm.facets.deathDate">
+     * </seco-timespan-facet>
+     * <seco-basic-facet
+     *   data-options="vm.facets.source">
+     * </seco-basic-facet>
+     * <seco-basic-facet
+     *   data-options="vm.facets.profession">
+     * </seco-basic-facet>
+     * <seco-basic-facet
+     *   data-options="vm.facets.birthMunicipality">
+     * </seco-basic-facet>
+     * <seco-basic-facet
+     *   data-options="vm.facets.principalAbode">
+     * </seco-basic-facet>
+     * <seco-hierarchy-facet
+     *   data-options="vm.facets.rank">
+     * </seco-hierarchy-facet>
+     * </pre>
+     */
     angular.module('seco.facetedSearch', ['sparql', 'ui.bootstrap', 'angularSpinner'])
     .constant('_', _) // eslint-disable-line no-undef
     .constant('EVENT_REQUEST_CONSTRAINTS', 'sf-request-constraints')
@@ -111,17 +268,11 @@
 
             var endpoint = new AdvancedSparqlService(endpointUrl, options.mapper);
 
-            var resultSetTemplate =
-            ' <FACET_SELECTIONS> ' +
-            ' BIND(?s AS ?id) ';
-
             // Get results based on the facet selections and the query template.
             // Use paging if defined in the options.
             function getResults(facetSelections, orderBy) {
                 var constraints = facetSelections.constraint.join(' ');
-                var resultSet = resultSetTemplate.replace(/<FACET_SELECTIONS>/g,
-                        constraints);
-                var qry = qryBuilder.buildQuery(options.queryTemplate, resultSet, orderBy);
+                var qry = qryBuilder.buildQuery(options.queryTemplate, constraints, orderBy);
 
                 if (options.paging) {
                     return endpoint.getObjects(qry.query, options.resultsPerPage, qry.resultSetQuery,
@@ -418,7 +569,7 @@
                 broadCastInitial();
             }
 
-            // Update state, and broadcast them to listening facets.
+            // Update state, and broadcast it to listening facets.
             function update(event, constraint) {
                 event.stopPropagation();
                 self.state.facets[constraint.id] = constraint;
@@ -453,7 +604,7 @@
 
             // Combine the possible RDF class and constraint definitions in the config.
             function getInitialConstraints(config) {
-                var state = config.rdfClass ? ' ?s a ' + config.rdfClass + ' . ' : '';
+                var state = config.rdfClass ? ' ?id a ' + config.rdfClass + ' . ' : '';
                 state = state + (config.constraint || '');
                 return state;
             }
@@ -693,7 +844,7 @@
             ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
-            '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) { ' +
+            '   SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) { ' +
             '    <OTHER_SELECTIONS> ' +
             '   } ' +
             '  } ' +
@@ -702,7 +853,7 @@
             '  {' +
             '   SELECT DISTINCT ?cnt ?value ?facet_text { ' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) (sample(?s) as ?ss) ?value {' +
+            '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value {' +
             '      <SELECTIONS> ' +
             '     } GROUP BY ?value ' +
             '    } ' +
@@ -791,7 +942,7 @@
         }
 
         function getTriplePattern() {
-            return '?s ' + this.predicate + ' ?value . ';
+            return '?id ' + this.predicate + ' ?value . ';
         }
 
         function getConstraint() {
@@ -799,7 +950,7 @@
                 return;
             }
             if (this.getSelectedValue()) {
-                return ' ?s ' + this.predicate + ' ' + this.getSelectedValue() + ' . ';
+                return ' ?id ' + this.predicate + ' ' + this.getSelectedValue() + ' . ';
             }
         }
 
@@ -990,9 +1141,9 @@
             if (!value) {
                 return;
             }
-            var result = this.useJenaText ? ' ?s text:query "' + value + '*" . ' : '';
+            var result = this.useJenaText ? ' ?id text:query "' + value + '*" . ' : '';
             var textVar = '?' + this.facetId;
-            result = result + ' ?s ' + this.predicate + ' ' + textVar + ' . ';
+            result = result + ' ?id ' + this.predicate + ' ' + textVar + ' . ';
             var words = value.replace(/[?,._*'\\/-]/g, ' ');
 
             words.split(' ').forEach(function(word) {
@@ -1182,11 +1333,11 @@
             var end = (this.getSelectedValue() || {}).end;
 
             var startFilter =
-            ' ?s <START_PROPERTY> <VAR> . ' +
+            ' ?id <START_PROPERTY> <VAR> . ' +
             ' FILTER(<VAR> >= "<START_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
 
             var endFilter =
-            ' ?s <END_PROPERTY> <VAR> . ' +
+            ' ?id <END_PROPERTY> <VAR> . ' +
             ' FILTER(<VAR> <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
 
             var startVar = '?start_' + this.varSuffix;
@@ -1365,7 +1516,7 @@
             ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
-            '   SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) { ' +
+            '   SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) { ' +
             '    <OTHER_SELECTIONS> ' +
             '   } ' +
             '  } ' +
@@ -1374,13 +1525,13 @@
             '  {' +
             '   SELECT DISTINCT ?cnt ?value ?facet_text {' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?s) as ?cnt) ?value ?class {' +
+            '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value ?class {' +
             '      VALUES ?class { ' +
             '       <HIERARCHY_CLASSES> ' +
             '      } ' +
             '      ?value <PROPERTY> ?class . ' +
             '      ?h <PROPERTY> ?value . ' +
-            '      ?s <ID> ?h .' +
+            '      ?id <ID> ?h .' +
             '      <OTHER_SELECTIONS> ' +
             '     } GROUP BY ?class ?value ' +
             '    } ' +
@@ -1412,7 +1563,7 @@
             ' } ' +
             ' ?<H_VAR> <PROPERTY> ?<CLASS_VAR> . ' +
             ' ?<V_VAR> <PROPERTY> ?<H_VAR> . ' +
-            ' ?s <ID> ?<V_VAR> .';
+            ' ?id <ID> ?<V_VAR> .';
 
             this.triplePatternTemplate = this.buildQueryTemplate(triplePatternTemplate);
         }
