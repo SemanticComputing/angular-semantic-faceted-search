@@ -100,12 +100,17 @@
         }
 
         function handleUpdateSuccess() {
+            vm.error = undefined;
             vm.isLoadingFacet = false;
         }
 
         function handleError(error) {
             vm.isLoadingFacet = false;
-            vm.error = error;
+            if (error) {
+                vm.error = error;
+            } else {
+                vm.error = 'Error occured';
+            }
         }
 
         function getFacetSize(facetStates) {

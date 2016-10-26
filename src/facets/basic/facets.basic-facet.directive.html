@@ -3,6 +3,7 @@
     <div class="well well-sm">
       <div class="row">
         <div class="col-xs-12 text-left">
+          <div class="alert alert-danger" ng-if="vm.error">{{ vm.error|limitTo:100 }}</div>
           <span spinner-key="vm.getSpinnerKey()" spinner-start-active="true"
             us-spinner="{radius:30, width:8, length: 40}" ng-if="vm.isLoading()"></span>
           <h5 class="facet-name pull-left">{{ vm.facet.name }}</h5>

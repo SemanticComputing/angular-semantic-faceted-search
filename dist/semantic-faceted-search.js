@@ -589,12 +589,17 @@
         }
 
         function handleUpdateSuccess() {
+            vm.error = undefined;
             vm.isLoadingFacet = false;
         }
 
         function handleError(error) {
             vm.isLoadingFacet = false;
-            vm.error = error;
+            if (error) {
+                vm.error = error;
+            } else {
+                vm.error = 'Error occured';
+            }
         }
 
         function getFacetSize(facetStates) {
@@ -739,7 +744,7 @@
             if (!self.isEnabled()) {
                 return $q.when();
             }
-            if (self.previousConstraints && _.isEqual(constraints.constraint,
+            if (!self._error && self.previousConstraints && _.isEqual(constraints.constraint,
                     self.previousConstraints)) {
                 return $q.when();
             }
@@ -764,10 +769,17 @@
 
         // Build a query with the facet selection and use it to get the facet state.
         function fetchState(constraints) {
-            var query = this.buildQuery(constraints.constraint);
+            var self = this;
 
-            return this.endpoint.getObjects(query).then(function(results) {
+            var query = self.buildQuery(constraints.constraint);
+
+            return self.endpoint.getObjects(query).then(function(results) {
+                self._error = false;
                 return facetMapperService.makeObjectListNoGrouping(results);
+            }).catch(function(error) {
+                self._isBusy = false;
+                self._error = true;
+                return $q.reject(error);
             });
         }
 
@@ -1526,6 +1538,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
+    "          <div class=\"alert alert-danger\" ng-if=\"vm.error\">{{ vm.error|limitTo:100 }}</div>\n" +
     "          <span spinner-key=\"vm.getSpinnerKey()\" spinner-start-active=\"true\"\n" +
     "            us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoading()\"></span>\n" +
     "          <h5 class=\"facet-name pull-left\">{{ vm.facet.name }}</h5>\n" +

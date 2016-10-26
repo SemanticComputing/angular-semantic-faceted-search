@@ -131,7 +131,7 @@
             if (!self.isEnabled()) {
                 return $q.when();
             }
-            if (self.previousConstraints && _.isEqual(constraints.constraint,
+            if (!self._error && self.previousConstraints && _.isEqual(constraints.constraint,
                     self.previousConstraints)) {
                 return $q.when();
             }
@@ -156,10 +156,17 @@
 
         // Build a query with the facet selection and use it to get the facet state.
         function fetchState(constraints) {
-            var query = this.buildQuery(constraints.constraint);
+            var self = this;
 
-            return this.endpoint.getObjects(query).then(function(results) {
+            var query = self.buildQuery(constraints.constraint);
+
+            return self.endpoint.getObjects(query).then(function(results) {
+                self._error = false;
                 return facetMapperService.makeObjectListNoGrouping(results);
+            }).catch(function(error) {
+                self._isBusy = false;
+                self._error = true;
+                return $q.reject(error);
             });
         }
 
