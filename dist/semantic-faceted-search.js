@@ -288,8 +288,7 @@
 
     /* @ngInject */
     function FacetResultHandler(_, DEFAULT_PAGES_PER_QUERY, DEFAULT_RESULTS_PER_PAGE,
-            AdvancedSparqlService, facetSelectionFormatter, objectMapperService,
-            QueryBuilderService) {
+            AdvancedSparqlService, objectMapperService, QueryBuilderService) {
 
         return ResultHandler;
 
