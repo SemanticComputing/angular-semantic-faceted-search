@@ -58,7 +58,11 @@
      *   in these values.
      *
      * @example
+     * Setup in the controller:
+     *
      * <pre>
+     * var vm = this;
+     *
      * // Define facets
      * vm.facets = {
      *     // Text facet
