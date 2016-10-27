@@ -67,7 +67,10 @@ module.exports = function(grunt) {
         'ngtemplates',
         'concat:js',
         'concat:css',
-        'clean:templates',
+        'clean:templates'
+    ]);
+
+    grunt.registerTask('doc', [
         'ngdocs:all'
     ]);
 };
