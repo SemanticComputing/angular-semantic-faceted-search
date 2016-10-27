@@ -11,7 +11,7 @@
             if (_.isArray(selection)) {
                 selectedValues = _.map(selection, 'value');
             } else {
-                selectedValues = [selection];
+                selectedValues = [selection.value];
             }
 
             var hasNoSelection = _.some(selectedValues, angular.isUndefined);
@@ -20,7 +20,8 @@
             }
 
             return _.filter(values, function(val) {
-                return _.includes(val.text.toLowerCase(), text.toLowerCase()) || _.includes(selectedValues, val.value);
+                return _.includes(val.text.toLowerCase(), text.toLowerCase()) ||
+                    _.includes(selectedValues, val.value);
             });
         };
     });
