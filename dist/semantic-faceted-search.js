@@ -745,11 +745,17 @@
         }
 
         function handleError(error) {
+            if (!vm.facet.hasError()) {
+                // The facet has recovered from the error.
+                // This happens when an update has been cancelled
+                // due to changes in facet selections.
+                return;
+            }
             vm.isLoadingFacet = false;
             if (error) {
                 vm.error = error;
             } else {
-                vm.error = 'Error occured';
+                vm.error = 'Error';
             }
         }
 
@@ -791,6 +797,7 @@
         BasicFacetConstructor.prototype.enable = enable;
         BasicFacetConstructor.prototype.isLoading = isLoading;
         BasicFacetConstructor.prototype.isEnabled = isEnabled;
+        BasicFacetConstructor.prototype.hasError = hasError;
         BasicFacetConstructor.prototype.getSelectedValue = getSelectedValue;
 
         return BasicFacetConstructor;
@@ -939,6 +946,10 @@
                 self._error = true;
                 return $q.reject(error);
             });
+        }
+
+        function hasError() {
+            return this._error;
         }
 
         function getTriplePattern() {

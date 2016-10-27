@@ -27,6 +27,7 @@
         BasicFacetConstructor.prototype.enable = enable;
         BasicFacetConstructor.prototype.isLoading = isLoading;
         BasicFacetConstructor.prototype.isEnabled = isEnabled;
+        BasicFacetConstructor.prototype.hasError = hasError;
         BasicFacetConstructor.prototype.getSelectedValue = getSelectedValue;
 
         return BasicFacetConstructor;
@@ -175,6 +176,10 @@
                 self._error = true;
                 return $q.reject(error);
             });
+        }
+
+        function hasError() {
+            return this._error;
         }
 
         function getTriplePattern() {
