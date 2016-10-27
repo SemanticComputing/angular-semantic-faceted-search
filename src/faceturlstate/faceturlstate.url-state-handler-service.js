@@ -14,13 +14,13 @@
     * and retrieving the facet values from URL parameters.
     *
     * Intended for bookmarking the current facet selections.
-    * {@link seco.facetedSearch.FacetHandler FacetHandler} can take
+    * {@link seco.facetedSearch.FacetHandler `FacetHandler`} can take
     * the return value of `getFacetValuesFromUrlParams` as the
     * `initialState` configuration value.
     *
     * Updating the URL parameters can be done, e.g., when the facet states
     * have been received while listening for facet updates.
-    * See {@link seco.facetedSearch.FacetHandler FacetHandler} for details
+    * See {@link seco.facetedSearch.FacetHandler `FacetHandler`} for details
     * regarding events.
     */
     .service('facetUrlStateHandlerService', facetUrlStateHandlerService);
@@ -38,7 +38,7 @@
         * @description
         * Update the URL parameters based on the given facet state.
         * @param {Object} facets The facet states as broadcast by
-        *   {@link seco.facetedSearch.FacetHandler FacetHandler}.
+        *   {@link seco.facetedSearch.FacetHandler `FacetHandler`}.
         */
         function updateUrlParams(facets) {
             facets = facets.facets || facets;

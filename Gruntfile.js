@@ -51,7 +51,10 @@ module.exports = function(grunt) {
         },
         ngdocs: {
             all: ['src/**/*.js'],
-            sourceLink: true
+            sourceLink: true,
+            options: {
+                title: 'SPARQL Faceter'
+            }
         }
     });
 

@@ -3,11 +3,10 @@
 
     /**
     * @ngdoc directive
-    * @name seco.facetedSearch.secoTextFacet
+    * @name seco.facetedSearch.directive:secoTextFacet
     * @restrict 'E'
     * @element ANY
     * @description
-    * # secoTextFacet
     * A free-text search facet.
     *
     * Does not make any SPARQL queries, just generates SPARQL triple patterns

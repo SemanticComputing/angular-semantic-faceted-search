@@ -3,11 +3,10 @@
 
     /**
     * @ngdoc directive
-    * @name seco.facetedSearch.secoTimespanFacet
+    * @name seco.facetedSearch.directive:secoTimespanFacet
     * @restrict 'E'
     * @element ANY
     * @description
-    * # secoTimespanFacet
     * A facet for selecting date ranges.
     *
     * Does not make any SPARQL queries, just generates SPARQL triple patterns

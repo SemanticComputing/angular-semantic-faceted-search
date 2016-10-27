@@ -1,12 +1,10 @@
-<a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/edit/master/src/facets/facets.facet-handler.service.js" class="improve-docs"><i class="icon-edit"> </i>Improve this doc</a><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/1f440c2/src/facets/facets.facet-handler.service.js#L62" class="view-source"><i class="icon-eye-open"> </i>View source</a><h1><code ng:non-bindable="">FacetHandler</code>
+<a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/edit/master/src/facets/facets.facet-handler.service.js" class="improve-docs"><i class="icon-edit"> </i>Improve this doc</a><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/da8525f/src/facets/facets.facet-handler.service.js#L74" class="view-source"><i class="icon-eye-open"> </i>View source</a><h1><code ng:non-bindable="">FacetHandler</code>
 <div><span class="hint">service in module <code ng:non-bindable="">seco.facetedSearch</code>
 </span>
 </div>
 </h1>
 <div><h2 id="description">Description</h2>
-<div class="description"><div class="seco-facetedsearch-facethandler-page"><h3 id="description_facethandler">FacetHandler</h3>
-<p>Service for mediating the communication between facets.
-Provides a constructor.</p>
+<div class="description"><div class="seco-facetedsearch-facethandler-page"><p>Service for mediating the communication between facets.</p>
 <p>When created, the FacetHandler object broadcasts a <code>sf-initial-constraints</code> event
 on the given scope, with the following structure:</p>
 <ul>
@@ -35,7 +33,7 @@ above, except omitting <code>config</code>.</li>
 </ul>
 </div></div>
 <h2 id="usage">Usage</h2>
-<div class="usage"><pre class="prettyprint linenums">FacetHandler(config);</pre>
+<div class="usage"><pre class="prettyprint linenums">new FacetHandler(config);</pre>
 <h4 id="usage_parameters">Parameters</h4><table class="variables-matrix table table-bordered table-striped"><thead><tr><th>Param</th><th>Type</th><th>Details</th></tr></thead><tbody><tr><td>config</td><td><a href="" class="label type-hint type-hint-object">Object</a></td><td><div class="seco-facetedsearch-facethandler-page"><p>Configuration object broadcast to all facets at init.
 The object has the following properties:</p>
 <ul>
@@ -55,14 +53,14 @@ Currently only one language can be given.
 This argument can also be given directly to the individual facets.</li>
 <li><strong>[initialState]</strong> - <code>{Object}</code> - The initial state of the facets.
 Used when loading the state from URL parameters, for example.
-See <a href="#/api/seco.facetedSearch.facetUrlStateHandlerService">facetUrlStateHandlerService</a>.</li>
+See <a href="#/api/seco.facetedSearch.facetUrlStateHandlerService"><code>facetUrlStateHandlerService</code></a>.</li>
 </ul>
 <p>The object is sent to facets as is, and so any extra fields will be included,
 although the above fields are the only ones used by FacetHandler and the
 built-in facets.</p>
 </div></td></tr></tbody></table></div>
 <div class="member method"><h2 id="methods">Methods</h2>
-<ul class="methods"><li><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/1f440c2/src/facets/facets.facet-handler.service.js#L144" class="view-source icon-eye-open"> </a><h3 id="methods_removelisteners">removeListeners()</h3>
+<ul class="methods"><li><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/da8525f/src/facets/facets.facet-handler.service.js#L147" class="view-source icon-eye-open"> </a><h3 id="methods_removelisteners">removeListeners()</h3>
 <div class="removelisteners"><div class="seco-facetedsearch-facethandler-removelisteners-page"><p>Remove event listeners from the scope.
 Probably only needed if you, for some reason, need to
 use <code>$rootScope</code> as the communication scope.</p>

@@ -3,11 +3,10 @@
 
     /**
     * @ngdoc directive
-    * @name seco.facetedSearch.secoBasicFacet
+    * @name seco.facetedSearch.directive:secoBasicFacet
     * @restrict 'E'
     * @element ANY
     * @description
-    * # secoBasicFacet
     * A basic select box facet with text filtering.
     *
     * @param {Object} options The configuration object with the following structure:
@@ -19,7 +18,7 @@
     *   If undefined, the facet will be disabled by default.
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
     *   Optional, as it can also be given globally in
-    *   {@link seco.facetedSearch.FacetHandler FacetHandler} config.
+    *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
     * - **[preferredLang]** - `{string}` - The language tag that is preferred
     *   when getting labels for facet values, in case the value is a resource.
     *   The default is 'en'.
