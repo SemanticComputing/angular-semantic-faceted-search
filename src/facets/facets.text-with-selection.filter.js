@@ -11,7 +11,7 @@
             if (_.isArray(selection)) {
                 selectedValues = _.map(selection, 'value');
             } else {
-                selectedValues = [selection.value];
+                selectedValues = selection ? [selection.value] : [];
             }
 
             var hasNoSelection = _.some(selectedValues, angular.isUndefined);
