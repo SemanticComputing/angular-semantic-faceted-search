@@ -28,7 +28,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A basic select box facet with text filtering.",
-      "keywords": "api basic box case config configuration currently default defines directive disabled displayed en enabled endpoint facet facetedsearch facethandler facets filtering friendly globally label labels language object optional options path predicate preferred properties property rdfs resource seco select set skos sparql structure supported tag text title undefined unique uri url usable users values variable"
+      "keywords": "api basic bound box case config configuration currently default define defined defines directive disabled displayed en enabled endpoint example facet facetedsearch facethandler facets filtering friendly generate generated globally helpful kinds label labels language multiple object optional options org pattern patterns people predicate preferred properties property rdfs resource restriction seco select selectable selection set skos sparql specifier structure subjects supported tag text title triple undefined unique uri url usable users values variable"
     },
     {
       "section": "api",
