@@ -32,7 +32,7 @@ describe('TextFacet', function() {
     });
 
     it('should get its initial value from config', function() {
-        options.initialConstraints = { facets: { textId: { value: 'value' } } };
+        options.initial = { textId: { value: 'value' } };
 
         var facet = new TextFacet(options);
 

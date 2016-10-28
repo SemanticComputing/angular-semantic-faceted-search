@@ -792,6 +792,7 @@
         BasicFacetConstructor.prototype.fetchState = fetchState;
         BasicFacetConstructor.prototype.getConstraint = getConstraint;
         BasicFacetConstructor.prototype.getTriplePattern = getTriplePattern;
+        BasicFacetConstructor.prototype.getSpecifier = getSpecifier;
         BasicFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         BasicFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         BasicFacetConstructor.prototype.buildQuery = buildQuery;
@@ -891,6 +892,7 @@
             this.name = this.config.name;
             this.facetId = this.config.facetId;
             this.predicate = this.config.predicate;
+            this.specifier = this.config.specifier;
             if (this.config.enabled) {
                 this.enable();
             } else {
@@ -962,6 +964,10 @@
             return '?id ' + this.predicate + ' ?value . ';
         }
 
+        function getSpecifier() {
+            return this.specifier ? this.specifier : '';
+        }
+
         function getConstraint() {
             if (!this.getSelectedValue()) {
                 return;
@@ -992,8 +998,10 @@
         }
 
         function buildSelections(constraints) {
-            constraints = constraints.join(' ');
-            return constraints + ' ' + this.getTriplePattern();
+            constraints = constraints.join(' ') +
+                ' ' + this.getTriplePattern() +
+                ' ' + this.getSpecifier();
+            return constraints;
         }
 
         function getOtherSelections(constraints) {
@@ -1019,10 +1027,6 @@
         // Replace placeholders in the query template using the configuration.
         function buildQueryTemplate(template) {
             var templateSubs = [
-                {
-                    placeHolder: /<ID>/g,
-                    value: this.facetId
-                },
                 {
                     placeHolder: /<LABEL_PART>/g,
                     value: this.config.labelPart
@@ -1172,7 +1176,7 @@
             }
 
             // Initial value
-            var initial = _.get(options, 'initialConstraints.facets.' + this.facetId);
+            var initial = _.get(options, 'initial.' + this.facetId);
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
@@ -1251,9 +1255,9 @@
 
         function init() {
             var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                var initial = _.cloneDeep($scope.options);
-                initial.initialConstraints = cons;
-                vm.facet = new TextFacet(initial);
+                var opts = _.cloneDeep($scope.options);
+                opts.initial = cons.facets;
+                vm.facet = new TextFacet(opts);
                 // Unregister initListener
                 initListener();
             });
@@ -1384,7 +1388,7 @@
             this.varSuffix = this.facetId;
 
             // Initial value
-            var initial = _.get(options, 'initialConstraints.facets.' + this.facetId);
+            var initial = _.get(options, 'initial.' + this.facetId);
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
@@ -1496,9 +1500,9 @@
 
         function init() {
             var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                var initial = _.cloneDeep($scope.options);
-                initial.initialConstraints = cons;
-                vm.facet = new TimespanFacet(initial);
+                var opts = _.cloneDeep($scope.options);
+                opts.initial = cons.facets;
+                vm.facet = new TimespanFacet(opts);
                 // Unregister initListener
                 initListener();
             });
@@ -1649,7 +1653,7 @@
             this.selectedValue;
 
             // Initial value
-            var constVal = _.get(options, 'initialConstraints.facets.' + this.facetId);
+            var constVal = _.get(options, 'initial.' + this.facetId);
             if (constVal && constVal.value) {
                 this._isEnabled = true;
                 this.selectedValue = { value: constVal.value };

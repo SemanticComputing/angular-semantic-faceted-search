@@ -16,6 +16,7 @@
         BasicFacetConstructor.prototype.fetchState = fetchState;
         BasicFacetConstructor.prototype.getConstraint = getConstraint;
         BasicFacetConstructor.prototype.getTriplePattern = getTriplePattern;
+        BasicFacetConstructor.prototype.getSpecifier = getSpecifier;
         BasicFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         BasicFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         BasicFacetConstructor.prototype.buildQuery = buildQuery;
@@ -115,6 +116,7 @@
             this.name = this.config.name;
             this.facetId = this.config.facetId;
             this.predicate = this.config.predicate;
+            this.specifier = this.config.specifier;
             if (this.config.enabled) {
                 this.enable();
             } else {
@@ -186,6 +188,10 @@
             return '?id ' + this.predicate + ' ?value . ';
         }
 
+        function getSpecifier() {
+            return this.specifier ? this.specifier : '';
+        }
+
         function getConstraint() {
             if (!this.getSelectedValue()) {
                 return;
@@ -216,8 +222,10 @@
         }
 
         function buildSelections(constraints) {
-            constraints = constraints.join(' ');
-            return constraints + ' ' + this.getTriplePattern();
+            constraints = constraints.join(' ') +
+                ' ' + this.getTriplePattern() +
+                ' ' + this.getSpecifier();
+            return constraints;
         }
 
         function getOtherSelections(constraints) {
@@ -243,10 +251,6 @@
         // Replace placeholders in the query template using the configuration.
         function buildQueryTemplate(template) {
             var templateSubs = [
-                {
-                    placeHolder: /<ID>/g,
-                    value: this.facetId
-                },
                 {
                     placeHolder: /<LABEL_PART>/g,
                     value: this.config.labelPart

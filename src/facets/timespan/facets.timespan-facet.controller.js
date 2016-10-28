@@ -24,9 +24,9 @@
 
         function init() {
             var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                var initial = _.cloneDeep($scope.options);
-                initial.initialConstraints = cons;
-                vm.facet = new TimespanFacet(initial);
+                var opts = _.cloneDeep($scope.options);
+                opts.initial = cons.facets;
+                vm.facet = new TimespanFacet(opts);
                 // Unregister initListener
                 initListener();
             });

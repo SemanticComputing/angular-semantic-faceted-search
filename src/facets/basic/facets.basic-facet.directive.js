@@ -12,8 +12,20 @@
     * @param {Object} options The configuration object with the following structure:
     * - **facetId** - `{string}` - A friendly id for the facet.
     *   Should be unique in the set of facets, and should be usable as a SPARQL variable.
-    * - **predicate** - `{string}` - The predicate or property path that defines the facet values.
     * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
+    * - **predicate** - `{string}` - The property (path) that defines the facet values.
+    * - **[specifier]** `{string}` - Restriction on the values as a SPARQL triple pattern.
+    *   Helpful if multiple facets need to be generated from the same predicate,
+    *   or not all values defined by the given predicate should be selectable.
+    *   `?value` is the variable to which the facet selection is bound.
+    *   For example, if `predicate` has been defined as
+    *   `<http://purl.org/dc/terms/subject>` (subject),
+    *   and there are different kinds of subjects for the resource, and you want
+    *   to select people (`<http://xmlns.com/foaf/0.1/Person>`) only, you would
+    *   define `specifier` as `'?value a <http://xmlns.com/foaf/0.1/Person> .'`.
+    *   This would generate the following triple patterns:
+    *       ?id <http://purl.org/dc/terms/subject> ?value .
+    *       ?value a <http://xmlns.com/foaf/0.1/Person> .
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.

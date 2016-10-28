@@ -39,6 +39,7 @@ describe('TextFacetController', function() {
     beforeEach(function() {
         $scope.options = {};
         controller = $controller('TextFacetController', { $scope: $scope });
+        $scope.$digest();
         $scope.$broadcast('sf-initial-constraints', constraints);
     });
 
@@ -48,6 +49,7 @@ describe('TextFacetController', function() {
         $scope.options = {};
 
         $controller('TextFacetController', { $scope: $scope });
+        $scope.$digest();
 
         expect($scope.$emit).toHaveBeenCalledWith('sf-request-constraints');
     });
@@ -56,6 +58,7 @@ describe('TextFacetController', function() {
         beforeEach(function() {
             $scope.options = {};
             controller = $controller('TextFacetController', { $scope: $scope });
+            $scope.$digest();
             $scope.$broadcast('sf-initial-constraints', constraints);
         });
 

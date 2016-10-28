@@ -37,7 +37,7 @@ describe('TimespanFacet', function() {
     it('should get its initial value from config', function() {
         var d = new Date('1945-02-02');
         var val = { start: d, end: d };
-        options.initialConstraints = { facets: { spanId: { value: val } } };
+        options.initial = { spanId: { value: val } };
 
         var facet = new TimespanFacet(options);
 

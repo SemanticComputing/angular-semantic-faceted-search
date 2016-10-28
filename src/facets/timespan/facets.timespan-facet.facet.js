@@ -45,7 +45,7 @@
             this.varSuffix = this.facetId;
 
             // Initial value
-            var initial = _.get(options, 'initialConstraints.facets.' + this.facetId);
+            var initial = _.get(options, 'initial.' + this.facetId);
             if (initial && initial.value) {
                 this._isEnabled = true;
                 this.selectedValue = initial.value;
