@@ -678,7 +678,7 @@
                 opts.initial = cons.facets;
                 vm.facet = new Facet(opts);
                 if (vm.facet.isEnabled()) {
-                    vm.previousVal = vm.facet.getSelectedValue();
+                    vm.previousVal = _.cloneDeep(vm.facet.getSelectedValue());
                     listen();
                     update(cons);
                 }
@@ -717,7 +717,7 @@
                 vm.isLoadingFacet = false;
                 return;
             }
-            vm.previousVal = _.clone(val);
+            vm.previousVal = _.cloneDeep(val);
             var args = {
                 id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
@@ -1364,66 +1364,165 @@
     .factory('TimespanFacet', TimespanFacet);
 
     /* ngInject */
-    function TimespanFacet(_) {
+    function TimespanFacet($q, _, AdvancedSparqlService, objectMapperService, BasicFacet) {
+        TimespanFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
-        TimespanFacetConstructor.prototype.getConstraint = getConstraint;
-        TimespanFacetConstructor.prototype.getPreferredLang = getPreferredLang;
-        TimespanFacetConstructor.prototype.disable = disable;
-        TimespanFacetConstructor.prototype.enable = enable;
-        TimespanFacetConstructor.prototype.isEnabled = isEnabled;
         TimespanFacetConstructor.prototype.getSelectedValue = getSelectedValue;
+        TimespanFacetConstructor.prototype.getConstraint = getConstraint;
+        TimespanFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
+        TimespanFacetConstructor.prototype.buildQuery = buildQuery;
+        TimespanFacetConstructor.prototype.fetchState = fetchState;
+        TimespanFacetConstructor.prototype.getOtherSelections = getOtherSelections;
 
         return TimespanFacetConstructor;
 
         function TimespanFacetConstructor(options) {
+            var prefixes =
+            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
+            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
+            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ';
 
-            /* Implementation */
+            var simpleTemplate = prefixes +
+            ' SELECT (min(xsd:date(?value)) AS ?min) (max(xsd:date(?value)) AS ?max) { ' +
+            '   <SELECTIONS> ' +
+            '   ?id <START_PROPERTY> ?value . ' +
+            ' } ';
 
-            var defaultConfig = {
-                preferredLang: 'fi'
-            };
+            var separateTemplate = prefixes +
+            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
+            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
+            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
+            ' SELECT ?min ?max { ' +
+            '   { ' +
+            '     SELECT (min(xsd:date(?start)) AS ?min) { ' +
+            '       <SELECTIONS> ' +
+            '       ?id <START_PROPERTY> ?start . ' +
+            '     } ' +
+            '   } ' +
+            '   { ' +
+            '     SELECT (max(xsd:date(?end)) AS ?max) { ' +
+            '       <SELECTIONS> ' +
+            '       ?id <END_PROPERTY> ?end . ' +
+            '     } ' +
+            '   } ' +
+            ' } ';
+
+            var defaultConfig = {};
 
             this.config = angular.extend({}, defaultConfig, options);
-
-            this.startDatePickerOptions = {
-                minDate: this.config.min,
-                maxDate: this.config.max,
-                initDate: this.config.min,
-                startingDay: this.config.startingDay || 1
-            };
-
-            this.endDatePickerOptions = {
-                minDate: this.config.min,
-                maxDate: this.config.max,
-                initDate: this.config.max,
-                startingDay: this.config.startingDay || 1
-            };
 
             this.name = this.config.name;
             this.facetId = this.config.facetId;
             this.startPredicate = this.config.startPredicate;
             this.endPredicate = this.config.endPredicate;
+            this.minDate = this.config.min;
+            this.maxDate = this.config.max;
+
+            this.state = {};
+
+            this.state.start = {
+                minDate: this.minDate,
+                maxDate: this.maxDate,
+                initDate: this.minDate,
+                startingDay: this.config.startingDay || 1
+            };
+
+            this.state.end = {
+                minDate: this.minDate,
+                maxDate: this.maxDate,
+                initDate: this.maxDate,
+                startingDay: this.config.startingDay || 1
+            };
+
             if (this.config.enabled) {
                 this.enable();
             } else {
                 this.disable();
             }
 
+            this.endpoint = new AdvancedSparqlService(this.config.endpointUrl,
+                objectMapperService);
+
+            this.queryTemplate = this.buildQueryTemplate(
+                this.startPredicate === this.endPredicate ? simpleTemplate : separateTemplate);
+
             this.varSuffix = this.facetId;
+
+            this.selectedValue = {};
 
             // Initial value
             var initial = _.get(options, 'initial.' + this.facetId);
-            if (initial && initial.value) {
+            if (initial) {
                 this._isEnabled = true;
-                this.selectedValue = initial.value;
+                this.selectedValue = initial;
             }
+        }
+
+        function buildQueryTemplate(template) {
+            return template
+                .replace(/<START_PROPERTY>/g, this.startPredicate)
+                .replace(/<END_PROPERTY>/g, this.endPredicate)
+                .replace(/\s+/g, ' ');
+        }
+
+        function buildQuery(constraints) {
+            constraints = constraints || [];
+            var query = this.queryTemplate
+                .replace(/<SELECTIONS>/g, this.getOtherSelections(constraints));
+            return query;
+        }
+
+        function getOtherSelections(constraints) {
+            var ownConstraint = this.getConstraint();
+            var selections = _.reject(constraints, function(v) { return v === ownConstraint; });
+            return selections.join(' ');
+        }
+
+        // Build a query with the facet selection and use it to get the facet state.
+        function fetchState(constraints) {
+            var self = this;
+
+            var query = self.buildQuery(constraints.constraint);
+
+            return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
+                var state = _.first(results);
+                var min = new Date(state.min);
+                var max = new Date(state.max);
+
+                if (min < self.minDate) {
+                    min = self.minDate;
+                }
+
+                if (max > self.maxDate) {
+                    max = self.maxDate;
+                }
+
+                self.state.start.minDate = min;
+                self.state.start.initDate = min;
+                self.state.start.maxDate = max;
+
+                self.state.end.minDate = min;
+                self.state.end.maxDate = max;
+                self.state.end.initDate = max;
+
+                self._error = false;
+
+                return self.state;
+            }).catch(function(error) {
+                self._isBusy = false;
+                self._error = true;
+                return $q.reject(error);
+            });
+        }
+
+        function getSelectedValue() {
+            return this.selectedValue;
         }
 
         function getConstraint() {
             var result =
             ' <START_FILTER> ' +
             ' <END_FILTER> ';
-
 
             var start = (this.getSelectedValue() || {}).start;
             var end = (this.getSelectedValue() || {}).end;
@@ -1472,27 +1571,6 @@
         function dateToISOString(date) {
             return date.toISOString().slice(0, 10);
         }
-
-        function getPreferredLang() {
-            return this.config.preferredLang;
-        }
-
-        function getSelectedValue() {
-            return this.selectedValue;
-        }
-
-        function isEnabled() {
-            return this._isEnabled;
-        }
-
-        function enable() {
-            this._isEnabled = true;
-        }
-
-        function disable() {
-            this.selectedValue = undefined;
-            this._isEnabled = false;
-        }
     }
 })();
 
@@ -1503,66 +1581,9 @@
     .controller('TimespanFacetController', TimespanFacetController);
 
     /* ngInject */
-    function TimespanFacetController($scope, _, EVENT_FACET_CHANGED,
-            EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS, TimespanFacet) {
-        var vm = this;
-
-        vm.changed = changed;
-        vm.enableFacet = enableFacet;
-        vm.disableFacet = disableFacet;
-        vm.isFacetEnabled = isFacetEnabled;
-
-        // Wait until the options attribute has been set.
-        var watcher = $scope.$watch('options', function(val) {
-            if (val) {
-                init();
-                watcher();
-            }
-        });
-
-        function init() {
-            var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                var opts = _.cloneDeep($scope.options);
-                opts.initial = cons.facets;
-                vm.facet = new TimespanFacet(opts);
-                vm.startDatePickerOptions = vm.facet.startDatePickerOptions;
-                vm.endDatePickerOptions = vm.facet.endDatePickerOptions;
-                // Unregister initListener
-                initListener();
-            });
-            $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
-        }
-
-        function emitChange() {
-            var val = vm.facet.getSelectedValue();
-            var args = {
-                id: vm.facet.facetId,
-                constraint: vm.facet.getConstraint(),
-                value: val
-            };
-            $scope.$emit(EVENT_FACET_CHANGED, args);
-        }
-
-        function changed() {
-            emitChange();
-        }
-
-        function enableFacet() {
-            vm.facet.enable();
-        }
-
-        function disableFacet() {
-            vm.facet.disable();
-            emitChange();
-        }
-
-        function isFacetEnabled() {
-            if (!vm.facet) {
-                return false;
-            }
-            return vm.facet.isEnabled();
-        }
-
+    function TimespanFacetController($scope, $controller, TimespanFacet) {
+        var args = { $scope: $scope, FacetImpl: TimespanFacet };
+        return $controller('AbstractFacetController', args);
     }
 })();
 
@@ -1590,8 +1611,8 @@
     *   the start date of the date range.
     * - **endPredicate** - `{string}` - The predicate or property path that defines
     *   the end date of the date range.
-    * - **[min]** - `{string|Date}` - The earliest selectable date.
-    * - **[max]** - `{string|Date}` - The latest selectable date.
+    * - **[min]** - `{Date}` - The earliest selectable date.
+    * - **[max]** - `{Date}` - The latest selectable date.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
     */
@@ -1891,7 +1912,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
     "              <button\n" +
     "                ng-disabled=\"vm.isLoading()\"\n" +
-    "                ng-click=\"vm.enableFacet(id)\"\n" +
+    "                ng-click=\"vm.enableFacet()\"\n" +
     "                class=\"facet-enable-btn btn btn-default btn-xs pull-right glyphicon glyphicon-plus\">\n" +
     "              </button>\n" +
     "            </div>\n" +
@@ -1968,11 +1989,12 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
 
   $templateCache.put('src/facets/timespan/facets.timespan-facet.directive.html',
     "<div class=\"facet-wrapper\">\n" +
-    "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoading()\"></span>\n" +
-    "  <div class=\"facet\" ng-if=vm.isFacetEnabled()>\n" +
+    "  <div class=\"facet\" ng-if=vm.facet.isEnabled()>\n" +
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
+    "          <span spinner-key=\"vm.getSpinnerKey()\" spinner-start-active=\"true\"\n" +
+    "            us-spinner=\"{radius:15, width:4, length: 20}\" ng-if=\"vm.isLoading()\"></span>\n" +
     "          <h5 class=\"facet-name pull-left\">{{ vm.facet.name }}</h5>\n" +
     "          <button\n" +
     "            ng-disabled=\"vm.isLoading()\"\n" +
@@ -1998,7 +2020,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            ng-model=\"vm.facet.selectedValue.start\"\n" +
     "            is-open=\"startDate.opened\"\n" +
     "            show-button-bar=\"false\"\n" +
-    "            datepicker-options=\"vm.startDatePickerOptions\"\n" +
+    "            datepicker-options=\"vm.facet.state.start\"\n" +
     "            ng-required=\"true\"\n" +
     "            close-text=\"Close\" />\n" +
     "          </span>\n" +
@@ -2019,7 +2041,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            ng-model=\"vm.facet.selectedValue.end\"\n" +
     "            is-open=\"endDate.opened\"\n" +
     "            show-button-bar=\"false\"\n" +
-    "            datepicker-options=\"vm.endDatePickerOptions\"\n" +
+    "            datepicker-options=\"vm.facet.state.end\"\n" +
     "            ng-required=\"true\"\n" +
     "            close-text=\"Close\" />\n" +
     "          </span>\n" +
@@ -2027,7 +2049,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +
-    "  <div class=\"facet\" ng-if=!vm.isFacetEnabled()>\n" +
+    "  <div class=\"facet\" ng-if=!vm.facet.isEnabled()>\n" +
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12\">\n" +
@@ -2038,7 +2060,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
     "              <button\n" +
     "                ng-disabled=\"vm.isLoading()\"\n" +
-    "                ng-click=\"vm.enableFacet(id)\"\n" +
+    "                ng-click=\"vm.enableFacet()\"\n" +
     "                class=\"facet-enable-btn btn btn-default btn-xs pull-right glyphicon glyphicon-plus\">\n" +
     "              </button>\n" +
     "            </div>\n" +

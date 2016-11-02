@@ -38,7 +38,7 @@
                 opts.initial = cons.facets;
                 vm.facet = new Facet(opts);
                 if (vm.facet.isEnabled()) {
-                    vm.previousVal = vm.facet.getSelectedValue();
+                    vm.previousVal = _.cloneDeep(vm.facet.getSelectedValue());
                     listen();
                     update(cons);
                 }
@@ -77,7 +77,7 @@
                 vm.isLoadingFacet = false;
                 return;
             }
-            vm.previousVal = _.clone(val);
+            vm.previousVal = _.cloneDeep(val);
             var args = {
                 id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
