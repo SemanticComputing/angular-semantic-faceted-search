@@ -30,12 +30,24 @@
 
             this.config = angular.extend({}, defaultConfig, options);
 
+            this.startDatePickerOptions = {
+                minDate: this.config.min,
+                maxDate: this.config.max,
+                initDate: this.config.min,
+                startingDay: this.config.startingDay || 1
+            };
+
+            this.endDatePickerOptions = {
+                minDate: this.config.min,
+                maxDate: this.config.max,
+                initDate: this.config.max,
+                startingDay: this.config.startingDay || 1
+            };
+
             this.name = this.config.name;
             this.facetId = this.config.facetId;
             this.startPredicate = this.config.startPredicate;
             this.endPredicate = this.config.endPredicate;
-            this.min = this.config.min;
-            this.max = this.config.max;
             if (this.config.enabled) {
                 this.enable();
             } else {
@@ -80,7 +92,6 @@
             endFilter = endFilter.replace(/<VAR>/g, endVar);
 
             if (start) {
-                start.setHours(12, 0, 0);
                 start = dateToISOString(start);
                 result = result
                     .replace('<START_FILTER>',
@@ -91,7 +102,6 @@
                 result = result.replace('<START_FILTER>', '');
             }
             if (end) {
-                end.setHours(12, 0, 0);
                 end = dateToISOString(end);
                 result = result
                     .replace('<END_FILTER>',

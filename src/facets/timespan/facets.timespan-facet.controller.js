@@ -27,6 +27,8 @@
                 var opts = _.cloneDeep($scope.options);
                 opts.initial = cons.facets;
                 vm.facet = new TimespanFacet(opts);
+                vm.startDatePickerOptions = vm.facet.startDatePickerOptions;
+                vm.endDatePickerOptions = vm.facet.endDatePickerOptions;
                 // Unregister initListener
                 initListener();
             });

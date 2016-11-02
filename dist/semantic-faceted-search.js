@@ -1385,12 +1385,24 @@
 
             this.config = angular.extend({}, defaultConfig, options);
 
+            this.startDatePickerOptions = {
+                minDate: this.config.min,
+                maxDate: this.config.max,
+                initDate: this.config.min,
+                startingDay: this.config.startingDay || 1
+            };
+
+            this.endDatePickerOptions = {
+                minDate: this.config.min,
+                maxDate: this.config.max,
+                initDate: this.config.max,
+                startingDay: this.config.startingDay || 1
+            };
+
             this.name = this.config.name;
             this.facetId = this.config.facetId;
             this.startPredicate = this.config.startPredicate;
             this.endPredicate = this.config.endPredicate;
-            this.min = this.config.min;
-            this.max = this.config.max;
             if (this.config.enabled) {
                 this.enable();
             } else {
@@ -1435,7 +1447,6 @@
             endFilter = endFilter.replace(/<VAR>/g, endVar);
 
             if (start) {
-                start.setHours(12, 0, 0);
                 start = dateToISOString(start);
                 result = result
                     .replace('<START_FILTER>',
@@ -1446,7 +1457,6 @@
                 result = result.replace('<START_FILTER>', '');
             }
             if (end) {
-                end.setHours(12, 0, 0);
                 end = dateToISOString(end);
                 result = result
                     .replace('<END_FILTER>',
@@ -1515,6 +1525,8 @@
                 var opts = _.cloneDeep($scope.options);
                 opts.initial = cons.facets;
                 vm.facet = new TimespanFacet(opts);
+                vm.startDatePickerOptions = vm.facet.startDatePickerOptions;
+                vm.endDatePickerOptions = vm.facet.endDatePickerOptions;
                 // Unregister initListener
                 initListener();
             });
@@ -1568,10 +1580,11 @@
     * Does not make any SPARQL queries, just generates SPARQL triple patterns
     * out of the selected dates for other facets to use.
     *
+    * Currently only supports values of the type <http://www.w3.org/2001/XMLSchema#date>.
+    *
     * @param {Object} options The configuration object with the following structure:
     * - **facetId** - `{string}` - A friendly id for the facet.
     *   Should be unique in the set of facets, and should be usable as a SPARQL variable.
-    * - **predicate** - `{string}` - The predicate or property path that defines the facet values.
     * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
     * - **startPredicate** - `{string}` - The predicate or property path that defines
     *   the start date of the date range.
@@ -1980,15 +1993,12 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            <input type=\"text\" class=\"form-control\"\n" +
     "            uib-datepicker-popup=\"\"\n" +
     "            ng-disabled=\"vm.isDisabled()\"\n" +
-    "            ng-change=\"vm.changed()\"\n" +
     "            ng-readonly=\"true\"\n" +
+    "            ng-change=\"vm.changed()\"\n" +
     "            ng-model=\"vm.facet.selectedValue.start\"\n" +
     "            is-open=\"startDate.opened\"\n" +
-    "            min-date=\"vm.facet.min\"\n" +
-    "            max-date=\"vm.facet.max\"\n" +
-    "            init-date=\"vm.facet.min\"\n" +
     "            show-button-bar=\"false\"\n" +
-    "            starting-day=\"1\"\n" +
+    "            datepicker-options=\"vm.startDatePickerOptions\"\n" +
     "            ng-required=\"true\"\n" +
     "            close-text=\"Close\" />\n" +
     "          </span>\n" +
@@ -2005,14 +2015,11 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            uib-datepicker-popup=\"\"\n" +
     "            ng-disabled=\"vm.isDisabled()\"\n" +
     "            ng-readonly=\"true\"\n" +
-    "            ng-change=\"vm.changed(id)\"\n" +
+    "            ng-change=\"vm.changed()\"\n" +
     "            ng-model=\"vm.facet.selectedValue.end\"\n" +
     "            is-open=\"endDate.opened\"\n" +
-    "            min-date=\"vm.facet.selectedValue.start || vm.facet.min\"\n" +
-    "            max-date=\"vm.facet.max\"\n" +
-    "            init-date=\"vm.facet.selectedValue.start || vm.facet.min\"\n" +
     "            show-button-bar=\"false\"\n" +
-    "            starting-day=\"1\"\n" +
+    "            datepicker-options=\"vm.endDatePickerOptions\"\n" +
     "            ng-required=\"true\"\n" +
     "            close-text=\"Close\" />\n" +
     "          </span>\n" +
