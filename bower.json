@@ -6,8 +6,8 @@
   ],
   "description": "Semantic faceted search using SPARQL",
   "main": [
-      "dist/semantic-faceted-search.js",
-      "dist/semantic-faceted-search.css"
+    "dist/semantic-faceted-search.js",
+    "dist/semantic-faceted-search.css"
   ],
   "moduleType": [],
   "license": "MIT",
@@ -17,10 +17,12 @@
     "lodash": "^4.0.1",
     "angular-paging-sparql-service": ">=0.4.0",
     "angular-spinner": "^0.8.1",
-    "angular-bootstrap": "^2.2.0"
+    "angular-bootstrap": "^2.2.0",
+    "moment": "^2.15.2",
+    "moment-timezone": "^0.5.7"
   },
   "devDependencies": {
-      "angular-mocks": "^1.4.8"
+    "angular-mocks": "^1.4.8"
   },
   "ignore": [
     "**/.*",

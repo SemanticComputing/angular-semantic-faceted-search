@@ -31,6 +31,7 @@ module.exports = function(grunt) {
                     'src/facets/text/facets.text-facet.facet.js',
                     'src/facets/text/facets.text-facet.controller.js',
                     'src/facets/text/facets.text-facet.directive.js',
+                    'src/facets/timespan/facets.timespan-mapper-service.js',
                     'src/facets/timespan/facets.timespan-facet.facet.js',
                     'src/facets/timespan/facets.timespan-facet.controller.js',
                     'src/facets/timespan/facets.timespan-facet.directive.js',

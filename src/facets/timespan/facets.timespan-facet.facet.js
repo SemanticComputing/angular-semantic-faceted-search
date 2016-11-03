@@ -9,7 +9,7 @@
     .factory('TimespanFacet', TimespanFacet);
 
     /* ngInject */
-    function TimespanFacet($q, _, AdvancedSparqlService, objectMapperService, BasicFacet) {
+    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet, moment) {
         TimespanFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
         TimespanFacetConstructor.prototype.getSelectedValue = getSelectedValue;
@@ -86,7 +86,7 @@
             }
 
             this.endpoint = new AdvancedSparqlService(this.config.endpointUrl,
-                objectMapperService);
+                timespanMapperService);
 
             this.queryTemplate = this.buildQueryTemplate(
                 this.startPredicate === this.endPredicate ? simpleTemplate : separateTemplate);
@@ -101,10 +101,10 @@
                 this._isEnabled = true;
                 this.selectedValue = {};
                 if (initial.value.start) {
-                    this.selectedValue.start = new Date(initial.value.start);
+                    this.selectedValue.start = timespanMapperService.parseValue(initial.value.start);
                 }
                 if (initial.value.end) {
-                    this.selectedValue.end = new Date(initial.value.end);
+                    this.selectedValue.end = timespanMapperService.parseValue(initial.value.end);
                 }
             }
         }
@@ -125,6 +125,7 @@
 
         function getOtherSelections(constraints) {
             var ownConstraint = this.getConstraint();
+
             var selections = _.reject(constraints, function(v) { return v === ownConstraint; });
             return selections.join(' ');
         }
@@ -137,24 +138,22 @@
 
             return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
                 var state = _.first(results);
-                var min = new Date(state.min);
-                var max = new Date(state.max);
 
-                if (min < self.minDate) {
-                    min = self.minDate;
+                if (state.min < self.minDate) {
+                    state.min = self.minDate;
                 }
 
-                if (max > self.maxDate) {
-                    max = self.maxDate;
+                if (state.max > self.maxDate) {
+                    state.max = self.maxDate;
                 }
 
-                self.state.start.minDate = min;
-                self.state.start.initDate = min;
-                self.state.start.maxDate = max;
+                self.state.start.minDate = state.min;
+                self.state.start.initDate = state.min;
+                self.state.start.maxDate = state.max;
 
-                self.state.end.minDate = min;
-                self.state.end.maxDate = max;
-                self.state.end.initDate = max;
+                self.state.end.minDate = state.min;
+                self.state.end.maxDate = state.max;
+                self.state.end.initDate = state.max;
 
                 self._error = false;
 
@@ -167,7 +166,17 @@
         }
 
         function getSelectedValue() {
-            return this.selectedValue;
+            if (!this.selectedValue) {
+                return;
+            }
+            var selectedValue = {};
+            if (this.selectedValue.start) {
+                selectedValue.start = moment(this.selectedValue.start).format('YYYY-MM-DD');
+            }
+            if (this.selectedValue.end) {
+                selectedValue.end = moment(this.selectedValue.end).format('YYYY-MM-DD');
+            }
+            return selectedValue;
         }
 
         function getConstraint() {
@@ -197,7 +206,6 @@
             endFilter = endFilter.replace(/<VAR>/g, endVar);
 
             if (start) {
-                start = dateToISOString(start);
                 result = result
                     .replace('<START_FILTER>',
                         startFilter.replace('<START_PROPERTY>',
@@ -207,7 +215,6 @@
                 result = result.replace('<START_FILTER>', '');
             }
             if (end) {
-                end = dateToISOString(end);
                 result = result
                     .replace('<END_FILTER>',
                         endFilter.replace('<END_PROPERTY>',
@@ -217,10 +224,6 @@
                 result = result.replace('<END_FILTER>', '');
             }
             return result;
-        }
-
-        function dateToISOString(date) {
-            return date.toISOString().slice(0, 10);
         }
     }
 })();

@@ -187,6 +187,7 @@
      */
     angular.module('seco.facetedSearch', ['sparql', 'ui.bootstrap', 'angularSpinner'])
     .constant('_', _) // eslint-disable-line no-undef
+    .constant('moment', moment) // eslint-disable-line no-undef
     .constant('EVENT_REQUEST_CONSTRAINTS', 'sf-request-constraints')
     .constant('EVENT_INITIAL_CONSTRAINTS', 'sf-initial-constraints')
     .constant('EVENT_FACET_CHANGED', 'sf-facet-changed')
@@ -1353,9 +1354,49 @@
     }
 })();
 
+(function() {
+    'use strict';
+
+    angular.module('seco.facetedSearch')
+
+    .factory('timespanMapperService', timespanMapperService);
+
+    /* ngInject */
+    function timespanMapperService(_, objectMapperService) {
+        TimespanMapper.prototype.makeObject = makeObject;
+        TimespanMapper.prototype.parseValue = parseValue;
+
+        var proto = Object.getPrototypeOf(objectMapperService);
+        TimespanMapper.prototype = angular.extend({}, proto, TimespanMapper.prototype);
+
+        return new TimespanMapper();
+
+        function TimespanMapper() {
+            this.objectClass = Object;
+        }
+
+        function makeObject(obj) {
+            var o = new this.objectClass();
+
+            o.min = parseValue(_.get(obj, 'min.value'));
+            o.max = parseValue(_.get(obj, 'max.value'));
+
+            return o;
+        }
+
+        function parseValue(value) {
+            if (!value) {
+                return undefined;
+            }
+            var d = _(value.substring(0, 10).split('-')).map(function(d) { return parseInt(d, 10); }).value();
+            return new Date(d[0], d[1]-1, d[2]);
+        }
+    }
+})();
+
 
 /*
-* Facet for selecting a simple value.
+* Facet for selecting a date range
 */
 (function() {
     'use strict';
@@ -1364,7 +1405,7 @@
     .factory('TimespanFacet', TimespanFacet);
 
     /* ngInject */
-    function TimespanFacet($q, _, AdvancedSparqlService, objectMapperService, BasicFacet) {
+    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet, moment) {
         TimespanFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
         TimespanFacetConstructor.prototype.getSelectedValue = getSelectedValue;
@@ -1441,7 +1482,7 @@
             }
 
             this.endpoint = new AdvancedSparqlService(this.config.endpointUrl,
-                objectMapperService);
+                timespanMapperService);
 
             this.queryTemplate = this.buildQueryTemplate(
                 this.startPredicate === this.endPredicate ? simpleTemplate : separateTemplate);
@@ -1456,10 +1497,10 @@
                 this._isEnabled = true;
                 this.selectedValue = {};
                 if (initial.value.start) {
-                    this.selectedValue.start = new Date(initial.value.start);
+                    this.selectedValue.start = timespanMapperService.parseValue(initial.value.start);
                 }
                 if (initial.value.end) {
-                    this.selectedValue.end = new Date(initial.value.end);
+                    this.selectedValue.end = timespanMapperService.parseValue(initial.value.end);
                 }
             }
         }
@@ -1480,6 +1521,7 @@
 
         function getOtherSelections(constraints) {
             var ownConstraint = this.getConstraint();
+
             var selections = _.reject(constraints, function(v) { return v === ownConstraint; });
             return selections.join(' ');
         }
@@ -1492,24 +1534,22 @@
 
             return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
                 var state = _.first(results);
-                var min = new Date(state.min);
-                var max = new Date(state.max);
 
-                if (min < self.minDate) {
-                    min = self.minDate;
+                if (state.min < self.minDate) {
+                    state.min = self.minDate;
                 }
 
-                if (max > self.maxDate) {
-                    max = self.maxDate;
+                if (state.max > self.maxDate) {
+                    state.max = self.maxDate;
                 }
 
-                self.state.start.minDate = min;
-                self.state.start.initDate = min;
-                self.state.start.maxDate = max;
+                self.state.start.minDate = state.min;
+                self.state.start.initDate = state.min;
+                self.state.start.maxDate = state.max;
 
-                self.state.end.minDate = min;
-                self.state.end.maxDate = max;
-                self.state.end.initDate = max;
+                self.state.end.minDate = state.min;
+                self.state.end.maxDate = state.max;
+                self.state.end.initDate = state.max;
 
                 self._error = false;
 
@@ -1522,7 +1562,17 @@
         }
 
         function getSelectedValue() {
-            return this.selectedValue;
+            if (!this.selectedValue) {
+                return;
+            }
+            var selectedValue = {};
+            if (this.selectedValue.start) {
+                selectedValue.start = moment(this.selectedValue.start).format('YYYY-MM-DD');
+            }
+            if (this.selectedValue.end) {
+                selectedValue.end = moment(this.selectedValue.end).format('YYYY-MM-DD');
+            }
+            return selectedValue;
         }
 
         function getConstraint() {
@@ -1552,7 +1602,6 @@
             endFilter = endFilter.replace(/<VAR>/g, endVar);
 
             if (start) {
-                start = dateToISOString(start);
                 result = result
                     .replace('<START_FILTER>',
                         startFilter.replace('<START_PROPERTY>',
@@ -1562,7 +1611,6 @@
                 result = result.replace('<START_FILTER>', '');
             }
             if (end) {
-                end = dateToISOString(end);
                 result = result
                     .replace('<END_FILTER>',
                         endFilter.replace('<END_PROPERTY>',
@@ -1572,10 +1620,6 @@
                 result = result.replace('<END_FILTER>', '');
             }
             return result;
-        }
-
-        function dateToISOString(date) {
-            return date.toISOString().slice(0, 10);
         }
     }
 })();
@@ -1608,7 +1652,8 @@
     * out of the selected dates for other facets to use.
     *
     * Currently only supports values of the type <http://www.w3.org/2001/XMLSchema#date>,
-    * and there is no support for timezones (dates will be handled as UTC).
+    * and there is no support for timezones. Any timezones in the values retrieved
+    * will be discarded.
     *
     * @param {Object} options The configuration object with the following structure:
     * - **facetId** - `{string}` - A friendly id for the facet.
@@ -1618,8 +1663,10 @@
     *   the start date of the date range.
     * - **endPredicate** - `{string}` - The predicate or property path that defines
     *   the end date of the date range.
-    * - **[min]** - `{Date}` - The earliest selectable date.
-    * - **[max]** - `{Date}` - The latest selectable date.
+    * - **[min]** - `{Date}` - The earliest selectable date. Giving a date that has
+    *   a different timezone than the current user may lead to timezone issues.
+    * - **[max]** - `{Date}` - The latest selectable date. Giving a date that has
+    *   a different timezone than the current user may lead to timezone issues.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
     */
@@ -2015,21 +2062,19 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "          <span class=\"input-group\">\n" +
     "            <span class=\"input-group-btn\">\n" +
     "              <button type=\"button\" class=\"btn btn-default\"\n" +
+    "                ng-disabled=\"vm.isLoading()\"\n" +
     "                ng-click=\"startDate.opened = !startDate.opened\">\n" +
     "                <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
     "              </button>\n" +
     "            </span>\n" +
     "            <input type=\"text\" class=\"form-control\"\n" +
     "            uib-datepicker-popup=\"\"\n" +
-    "            ng-disabled=\"vm.isDisabled()\"\n" +
     "            ng-readonly=\"true\"\n" +
     "            ng-change=\"vm.changed()\"\n" +
     "            ng-model=\"vm.facet.selectedValue.start\"\n" +
-    "            ng-model-options=\"{timezone: 'UTC'}\"\n" +
     "            is-open=\"startDate.opened\"\n" +
     "            show-button-bar=\"false\"\n" +
     "            datepicker-options=\"vm.facet.state.start\"\n" +
-    "            ng-required=\"true\"\n" +
     "            close-text=\"Close\" />\n" +
     "          </span>\n" +
     "        </div>\n" +
@@ -2037,21 +2082,19 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "          <span class=\"input-group\">\n" +
     "            <span class=\"input-group-btn\">\n" +
     "              <button type=\"button\" class=\"btn btn-default\"\n" +
+    "                ng-disabled=\"vm.isLoading()\"\n" +
     "                ng-click=\"endDate.opened = !endDate.opened\">\n" +
     "                <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
     "              </button>\n" +
     "            </span>\n" +
     "            <input type=\"text\" class=\"form-control\"\n" +
     "            uib-datepicker-popup=\"\"\n" +
-    "            ng-disabled=\"vm.isDisabled()\"\n" +
     "            ng-readonly=\"true\"\n" +
     "            ng-change=\"vm.changed()\"\n" +
     "            ng-model=\"vm.facet.selectedValue.end\"\n" +
-    "            ng-model-options=\"{timezone: 'UTC'}\"\n" +
     "            is-open=\"endDate.opened\"\n" +
     "            show-button-bar=\"false\"\n" +
     "            datepicker-options=\"vm.facet.state.end\"\n" +
-    "            ng-required=\"true\"\n" +
     "            close-text=\"Close\" />\n" +
     "          </span>\n" +
     "        </div>\n" +

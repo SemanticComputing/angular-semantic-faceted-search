@@ -18,21 +18,19 @@
           <span class="input-group">
             <span class="input-group-btn">
               <button type="button" class="btn btn-default"
+                ng-disabled="vm.isLoading()"
                 ng-click="startDate.opened = !startDate.opened">
                 <i class="glyphicon glyphicon-calendar"></i>
               </button>
             </span>
             <input type="text" class="form-control"
             uib-datepicker-popup=""
-            ng-disabled="vm.isDisabled()"
             ng-readonly="true"
             ng-change="vm.changed()"
             ng-model="vm.facet.selectedValue.start"
-            ng-model-options="{timezone: 'UTC'}"
             is-open="startDate.opened"
             show-button-bar="false"
             datepicker-options="vm.facet.state.start"
-            ng-required="true"
             close-text="Close" />
           </span>
         </div>
@@ -40,21 +38,19 @@
           <span class="input-group">
             <span class="input-group-btn">
               <button type="button" class="btn btn-default"
+                ng-disabled="vm.isLoading()"
                 ng-click="endDate.opened = !endDate.opened">
                 <i class="glyphicon glyphicon-calendar"></i>
               </button>
             </span>
             <input type="text" class="form-control"
             uib-datepicker-popup=""
-            ng-disabled="vm.isDisabled()"
             ng-readonly="true"
             ng-change="vm.changed()"
             ng-model="vm.facet.selectedValue.end"
-            ng-model-options="{timezone: 'UTC'}"
             is-open="endDate.opened"
             show-button-bar="false"
             datepicker-options="vm.facet.state.end"
-            ng-required="true"
             close-text="Close" />
           </span>
         </div>
