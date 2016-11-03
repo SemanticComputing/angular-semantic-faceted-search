@@ -42,6 +42,20 @@ describe('TimespanFacet', function() {
         var facet = new TimespanFacet(options);
 
         expect(facet.getSelectedValue()).toEqual(val);
+
+        val = { start: d };
+        options.initial = { spanId: { value: val } };
+
+        facet = new TimespanFacet(options);
+
+        expect(facet.getSelectedValue()).toEqual(val);
+
+        val = { end: d };
+        options.initial = { spanId: { value: val } };
+
+        facet = new TimespanFacet(options);
+
+        expect(facet.getSelectedValue()).toEqual(val);
     });
 
     describe('enable', function() {

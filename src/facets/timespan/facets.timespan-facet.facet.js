@@ -1,6 +1,6 @@
 
 /*
-* Facet for selecting a simple value.
+* Facet for selecting a date range
 */
 (function() {
     'use strict';
