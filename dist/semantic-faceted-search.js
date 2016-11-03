@@ -1452,9 +1452,15 @@
 
             // Initial value
             var initial = _.get(options, 'initial.' + this.facetId);
-            if (initial) {
+            if (initial && initial.value) {
                 this._isEnabled = true;
-                this.selectedValue = initial;
+                this.selectedValue = {};
+                if (initial.value.start) {
+                    this.selectedValue.start = new Date(initial.value.start);
+                }
+                if (initial.value.end) {
+                    this.selectedValue.end = new Date(initial.value.end);
+                }
             }
         }
 
@@ -1601,7 +1607,8 @@
     * Does not make any SPARQL queries, just generates SPARQL triple patterns
     * out of the selected dates for other facets to use.
     *
-    * Currently only supports values of the type <http://www.w3.org/2001/XMLSchema#date>.
+    * Currently only supports values of the type <http://www.w3.org/2001/XMLSchema#date>,
+    * and there is no support for timezones (dates will be handled as UTC).
     *
     * @param {Object} options The configuration object with the following structure:
     * - **facetId** - `{string}` - A friendly id for the facet.
@@ -2018,6 +2025,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            ng-readonly=\"true\"\n" +
     "            ng-change=\"vm.changed()\"\n" +
     "            ng-model=\"vm.facet.selectedValue.start\"\n" +
+    "            ng-model-options=\"{timezone: 'UTC'}\"\n" +
     "            is-open=\"startDate.opened\"\n" +
     "            show-button-bar=\"false\"\n" +
     "            datepicker-options=\"vm.facet.state.start\"\n" +
@@ -2039,6 +2047,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            ng-readonly=\"true\"\n" +
     "            ng-change=\"vm.changed()\"\n" +
     "            ng-model=\"vm.facet.selectedValue.end\"\n" +
+    "            ng-model-options=\"{timezone: 'UTC'}\"\n" +
     "            is-open=\"endDate.opened\"\n" +
     "            show-button-bar=\"false\"\n" +
     "            datepicker-options=\"vm.facet.state.end\"\n" +

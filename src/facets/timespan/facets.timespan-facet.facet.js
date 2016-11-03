@@ -97,9 +97,15 @@
 
             // Initial value
             var initial = _.get(options, 'initial.' + this.facetId);
-            if (initial) {
+            if (initial && initial.value) {
                 this._isEnabled = true;
-                this.selectedValue = initial;
+                this.selectedValue = {};
+                if (initial.value.start) {
+                    this.selectedValue.start = new Date(initial.value.start);
+                }
+                if (initial.value.end) {
+                    this.selectedValue.end = new Date(initial.value.end);
+                }
             }
         }
 
