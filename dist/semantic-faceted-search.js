@@ -1415,7 +1415,13 @@
             var initial = _.get(options, 'initial.' + this.facetId);
             if (initial && initial.value) {
                 this._isEnabled = true;
-                this.selectedValue = initial.value;
+                this.selectedValue = {};
+                if (initial.value.start) {
+                    this.selectedValue.start = new Date(initial.value.start);
+                }
+                if (initial.value.end) {
+                    this.selectedValue.end = new Date(initial.value.end);
+                }
             }
         }
 
@@ -1590,8 +1596,8 @@
     *   the start date of the date range.
     * - **endPredicate** - `{string}` - The predicate or property path that defines
     *   the end date of the date range.
-    * - **[min]** - `{string|Date}` - The earliest selectable date.
-    * - **[max]** - `{string|Date}` - The latest selectable date.
+    * - **[min]** - `{Date}` - The earliest selectable date.
+    * - **[max]** - `{Date}` - The latest selectable date.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
     */
@@ -1996,6 +2002,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            ng-readonly=\"true\"\n" +
     "            ng-change=\"vm.changed()\"\n" +
     "            ng-model=\"vm.facet.selectedValue.start\"\n" +
+    "            ng-model-options=\"{timezone: 'UTC'}\"\n" +
     "            is-open=\"startDate.opened\"\n" +
     "            show-button-bar=\"false\"\n" +
     "            datepicker-options=\"vm.startDatePickerOptions\"\n" +
@@ -2017,6 +2024,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            ng-readonly=\"true\"\n" +
     "            ng-change=\"vm.changed()\"\n" +
     "            ng-model=\"vm.facet.selectedValue.end\"\n" +
+    "            ng-model-options=\"{timezone: 'UTC'}\"\n" +
     "            is-open=\"endDate.opened\"\n" +
     "            show-button-bar=\"false\"\n" +
     "            datepicker-options=\"vm.endDatePickerOptions\"\n" +
