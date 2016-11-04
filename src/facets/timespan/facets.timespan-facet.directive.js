@@ -9,8 +9,8 @@
     * @description
     * A facet for selecting date ranges.
     *
-    * Does not make any SPARQL queries, just generates SPARQL triple patterns
-    * out of the selected dates for other facets to use.
+    * Restricts the selectable dates by getting the minimum and maximum dates
+    * based on the underlying data, and facet selections.
     *
     * Currently only supports values of the type <http://www.w3.org/2001/XMLSchema#date>,
     * and there is no support for timezones. Any timezones in the values retrieved
@@ -24,10 +24,12 @@
     *   the start date of the date range.
     * - **endPredicate** - `{string}` - The predicate or property path that defines
     *   the end date of the date range.
-    * - **[min]** - `{Date}` - The earliest selectable date. Giving a date that has
-    *   a different timezone than the current user may lead to timezone issues.
-    * - **[max]** - `{Date}` - The latest selectable date. Giving a date that has
-    *   a different timezone than the current user may lead to timezone issues.
+    * - **[min]** - `{string|Date}` - The earliest selectable date. If string, should
+    *   be in ISO format. Giving a Date object that has a predefined timezone other
+    *   than the user's may lead to timezone issues.
+    * - **[max]** - `{string|Date}` - The earliest selectable date. If string, should
+    *   be in ISO format. Giving a Date object that has a predefined timezone other
+    *   than the user's may lead to timezone issues.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
     */

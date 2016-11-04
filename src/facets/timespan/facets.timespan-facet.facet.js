@@ -9,7 +9,7 @@
     .factory('TimespanFacet', TimespanFacet);
 
     /* ngInject */
-    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet, moment) {
+    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet) {
         TimespanFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
         TimespanFacetConstructor.prototype.getSelectedValue = getSelectedValue;
@@ -60,8 +60,17 @@
             this.facetId = this.config.facetId;
             this.startPredicate = this.config.startPredicate;
             this.endPredicate = this.config.endPredicate;
-            this.minDate = this.config.min;
-            this.maxDate = this.config.max;
+
+            if (angular.isString(this.config.min)) {
+                this.minDate = timespanMapperService.parseValue(this.config.min);
+            } else {
+                this.minDate = this.config.min;
+            }
+            if (angular.isString(this.config.max)) {
+                this.maxDate = timespanMapperService.parseValue(this.config.max);
+            } else {
+                this.maxDate = this.config.max;
+            }
 
             this.state = {};
 
@@ -171,10 +180,10 @@
             }
             var selectedValue = {};
             if (this.selectedValue.start) {
-                selectedValue.start = moment(this.selectedValue.start).format('YYYY-MM-DD');
+                selectedValue.start = getISOStringFromDate(this.selectedValue.start);
             }
             if (this.selectedValue.end) {
-                selectedValue.end = moment(this.selectedValue.end).format('YYYY-MM-DD');
+                selectedValue.end = getISOStringFromDate(this.selectedValue.end);
             }
             return selectedValue;
         }
@@ -184,8 +193,14 @@
             ' <START_FILTER> ' +
             ' <END_FILTER> ';
 
-            var start = (this.getSelectedValue() || {}).start;
-            var end = (this.getSelectedValue() || {}).end;
+            var value = this.getSelectedValue() || {};
+
+            var start = value.start;
+            var end = value.end;
+
+            if (!(start || end)) {
+                return '';
+            }
 
             var startFilter =
             ' ?id <START_PROPERTY> <VAR> . ' +
@@ -224,6 +239,15 @@
                 result = result.replace('<END_FILTER>', '');
             }
             return result;
+        }
+
+        function getISOStringFromDate(d) {
+            var mm = (d.getMonth() + 1).toString();
+            var dd = d.getDate().toString();
+            mm = mm.length === 2 ? mm : '0' + mm;
+            dd = dd.length === 2 ? dd : '0' + dd;
+
+            return [d.getFullYear(), mm, dd].join('-');
         }
     }
 })();

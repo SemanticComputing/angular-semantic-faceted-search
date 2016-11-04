@@ -187,7 +187,6 @@
      */
     angular.module('seco.facetedSearch', ['sparql', 'ui.bootstrap', 'angularSpinner'])
     .constant('_', _) // eslint-disable-line no-undef
-    .constant('moment', moment) // eslint-disable-line no-undef
     .constant('EVENT_REQUEST_CONSTRAINTS', 'sf-request-constraints')
     .constant('EVENT_INITIAL_CONSTRAINTS', 'sf-initial-constraints')
     .constant('EVENT_FACET_CHANGED', 'sf-facet-changed')
@@ -1405,7 +1404,7 @@
     .factory('TimespanFacet', TimespanFacet);
 
     /* ngInject */
-    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet, moment) {
+    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet) {
         TimespanFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
         TimespanFacetConstructor.prototype.getSelectedValue = getSelectedValue;
@@ -1456,8 +1455,17 @@
             this.facetId = this.config.facetId;
             this.startPredicate = this.config.startPredicate;
             this.endPredicate = this.config.endPredicate;
-            this.minDate = this.config.min;
-            this.maxDate = this.config.max;
+
+            if (angular.isString(this.config.min)) {
+                this.minDate = timespanMapperService.parseValue(this.config.min);
+            } else {
+                this.minDate = this.config.min;
+            }
+            if (angular.isString(this.config.max)) {
+                this.maxDate = timespanMapperService.parseValue(this.config.max);
+            } else {
+                this.maxDate = this.config.max;
+            }
 
             this.state = {};
 
@@ -1567,10 +1575,10 @@
             }
             var selectedValue = {};
             if (this.selectedValue.start) {
-                selectedValue.start = moment(this.selectedValue.start).format('YYYY-MM-DD');
+                selectedValue.start = getISOStringFromDate(this.selectedValue.start);
             }
             if (this.selectedValue.end) {
-                selectedValue.end = moment(this.selectedValue.end).format('YYYY-MM-DD');
+                selectedValue.end = getISOStringFromDate(this.selectedValue.end);
             }
             return selectedValue;
         }
@@ -1580,8 +1588,14 @@
             ' <START_FILTER> ' +
             ' <END_FILTER> ';
 
-            var start = (this.getSelectedValue() || {}).start;
-            var end = (this.getSelectedValue() || {}).end;
+            var value = this.getSelectedValue() || {};
+
+            var start = value.start;
+            var end = value.end;
+
+            if (!(start || end)) {
+                return '';
+            }
 
             var startFilter =
             ' ?id <START_PROPERTY> <VAR> . ' +
@@ -1621,6 +1635,15 @@
             }
             return result;
         }
+
+        function getISOStringFromDate(d) {
+            var mm = (d.getMonth() + 1).toString();
+            var dd = d.getDate().toString();
+            mm = mm.length === 2 ? mm : '0' + mm;
+            dd = dd.length === 2 ? dd : '0' + dd;
+
+            return [d.getFullYear(), mm, dd].join('-');
+        }
     }
 })();
 
@@ -1648,8 +1671,8 @@
     * @description
     * A facet for selecting date ranges.
     *
-    * Does not make any SPARQL queries, just generates SPARQL triple patterns
-    * out of the selected dates for other facets to use.
+    * Restricts the selectable dates by getting the minimum and maximum dates
+    * based on the underlying data, and facet selections.
     *
     * Currently only supports values of the type <http://www.w3.org/2001/XMLSchema#date>,
     * and there is no support for timezones. Any timezones in the values retrieved
@@ -1663,10 +1686,12 @@
     *   the start date of the date range.
     * - **endPredicate** - `{string}` - The predicate or property path that defines
     *   the end date of the date range.
-    * - **[min]** - `{Date}` - The earliest selectable date. Giving a date that has
-    *   a different timezone than the current user may lead to timezone issues.
-    * - **[max]** - `{Date}` - The latest selectable date. Giving a date that has
-    *   a different timezone than the current user may lead to timezone issues.
+    * - **[min]** - `{string|Date}` - The earliest selectable date. If string, should
+    *   be in ISO format. Giving a Date object that has a predefined timezone other
+    *   than the user's may lead to timezone issues.
+    * - **[max]** - `{string|Date}` - The earliest selectable date. If string, should
+    *   be in ISO format. Giving a Date object that has a predefined timezone other
+    *   than the user's may lead to timezone issues.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
     */

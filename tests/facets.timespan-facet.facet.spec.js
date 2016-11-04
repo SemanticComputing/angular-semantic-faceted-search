@@ -35,7 +35,7 @@ describe('TimespanFacet', function() {
     });
 
     it('should get its initial value from config', function() {
-        var d = new Date('1945-02-02');
+        var d = '1945-02-02';
         var val = { start: d, end: d };
         options.initial = { spanId: { value: val } };
 
@@ -80,12 +80,18 @@ describe('TimespanFacet', function() {
     });
 
     describe('getSelectedValue', function() {
-        it('should get the selected value', function() {
-            var d = new Date();
-            var val = { start: d, end: d };
+        it('should get the selected values as strings', function() {
+            var ds = new Date(1945,0,1);
+            var de = new Date(1946,1,2);
+            var val = { start: ds, end: de };
             facet.selectedValue = val;
 
-            expect(facet.getSelectedValue()).toEqual(val);
+            var expected = {
+                start: '1945-01-01',
+                end: '1946-02-02'
+            };
+
+            expect(facet.getSelectedValue()).toEqual(expected);
         });
     });
 
