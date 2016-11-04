@@ -55,7 +55,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A facet for selecting date ranges.",
-      "keywords": "api configuration currently dates default defines directive disabled displayed earliest enabled facet facetedsearch facets friendly generates handled latest object options org path patterns predicate property queries range ranges seco selectable selected selecting set sparql start structure support supports timezones title triple type undefined unique usable users utc values variable w3"
+      "keywords": "api based configuration currently data dates default defines directive disabled discarded displayed earliest enabled facet facetedsearch facets format friendly iso issues lead maximum minimum object options org path predefined predicate property range ranges restricts retrieved seco selectable selecting selections set sparql start string structure support supports timezone timezones title type undefined underlying unique usable user users values variable w3"
     },
     {
       "section": "api",
