@@ -125,7 +125,7 @@
             }
 
             function getConstraint() {
-                return _(self.state.facets).values().map('constraint').compact().value();
+                return _(self.state.facets).values().sortBy('priority').map('constraint').compact().value();
             }
 
             // Combine the possible RDF class and constraint definitions in the config.

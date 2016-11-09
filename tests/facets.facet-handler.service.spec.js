@@ -1,5 +1,5 @@
 /* eslint-env jasmine */
-/* global inject, module  */
+/* global inject, module */
 
 describe('FacetHandler', function() {
     var $rootScope, scope, FacetHandler, options;
@@ -40,8 +40,6 @@ describe('FacetHandler', function() {
     });
 
     it('should listen for facet changes and broadcast constraints', function() {
-        var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
-        var data = { facets: {}, constraint: cons };
         new FacetHandler(options);
 
         var args = {
@@ -51,9 +49,57 @@ describe('FacetHandler', function() {
         };
         scope.$emit('sf-facet-changed', args);
 
+        var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
         var updatedCons = [args.constraint].concat(cons);
 
-        data = { facets: { facetId: args }, constraint: updatedCons };
+        var data = { facets: { facetId: args }, constraint: updatedCons };
+
+        expect(scope.$broadcast).toHaveBeenCalledWith('sf-facet-constraints', data);
+    });
+
+    it('should sort the constraints by priority when broadcasting', function() {
+        new FacetHandler(options);
+
+        var args1 = {
+            id: 'f1',
+            constraint: '?id <1> <obj> .',
+            value: '<obj>'
+        };
+        scope.$emit('sf-facet-changed', args1);
+
+        var args2 = {
+            id: 'f2',
+            constraint: '?id <2> <obj> .',
+            value: '<obj>',
+            priority: 1
+        };
+        scope.$emit('sf-facet-changed', args2);
+
+        scope.$broadcast.calls.reset();
+
+        var args3 = {
+            id: 'f3',
+            constraint: '?id <3> <obj> .',
+            value: '<obj>',
+            priority: 10
+        };
+        scope.$emit('sf-facet-changed', args3);
+
+        var updatedCons = [
+            '?id <2> <obj> .',
+            '?id <3> <obj> .',
+            '?id <1> <obj> .',
+            ' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'
+        ];
+
+        var data = {
+            facets: {
+                f1: args1,
+                f2: args2,
+                f3: args3
+            },
+            constraint: updatedCons
+        };
 
         expect(scope.$broadcast).toHaveBeenCalledWith('sf-facet-constraints', data);
     });
