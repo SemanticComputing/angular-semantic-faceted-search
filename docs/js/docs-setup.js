@@ -10,7 +10,7 @@ NG_DOCS={
       "type": "overview",
       "moduleName": "index",
       "shortDescription": "SPARQL Faceter - Client-Side Faceted Search Using SPARQL",
-      "keywords": "$on $scope ammatti api argument attribute based basic birth birthmunicipality birthplace box broadcasting built-in change changes cidoc-crm classes client-side collection common configuration configured constraint constraints controller custom data-options dataservice death deathdate default define defines directive directives displayed documentation easily emits emitted enabled endpointurl endpredicate equalto event events facet faceted facetedsearch faceter facethandler facetid facets facetstate false fetches fi fields filtering free-text friendly function generated getresults handler handles hierarchical hierarchy http implemented individual init initial initialize initlistener interested key labels listen listening listens maintaining max mediates min module municipality muninn-project narrows objectfollowing occupation options org overview path pattern predicate preferredlang preflabel presumably principalabode profession property range rank rdfclass reasonably responsible resultset scope search seco secobasicfacet secohierarchyfacet secotextfacet secotimespanfacet select selections service services set setup sf-facet-constraints sf-facets-changed sf-initial-constraints skos source sparql startpredicate support synchronizes template text time title triple true types unique update updateresults updates usable users values var variable vm w3 work works"
+      "keywords": "$on $scope ammatti api argument ascending attribute based basic better birth birthmunicipality birthplace box broadcasting broadcasts built-in caching change changes cidoc-crm classes client-side collection common configuration configured constraint constraints controller custom data-options dataservice death deathdate default define defined defines directive directives displayed documentation easily emits emitted enabled endpointurl endpredicate equalto event events facet faceted facetedsearch faceter facethandler facetid facets facetstate false fetches fi fields filtering free-text friendly function generated getresults handler handles hierarchical hierarchy http implemented individual init initial initialize initlistener interested jena key labels listen listening listens maintaining max mediates min module municipality muninn-project narrows objectfollowing occupation optimize options order org overview path pattern predicate preferredlang preflabel presumably principalabode priority profession property query range rank rdfclass reasonably responsible resultset scope search seco secobasicfacet secohierarchyfacet secojenatextfacet secotextfacet secotimespanfacet select selections service services set setup sf-facet-constraints sf-facets-changed sf-initial-constraints skos sorts source sparql startpredicate support synchronizes template text time title triple true types undefined unique update updateresults updates usable users values var variable vm w3 work works"
     },
     {
       "section": "api",
@@ -28,7 +28,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A basic select box facet with text filtering.",
-      "keywords": "api basic bound box case config configuration currently default define defined defines directive disabled displayed en enabled endpoint example facet facetedsearch facethandler facets filtering friendly generate generated globally helpful kinds label labels language multiple object optional options org pattern patterns people predicate preferred properties property rdfs resource restriction seco select selectable selection set skos sparql specifier structure subjects supported tag text title triple undefined unique uri url usable users values variable"
+      "keywords": "api basic bound box case config configuration constraint currently default define defined defines directive disabled displayed en enabled endpoint example facet facetedsearch facethandler facets filtering friendly generate generated globally helpful kinds label labels language multiple object optional options org pattern patterns people predicate preferred priority properties property rdfs resource restriction seco select selectable selection set skos sorting sparql specifier structure subjects supported tag text title triple undefined unique uri url usable users values variable"
     },
     {
       "section": "api",
@@ -37,7 +37,16 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A select box facet for hierarchical values.",
-      "keywords": "api box case config configuration currently default defines directive disabled displayed en enabled endpoint facet facetedsearch facethandler facets friendly globally hierarchical hierarchy label labels language level object optional options path predicate preferred properties property rdfs resource resources seco select set skos sparql structure supported tag title top undefined unique uri url usable users values variable"
+      "keywords": "api box case config configuration constraint currently default defines directive disabled displayed en enabled endpoint facet facetedsearch facethandler facets friendly globally hierarchical hierarchy label labels language level object optional options path predicate preferred priority properties property rdfs resource resources seco select set skos sorting sparql structure supported tag title top undefined unique uri url usable users values variable"
+    },
+    {
+      "section": "api",
+      "id": "seco.facetedSearch.directive:secoJenaTextFacet",
+      "shortName": "secoJenaTextFacet",
+      "type": "directive",
+      "moduleName": "seco.facetedSearch",
+      "shortDescription": "A free-text search facet using Jena text search.",
+      "keywords": "api configuration constraint default directive disabled displayed enabled facet facetedsearch facets free-text friendly generates jena object options patterns predicate priority queries search seco set sorting sparql structure text title triple typed undefined unique usable users variable"
     },
     {
       "section": "api",
@@ -46,7 +55,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A free-text search facet.",
-      "keywords": "api configuration default defines directive disabled displayed enabled facet facetedsearch facets free-text friendly generates object options path patterns predicate property queries search seco set sparql structure text title triple typed undefined unique usable users values variable"
+      "keywords": "api configuration constraint default defines directive disabled displayed enabled facet facetedsearch facets free-text friendly generates object options path patterns predicate priority property queries search seco set sorting sparql structure text title triple typed undefined unique usable users values variable"
     },
     {
       "section": "api",
@@ -55,7 +64,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A facet for selecting date ranges.",
-      "keywords": "api based configuration currently data dates default defines directive disabled discarded displayed earliest enabled facet facetedsearch facets format friendly iso issues lead maximum minimum object options org path predefined predicate property range ranges restricts retrieved seco selectable selecting selections set sparql start string structure support supports timezone timezones title type undefined underlying unique usable user users values variable w3"
+      "keywords": "api based configuration constraint currently data dates default defines directive disabled discarded displayed earliest enabled facet facetedsearch facets format friendly iso issues lead maximum minimum object options org path predefined predicate priority property range ranges restricts retrieved seco selectable selecting selections set sorting sparql start string structure support supports timezone timezones title type undefined underlying unique usable user users values variable w3"
     },
     {
       "section": "api",
@@ -89,7 +98,7 @@ NG_DOCS={
       "type": "function",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "Service for retrieving SPARQL results based on facet selections.",
-      "keywords": "angular-paging-sparql-service api based best block broadcast comparators configuration constraint default defined en endpoint endpointurl example facet facetedsearch facethandler facetresulthandler facets facetselections filter function getresults github http https included insure io mapper method number object objectmapperservice optional options order package paged paging parameter placeholder prefixes properties query querytemplate rdf rdfs reflect required resources restrict result resultoptions retrieve retrieving seco select selections service sort sorting sparql template true truthy url variable variables wrap"
+      "keywords": "angular-paging-sparql-service api based best block broadcast comparators configuration constraint default defined en endpoint endpointurl example facet facetedsearch facethandler facetresulthandler facets facetselections filter function getresults github http https included insure io mapper method number object objectmapperservice optional options order package paged paging parameter placeholder prefixes properties query querytemplate rdf rdfs reflect required resources restrict result resultoptions retrieve retrieving seco select selections service skos sort sorting sparql template true truthy url variable variables wrap"
     },
     {
       "section": "api",
