@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.0] - 2016-11-14
+
+### Added
+- [secoJenaTextFacet](http://semanticcomputing.github.io/angular-semantic-faceted-search/#/api/seco.facetedSearch.directive:secoJenaTextFacet)
+- `priority` configuration variable to provide a way to sort the facet constraints (see the [documentation][api]).
+
+
 ## [1.1.1] - 2016-11-04
 
 ### Fixed
@@ -35,7 +42,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
+[1.2.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.1.1...1.2.0
 [1.1.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.0.7...1.1.1
 [1.1.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.0.7...1.1.0
 [1.0.7]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.0.6...1.0.7
 [1.0.6]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.0.5...1.0.6
+[api]: http://semanticcomputing.github.io/angular-semantic-faceted-search/#/api

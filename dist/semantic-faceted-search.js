@@ -1422,6 +1422,9 @@
     * @description
     * A free-text search facet using Jena text search.
     *
+    * This facet can only be used if the SPARQL endpoint supports
+    * [Jena text query](https://jena.apache.org/documentation/query/text-query.html).
+    *
     * Does not make any SPARQL queries, just generates SPARQL triple patterns
     * out of the typed text for other facets to use.
     *
