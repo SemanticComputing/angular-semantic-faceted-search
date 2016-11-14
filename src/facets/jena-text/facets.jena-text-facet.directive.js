@@ -19,11 +19,15 @@
     * - **facetId** - `{string}` - A friendly id for the facet.
     *   Should be unique in the set of facets, and should be usable as a SPARQL variable.
     * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
-    * - **[predicate]** - `{string}` - The predicate to use in the search.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
+    * - **[predicate]** - `{string}` - The property to use in the search.
+    *   See [Jena text query documentation](https://jena.apache.org/documentation/query/text-query.html#query-with-sparql).
     * - **[priority]** - `{number}` - Priority for constraint sorting.
     *   Default is 10.
+    * - **[limit]** - `{number}` - Limit for the text search results.
+    *   See [Jena text query documentation](https://jena.apache.org/documentation/query/text-query.html#query-with-sparql).
+    * - **[graph]** - `{string}` - The URI of the graph to use for the text search.
     *
     */
     angular.module('seco.facetedSearch')

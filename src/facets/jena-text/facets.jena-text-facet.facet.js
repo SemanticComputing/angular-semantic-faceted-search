@@ -23,14 +23,24 @@
                 return;
             }
             value = value.replace(/[,._'"\\/-]/g, ' ').trim();
-            var obj;
+            var args = [];
             if (this.config.predicate) {
-                obj = '(' + this.config.predicate + ' "' + value + '" )';
-            } else {
-                obj = '"' + value + '"';
-
+                args.push(this.config.predicate);
             }
+
+            args.push('"' + value + '"');
+
+            if (this.config.limit) {
+                args.push(this.config.limit);
+            }
+
+            var obj = '(' + args.join(' ') + ')';
+
             var result = ' ?id <http://jena.apache.org/text#query> ' + obj + ' . ';
+
+            if (this.config.graph) {
+                result = ' GRAPH ' + this.config.graph + ' { ' + result + ' } ';
+            }
 
             return result;
         }
