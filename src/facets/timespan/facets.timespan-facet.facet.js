@@ -9,7 +9,8 @@
     .factory('TimespanFacet', TimespanFacet);
 
     /* ngInject */
-    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet) {
+    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet,
+            PREFIXES) {
         TimespanFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
         TimespanFacetConstructor.prototype.getSelectedValue = getSelectedValue;
@@ -22,21 +23,13 @@
         return TimespanFacetConstructor;
 
         function TimespanFacetConstructor(options) {
-            var prefixes =
-            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
-            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
-            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ';
-
-            var simpleTemplate = prefixes +
+            var simpleTemplate = PREFIXES +
             ' SELECT (min(xsd:date(?value)) AS ?min) (max(xsd:date(?value)) AS ?max) { ' +
             '   <SELECTIONS> ' +
             '   ?id <START_PROPERTY> ?value . ' +
             ' } ';
 
-            var separateTemplate = prefixes +
-            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
-            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
-            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
+            var separateTemplate = PREFIXES +
             ' SELECT ?min ?max { ' +
             '   { ' +
             '     SELECT (min(xsd:date(?start)) AS ?min) { ' +

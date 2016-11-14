@@ -15,6 +15,7 @@
      * - {@link seco.facetedSearch.directive:secoBasicFacet `secoBasicFacet`} - A basic select box facet with text filtering
      * - {@link seco.facetedSearch.directive:secoHierarchyFacet `secoHierarchyFacet`} - A basic facet with hierarchy support.
      * - {@link seco.facetedSearch.directive:secoTextFacet `secoTextFacet`} - A free-text facet.
+     * - {@link seco.facetedSearch.directive:secoJenaTextFacet `secoJenaTextFacet`} - A free-text facet that uses Jena text search.
      * - {@link seco.facetedSearch.directive:secoTimespanFacet `secoTimespanFacet`} - Date range facet.
      *
      * Custom facets can be implemented reasonably easily.
@@ -39,6 +40,12 @@
      * - **predicate** - `{string}` - The predicate or property path that defines the facet values.
      * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
      * - **enabled** `{boolean}` - Whether or not the facet is enabled by default.
+     * - **priority** `{number}` - When the {@link seco.facetedSearch.FacetHandler `FacetHandler`}
+     *   broadcasts the constraints, it sorts them based on each facet's priority value (if it
+     *   is defined), in ascending order. This can be used for better query caching, or to
+     *   optimize the order of constraints. For most facets, this value is undefined by default.
+     *   {@link seco.facetedSearch.directive:secoJenaTextFacet `secoJenaTextFacet`} has a default
+     *   priority of 10 (so it will always be the first constraint by default).
      *
      * For other options, see the facets' individual documentation.
      *
@@ -187,6 +194,11 @@
      */
     angular.module('seco.facetedSearch', ['sparql', 'ui.bootstrap', 'angularSpinner'])
     .constant('_', _) // eslint-disable-line no-undef
+    .constant('PREFIXES',
+        ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
+        ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
+        ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> '
+    )
     .constant('EVENT_REQUEST_CONSTRAINTS', 'sf-request-constraints')
     .constant('EVENT_INITIAL_CONSTRAINTS', 'sf-initial-constraints')
     .constant('EVENT_FACET_CHANGED', 'sf-facet-changed')
@@ -301,7 +313,7 @@
 
     /* @ngInject */
     function FacetResultHandler(_, DEFAULT_PAGES_PER_QUERY, DEFAULT_RESULTS_PER_PAGE,
-            AdvancedSparqlService, objectMapperService, QueryBuilderService) {
+            PREFIXES, AdvancedSparqlService, objectMapperService, QueryBuilderService) {
 
         return ResultHandler;
 
@@ -334,7 +346,7 @@
         *      }
         *      </pre>
         *   - **[prefixes]** - `{string}` - Any prefixes used in the `queryTemplate`.
-        *     Required if the query uses any other prefixes than `rdf`, or `rdfs`.
+        *     Required if the query uses any other prefixes than `rdf`, `rdfs`, or `skos`.
         *   - **[paging]** - `{boolean}` - If truthy, results will be paged.
         *     Default is `true`.
         *   - **[resultsPerPage]** - `{number}` - The number of results per page.
@@ -354,8 +366,7 @@
                 resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
                 pagesPerQuery: DEFAULT_PAGES_PER_QUERY,
                 mapper: objectMapperService,
-                prefixes: 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> ' +
-                          'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ',
+                prefixes: PREFIXES,
                 paging: true
             };
             options = angular.extend(options, resultOptions);
@@ -582,7 +593,7 @@
             }
 
             function getConstraint() {
-                return _(self.state.facets).values().map('constraint').compact().value();
+                return _(self.state.facets).values().sortBy('priority').map('constraint').compact().value();
             }
 
             // Combine the possible RDF class and constraint definitions in the config.
@@ -785,7 +796,7 @@
     .factory('BasicFacet', BasicFacet);
 
     /* ngInject */
-    function BasicFacet($q, _, SparqlService, facetMapperService, NO_SELECTION_STRING) {
+    function BasicFacet($q, _, SparqlService, facetMapperService, NO_SELECTION_STRING, PREFIXES) {
 
         BasicFacetConstructor.prototype.update = update;
         BasicFacetConstructor.prototype.getState = getState;
@@ -846,11 +857,7 @@
             '  FILTER(BOUND(?lbl)) ' +
             ' } ';
 
-            var queryTemplate =
-            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
-            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
-            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
-
+            var queryTemplate = PREFIXES +
             ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
@@ -1128,6 +1135,8 @@
     *   language tag is used. If a label is still not found,
     *   the end part of the resource URI is used.
     *   Supported label properties are `skos:prefLabel`, and `rdfs:label`.
+    * - **[priority]** - `{number}` - Priority for constraint sorting.
+    *   Undefined by default.
     */
     angular.module('seco.facetedSearch')
     .directive('secoBasicFacet', basicFacet);
@@ -1145,10 +1154,6 @@
     }
 })();
 
-
-/*
-* Facet for selecting a simple value.
-*/
 (function() {
     'use strict';
 
@@ -1335,7 +1340,8 @@
     * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
-    *
+    * - **[priority]** - `{number}` - Priority for constraint sorting.
+    *   Undefined by default.
     */
     angular.module('seco.facetedSearch')
     .directive('secoTextFacet', textFacet);
@@ -1347,6 +1353,99 @@
                 options: '='
             },
             controller: 'TextFacetController',
+            controllerAs: 'vm',
+            templateUrl: 'src/facets/text/facets.text-facet.directive.html'
+        };
+    }
+})();
+
+(function() {
+    'use strict';
+
+    angular.module('seco.facetedSearch')
+    .factory('JenaTextFacet', JenaTextFacet);
+
+    /* ngInject */
+    function JenaTextFacet(_, TextFacet) {
+
+        JenaTextFacet.prototype = Object.create(TextFacet.prototype);
+        JenaTextFacet.prototype.getConstraint = getConstraint;
+
+        return JenaTextFacet;
+
+        function JenaTextFacet(options) {
+            TextFacet.call(this, options);
+            this.config.priority = this.config.priority || 10;
+        }
+
+        function getConstraint() {
+            var value = this.getSelectedValue();
+            if (!value) {
+                return;
+            }
+            value = value.replace(/[,._'"\\/-]/g, ' ').trim();
+            var obj;
+            if (this.config.predicate) {
+                obj = '(' + this.config.predicate + ' "' + value + '" )';
+            } else {
+                obj = '"' + value + '"';
+
+            }
+            var result = ' ?id <http://jena.apache.org/text#query> ' + obj + ' . ';
+
+            return result;
+        }
+    }
+})();
+
+(function() {
+    'use strict';
+
+    angular.module('seco.facetedSearch')
+    .controller('JenaTextFacetController', JenaTextFacetController);
+
+    /* ngInject */
+    function JenaTextFacetController($controller, $scope, JenaTextFacet) {
+        var args = { $scope: $scope, TextFacet: JenaTextFacet };
+        return $controller('TextFacetController', args);
+    }
+})();
+
+(function() {
+    'use strict';
+
+    /**
+    * @ngdoc directive
+    * @name seco.facetedSearch.directive:secoJenaTextFacet
+    * @restrict 'E'
+    * @element ANY
+    * @description
+    * A free-text search facet using Jena text search.
+    *
+    * Does not make any SPARQL queries, just generates SPARQL triple patterns
+    * out of the typed text for other facets to use.
+    *
+    * @param {Object} options The configuration object with the following structure:
+    * - **facetId** - `{string}` - A friendly id for the facet.
+    *   Should be unique in the set of facets, and should be usable as a SPARQL variable.
+    * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
+    * - **[predicate]** - `{string}` - The predicate to use in the search.
+    * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
+    *   If undefined, the facet will be disabled by default.
+    * - **[priority]** - `{number}` - Priority for constraint sorting.
+    *   Default is 10.
+    *
+    */
+    angular.module('seco.facetedSearch')
+    .directive('secoJenaTextFacet', jenaTextFacet);
+
+    function jenaTextFacet() {
+        return {
+            restrict: 'E',
+            scope: {
+                options: '='
+            },
+            controller: 'JenaTextFacetController',
             controllerAs: 'vm',
             templateUrl: 'src/facets/text/facets.text-facet.directive.html'
         };
@@ -1404,7 +1503,8 @@
     .factory('TimespanFacet', TimespanFacet);
 
     /* ngInject */
-    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet) {
+    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet,
+            PREFIXES) {
         TimespanFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
         TimespanFacetConstructor.prototype.getSelectedValue = getSelectedValue;
@@ -1417,21 +1517,13 @@
         return TimespanFacetConstructor;
 
         function TimespanFacetConstructor(options) {
-            var prefixes =
-            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
-            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
-            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ';
-
-            var simpleTemplate = prefixes +
+            var simpleTemplate = PREFIXES +
             ' SELECT (min(xsd:date(?value)) AS ?min) (max(xsd:date(?value)) AS ?max) { ' +
             '   <SELECTIONS> ' +
             '   ?id <START_PROPERTY> ?value . ' +
             ' } ';
 
-            var separateTemplate = prefixes +
-            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
-            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
-            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
+            var separateTemplate = PREFIXES +
             ' SELECT ?min ?max { ' +
             '   { ' +
             '     SELECT (min(xsd:date(?start)) AS ?min) { ' +
@@ -1694,6 +1786,8 @@
     *   than the user's may lead to timezone issues.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
+    * - **[priority]** - `{number}` - Priority for constraint sorting.
+    *   Undefined by default.
     */
     angular.module('seco.facetedSearch')
     .directive('secoTimespanFacet', timespanFacet);
@@ -1722,7 +1816,7 @@
     .factory('HierarchyFacet', HierarchyFacet);
 
     /* ngInject */
-    function HierarchyFacet(_, BasicFacet) {
+    function HierarchyFacet(_, BasicFacet, PREFIXES) {
 
         HierarchyFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
@@ -1736,10 +1830,7 @@
 
         function HierarchyFacetConstructor(options) {
 
-            var queryTemplate =
-            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
-            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
-            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
+            var queryTemplate = PREFIXES +
             ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +
@@ -1925,6 +2016,8 @@
     *   language tag is used. If a label is still not found,
     *   the end part of the resource URI is used.
     *   Supported label properties are `skos:prefLabel`, and `rdfs:label`.
+    * - **[priority]** - `{number}` - Priority for constraint sorting.
+    *   Undefined by default.
     */
     angular.module('seco.facetedSearch')
     .directive('secoHierarchyFacet', hierarchyFacet);

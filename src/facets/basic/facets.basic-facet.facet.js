@@ -9,7 +9,7 @@
     .factory('BasicFacet', BasicFacet);
 
     /* ngInject */
-    function BasicFacet($q, _, SparqlService, facetMapperService, NO_SELECTION_STRING) {
+    function BasicFacet($q, _, SparqlService, facetMapperService, NO_SELECTION_STRING, PREFIXES) {
 
         BasicFacetConstructor.prototype.update = update;
         BasicFacetConstructor.prototype.getState = getState;
@@ -70,11 +70,7 @@
             '  FILTER(BOUND(?lbl)) ' +
             ' } ';
 
-            var queryTemplate =
-            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
-            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
-            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
-
+            var queryTemplate = PREFIXES +
             ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +

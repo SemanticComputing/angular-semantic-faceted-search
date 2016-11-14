@@ -32,6 +32,8 @@
     *   than the user's may lead to timezone issues.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
+    * - **[priority]** - `{number}` - Priority for constraint sorting.
+    *   Undefined by default.
     */
     angular.module('seco.facetedSearch')
     .directive('secoTimespanFacet', timespanFacet);

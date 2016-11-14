@@ -9,7 +9,7 @@
     .factory('HierarchyFacet', HierarchyFacet);
 
     /* ngInject */
-    function HierarchyFacet(_, BasicFacet) {
+    function HierarchyFacet(_, BasicFacet, PREFIXES) {
 
         HierarchyFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
@@ -23,10 +23,7 @@
 
         function HierarchyFacetConstructor(options) {
 
-            var queryTemplate =
-            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
-            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
-            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
+            var queryTemplate = PREFIXES +
             ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
             ' { ' +
             '  { ' +

@@ -1,7 +1,3 @@
-
-/*
-* Facet for selecting a simple value.
-*/
 (function() {
     'use strict';
 

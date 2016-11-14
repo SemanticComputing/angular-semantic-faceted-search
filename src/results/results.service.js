@@ -16,7 +16,7 @@
 
     /* @ngInject */
     function FacetResultHandler(_, DEFAULT_PAGES_PER_QUERY, DEFAULT_RESULTS_PER_PAGE,
-            AdvancedSparqlService, objectMapperService, QueryBuilderService) {
+            PREFIXES, AdvancedSparqlService, objectMapperService, QueryBuilderService) {
 
         return ResultHandler;
 
@@ -49,7 +49,7 @@
         *      }
         *      </pre>
         *   - **[prefixes]** - `{string}` - Any prefixes used in the `queryTemplate`.
-        *     Required if the query uses any other prefixes than `rdf`, or `rdfs`.
+        *     Required if the query uses any other prefixes than `rdf`, `rdfs`, or `skos`.
         *   - **[paging]** - `{boolean}` - If truthy, results will be paged.
         *     Default is `true`.
         *   - **[resultsPerPage]** - `{number}` - The number of results per page.
@@ -69,8 +69,7 @@
                 resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
                 pagesPerQuery: DEFAULT_PAGES_PER_QUERY,
                 mapper: objectMapperService,
-                prefixes: 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> ' +
-                          'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ',
+                prefixes: PREFIXES,
                 paging: true
             };
             options = angular.extend(options, resultOptions);

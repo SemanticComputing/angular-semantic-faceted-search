@@ -15,6 +15,7 @@
      * - {@link seco.facetedSearch.directive:secoBasicFacet `secoBasicFacet`} - A basic select box facet with text filtering
      * - {@link seco.facetedSearch.directive:secoHierarchyFacet `secoHierarchyFacet`} - A basic facet with hierarchy support.
      * - {@link seco.facetedSearch.directive:secoTextFacet `secoTextFacet`} - A free-text facet.
+     * - {@link seco.facetedSearch.directive:secoJenaTextFacet `secoJenaTextFacet`} - A free-text facet that uses Jena text search.
      * - {@link seco.facetedSearch.directive:secoTimespanFacet `secoTimespanFacet`} - Date range facet.
      *
      * Custom facets can be implemented reasonably easily.
@@ -39,6 +40,12 @@
      * - **predicate** - `{string}` - The predicate or property path that defines the facet values.
      * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
      * - **enabled** `{boolean}` - Whether or not the facet is enabled by default.
+     * - **priority** `{number}` - When the {@link seco.facetedSearch.FacetHandler `FacetHandler`}
+     *   broadcasts the constraints, it sorts them based on each facet's priority value (if it
+     *   is defined), in ascending order. This can be used for better query caching, or to
+     *   optimize the order of constraints. For most facets, this value is undefined by default.
+     *   {@link seco.facetedSearch.directive:secoJenaTextFacet `secoJenaTextFacet`} has a default
+     *   priority of 10 (so it will always be the first constraint by default).
      *
      * For other options, see the facets' individual documentation.
      *
@@ -187,6 +194,11 @@
      */
     angular.module('seco.facetedSearch', ['sparql', 'ui.bootstrap', 'angularSpinner'])
     .constant('_', _) // eslint-disable-line no-undef
+    .constant('PREFIXES',
+        ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
+        ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
+        ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> '
+    )
     .constant('EVENT_REQUEST_CONSTRAINTS', 'sf-request-constraints')
     .constant('EVENT_INITIAL_CONSTRAINTS', 'sf-initial-constraints')
     .constant('EVENT_FACET_CHANGED', 'sf-facet-changed')

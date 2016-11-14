@@ -29,6 +29,8 @@
     *   language tag is used. If a label is still not found,
     *   the end part of the resource URI is used.
     *   Supported label properties are `skos:prefLabel`, and `rdfs:label`.
+    * - **[priority]** - `{number}` - Priority for constraint sorting.
+    *   Undefined by default.
     */
     angular.module('seco.facetedSearch')
     .directive('secoHierarchyFacet', hierarchyFacet);
