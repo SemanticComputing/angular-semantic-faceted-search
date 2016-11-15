@@ -17,7 +17,7 @@ describe('JenaTextFacet', function() {
 
         facet = new JenaTextFacet(options);
 
-        subPred = '?id <http://jena.apache.org/text#query> ';
+        subPred = '(?id ?score) <http://jena.apache.org/text#query> ';
 
     }));
 
@@ -88,7 +88,7 @@ describe('JenaTextFacet', function() {
             expect(isIncluded).toBe(true);
         });
 
-        it('should should contain the search as is', function() {
+        it('should should not change the case of the search', function() {
             var searchTerms = 'FoO BBAR';
             facet.selectedValue = searchTerms;
 
@@ -96,6 +96,30 @@ describe('JenaTextFacet', function() {
 
             var isIncluded = (cons.indexOf(searchTerms) > -1);
             expect(isIncluded).toBe(true);
+        });
+
+        it('should remove quotes if they are unbalanced', function() {
+            facet.selectedValue = '"blaa blaa';
+
+            var expected = subPred + '("blaa blaa") .';
+            expect(facet.getConstraint()).toEqual(expected);
+
+            facet.selectedValue = '"blaa foo" bar"';
+
+            expected = subPred + '("blaa foo bar") .';
+            expect(facet.getConstraint()).toEqual(expected);
+        });
+
+        it('should excape quotes if they are balanced', function() {
+            facet.selectedValue = '"blaa blaa"';
+
+            var expected = subPred + '("\\\"blaa blaa\\\"") .';
+            expect(facet.getConstraint()).toEqual(expected);
+
+            facet.selectedValue = 'blaa "blaa" "foo" bar';
+
+            expected = subPred + '("blaa \\\"blaa\\\" \\\"foo\\\" bar") .';
+            expect(facet.getConstraint()).toEqual(expected);
         });
 
         it('should return a valid constraint if no property is given', function() {

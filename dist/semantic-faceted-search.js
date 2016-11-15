@@ -1363,10 +1363,11 @@
     'use strict';
 
     angular.module('seco.facetedSearch')
+    .value('textQueryPredicate', '<http://jena.apache.org/text#query>')
     .factory('JenaTextFacet', JenaTextFacet);
 
     /* ngInject */
-    function JenaTextFacet(_, TextFacet) {
+    function JenaTextFacet(_, TextFacet, textQueryPredicate) {
 
         JenaTextFacet.prototype = Object.create(TextFacet.prototype);
         JenaTextFacet.prototype.getConstraint = getConstraint;
@@ -1383,7 +1384,16 @@
             if (!value) {
                 return;
             }
-            value = value.replace(/[,._'"\\/-]/g, ' ').trim();
+            var quoteRepl;
+            if ((value.match(/"/g) || []).length % 2) {
+                // Unbalanced quotes, remove them
+                quoteRepl = '';
+            } else {
+                // Balanced quotes, escape them
+                quoteRepl = '\\"';
+            }
+            value = value.replace(/"/g, quoteRepl).trim();
+
             var args = [];
             if (this.config.predicate) {
                 args.push(this.config.predicate);
@@ -1397,10 +1407,10 @@
 
             var obj = '(' + args.join(' ') + ')';
 
-            var result = ' ?id <http://jena.apache.org/text#query> ' + obj + ' . ';
+            var result = '(?id ?score) ' + textQueryPredicate + ' ' + obj + ' .';
 
             if (this.config.graph) {
-                result = ' GRAPH ' + this.config.graph + ' { ' + result + ' } ';
+                result = 'GRAPH ' + this.config.graph + ' { ' + result + ' }';
             }
 
             return result;
@@ -1434,6 +1444,20 @@
     *
     * This facet can only be used if the SPARQL endpoint supports
     * [Jena text query](https://jena.apache.org/documentation/query/text-query.html).
+    *
+    * The produced constraint looks like this:
+    * <pre>
+    * (?id ?score) <http://jena.apache.org/text#query> (predicate "search terms" limit) .
+    * </pre>
+    * where `predicate`, and `limit` are based on the configuration options
+    * (and left out if they are undefined).
+    *
+    * If the `graph` option is defined, the constraint is wrapped accordingly:
+    * <pre>
+    * GRAPH graph {
+    *   (?id ?score) <http://jena.apache.org/text#query> (predicate "search terms" limit) .
+    * }
+    * </pre>
     *
     * Does not make any SPARQL queries, just generates SPARQL triple patterns
     * out of the typed text for other facets to use.

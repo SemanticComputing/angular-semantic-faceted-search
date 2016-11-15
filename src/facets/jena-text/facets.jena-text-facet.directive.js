@@ -12,6 +12,20 @@
     * This facet can only be used if the SPARQL endpoint supports
     * [Jena text query](https://jena.apache.org/documentation/query/text-query.html).
     *
+    * The produced constraint looks like this:
+    * <pre>
+    * (?id ?score) <http://jena.apache.org/text#query> (predicate "search terms" limit) .
+    * </pre>
+    * where `predicate`, and `limit` are based on the configuration options
+    * (and left out if they are undefined).
+    *
+    * If the `graph` option is defined, the constraint is wrapped accordingly:
+    * <pre>
+    * GRAPH graph {
+    *   (?id ?score) <http://jena.apache.org/text#query> (predicate "search terms" limit) .
+    * }
+    * </pre>
+    *
     * Does not make any SPARQL queries, just generates SPARQL triple patterns
     * out of the typed text for other facets to use.
     *
