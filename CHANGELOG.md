@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.3.0] - 2016-11-15
+
+### Changed
+- secoJenaTextFacet allows for more user control in the search.
+  I.e. it does not modify the user input except for excaping quotes
+  (and removing them if they are unbalanced)
+- secoJenaTextFacet default priority is now 0 (instead of 10).
+
 ## [1.2.1] - 2016-11-15
 
 ### Added
@@ -48,6 +56,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix the timespan facet, and its documentation
 
 [Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.2.1...HEAD
+[1.3.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.2.1...1.3.0
 [1.2.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.1.1...1.2.0
 [1.1.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.0.7...1.1.1
