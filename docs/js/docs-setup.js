@@ -46,7 +46,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A free-text search facet using Jena text search.",
-      "keywords": "apache api configuration constraint default directive disabled displayed enabled endpoint facet facetedsearch facets free-text friendly generates html jena object options org patterns predicate priority queries query search seco set sorting sparql structure supports text title triple typed undefined unique usable users variable"
+      "keywords": "apache api based captured case configuration constraint default defined directive disabled displayed documentation enabled endpoint escaped facet facetedsearch facets free-text friendly generates graph html jena left limit modified number object odd option options org patterns predicate priority produced property queries query query-with-sparql quotes removed score search seco set sort sorting sparql structure supports terms text title triple typed undefined unique uri usable users variable wrapped"
     },
     {
       "section": "api",
