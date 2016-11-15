@@ -126,7 +126,7 @@ describe('JenaTextFacet', function() {
             var searchTerms = 'foo bar';
 
             facet.selectedValue = searchTerms;
-            var cons = facet.getConstraint().trim();
+            var cons = facet.getConstraint();
 
             var expected = subPred + '("foo bar") .';
 
@@ -141,7 +141,7 @@ describe('JenaTextFacet', function() {
             facet = new JenaTextFacet(options);
 
             facet.selectedValue = searchTerms;
-            var cons = facet.getConstraint().trim();
+            var cons = facet.getConstraint();
 
             var expected = subPred + '(<pred> "foo bar") .';
 
@@ -156,7 +156,7 @@ describe('JenaTextFacet', function() {
             facet = new JenaTextFacet(options);
 
             facet.selectedValue = searchTerms;
-            var cons = facet.getConstraint().trim();
+            var cons = facet.getConstraint();
 
             var expected = subPred + '("foo bar" 10) .';
 
@@ -166,7 +166,7 @@ describe('JenaTextFacet', function() {
             facet = new JenaTextFacet(options);
 
             facet.selectedValue = searchTerms;
-            cons = facet.getConstraint().trim();
+            cons = facet.getConstraint();
 
             expected = subPred + '(<pred> "foo bar" 10) .';
 
@@ -181,7 +181,7 @@ describe('JenaTextFacet', function() {
             facet = new JenaTextFacet(options);
 
             facet.selectedValue = searchTerms;
-            var cons = facet.getConstraint().trim().replace(/\s+/g, ' ');
+            var cons = facet.getConstraint().replace(/\s+/g, ' ');
 
             var expected = 'GRAPH <graph> { ' + subPred + '("foo bar") . }';
 
@@ -191,7 +191,7 @@ describe('JenaTextFacet', function() {
             facet = new JenaTextFacet(options);
 
             facet.selectedValue = searchTerms;
-            cons = facet.getConstraint().trim().replace(/\s+/g, ' ');
+            cons = facet.getConstraint().replace(/\s+/g, ' ');
 
             expected = 'GRAPH <graph> { ' + subPred + '(<pred> "foo bar") . }';
 
@@ -201,11 +201,121 @@ describe('JenaTextFacet', function() {
             facet = new JenaTextFacet(options);
 
             facet.selectedValue = searchTerms;
-            cons = facet.getConstraint().trim().replace(/\s+/g, ' ');
+            cons = facet.getConstraint().replace(/\s+/g, ' ');
 
             expected = 'GRAPH <graph> { ' + subPred + '(<pred> "foo bar" 100) . }';
 
             expect(cons).toEqual(expected);
+        });
+
+        it('should remove ~ from the beginning of the query', function() {
+            var searchTerms = {
+                '~foo bar': 'foo bar',
+                '~~foo bar': 'foo bar',
+                '~foo~ bar': 'foo~ bar'
+            };
+
+            Object.keys(searchTerms).forEach(function(query) {
+                facet.selectedValue = query;
+                var cons = facet.getConstraint();
+
+                var expected = subPred + '("' + searchTerms[query] + '") .';
+
+                expect(cons).toEqual(expected);
+            });
+        });
+
+        it('should remove double ~ from the query', function() {
+            var searchTerms = {
+                'foo~~ bar~': 'foo~ bar~',
+                'foo~~~ bar~': 'foo~ bar~',
+                'foo~~~ bar~~~': 'foo~ bar~'
+            };
+
+            Object.keys(searchTerms).forEach(function(query) {
+                facet.selectedValue = query;
+                var cons = facet.getConstraint();
+
+                var expected = subPred + '("' + searchTerms[query] + '") .';
+
+                expect(cons).toEqual(expected);
+            });
+        });
+
+        it('should remove AND, OR, and NOT if they are the first or last part of a query', function() {
+            var searchTerms = {
+                'foo bar AND': 'foo bar',
+                'foo bar AND NOT': 'foo bar',
+                'foo bar AND NOT OR': 'foo bar',
+                'foo bar OR': 'foo bar',
+                'foo bar NOT': 'foo bar',
+                'AND': '',
+                '~AND': '',
+                '~~AND': '',
+                'AND~': '',
+                'AND~~': '',
+                '~AND~~': '',
+                'NOT~': '',
+                'NOT': '',
+                'OR': '',
+                'AND foo bar AND': 'foo bar',
+                'AND foo bar': 'foo bar',
+                'OR foo bar AND NOT': 'foo bar',
+                'NOT foo bar AND NOT OR': 'foo bar',
+                'AND OR NOT foo bar OR': 'foo bar',
+                'OR NOT foo bar NOT': 'foo bar'
+            };
+
+            Object.keys(searchTerms).forEach(function(query) {
+                facet.selectedValue = query;
+                var cons = facet.getConstraint();
+
+                var expected = subPred + '("' + searchTerms[query] + '") .';
+
+                expect(cons).toEqual(expected);
+            });
+        });
+
+        it('should not remove AND, OR, and NOT if they are part of the first or last word', function() {
+            var searchTerms = {
+                'foo barAND': 'foo barAND',
+                'foo barAND NOT': 'foo barAND',
+                'foo barAND NOT OR': 'foo barAND',
+                'foo barOR': 'foo barOR',
+                'foo barNOT': 'foo barNOT',
+                'barNOT': 'barNOT',
+                'barAND': 'barAND',
+                'ANDbarOR': 'ANDbarOR',
+                'ORbar': 'ORbar',
+                'NOTbar': 'NOTbar'
+            };
+
+            Object.keys(searchTerms).forEach(function(query) {
+                facet.selectedValue = query;
+                var cons = facet.getConstraint();
+
+                var expected = subPred + '("' + searchTerms[query] + '") .';
+
+                expect(cons).toEqual(expected);
+            });
+        });
+        it('should remove parentheses, and backslashes', function() {
+            var searchTerms = [
+                'foo bar (',
+                'foo bar )',
+                'foo bar ()',
+                'foo bar \\',
+                'foo bar (\\\\)'
+            ];
+
+            searchTerms.forEach(function(query) {
+                facet.selectedValue = query;
+                var cons = facet.getConstraint();
+
+                var expected = subPred + '("foo bar") .';
+
+                expect(cons).toEqual(expected);
+            });
         });
     });
 });

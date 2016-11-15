@@ -10,6 +10,7 @@
 
         JenaTextFacet.prototype = Object.create(TextFacet.prototype);
         JenaTextFacet.prototype.getConstraint = getConstraint;
+        JenaTextFacet.prototype.sanitize = sanitize;
 
         return JenaTextFacet;
 
@@ -21,17 +22,10 @@
         function getConstraint() {
             var value = this.getSelectedValue();
             if (!value) {
-                return;
+                return undefined;
             }
-            var quoteRepl;
-            if ((value.match(/"/g) || []).length % 2) {
-                // Unbalanced quotes, remove them
-                quoteRepl = '';
-            } else {
-                // Balanced quotes, escape them
-                quoteRepl = '\\"';
-            }
-            value = value.replace(/"/g, quoteRepl).trim();
+
+            value = this.sanitize(value);
 
             var args = [];
             if (this.config.predicate) {
@@ -52,7 +46,28 @@
                 result = 'GRAPH ' + this.config.graph + ' { ' + result + ' }';
             }
 
-            return result;
+            return result || undefined;
+        }
+
+        function sanitize(query) {
+            query = query
+                .replace(/[\\()]/g, '') // backslashes, and parentheses
+                .replace(/~{2,}/g, '~') // double ~
+                .replace(/^~/g, '') // ~ as first token
+                .replace(/(\b~*(AND|OR|NOT)\s*~*)+$/g, '') // AND, OR, NOT last
+                .replace(/^((AND|OR|NOT)\b\s*~*)+/g, ''); // AND, OR, NOT first
+
+            var quoteRepl;
+            if ((query.match(/"/g) || []).length % 2) {
+                // Unbalanced quotes, remove them
+                quoteRepl = '';
+            } else {
+                // Balanced quotes, escape them
+                quoteRepl = '\\"';
+            }
+            query = query.replace(/"/g, quoteRepl).trim();
+
+            return query;
         }
     }
 })();
