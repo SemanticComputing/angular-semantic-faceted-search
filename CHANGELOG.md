@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.3.1] - 2016-11-15
+
+### Fixed
+- Sanitize the user's query in secoJenaTextFacet to avoid syntax errors from the
+  SPARQL endpoint.
+
 ## [1.3.0] - 2016-11-15
 
 ### Changed
@@ -55,7 +61,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.2.1...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.1...HEAD
+[1.3.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.0...1.3.1
 [1.3.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.2.1...1.3.0
 [1.2.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.1.1...1.2.0
