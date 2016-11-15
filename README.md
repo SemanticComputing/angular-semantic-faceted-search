@@ -11,22 +11,24 @@ Install via Bower:
 
 `bower install sparql-faceter`
 
-Make sure to include the script in your HTML:
+Include `seco.facetedSearch` in your module dependencies:
+
+```
+angular.module('myApp', ['seco.facetedSearch'])
+```
+
+Include the script in your HTML:
 
 ```
 <script src="bower_components/sparql-faceter/dist/semantic-faceted-search.js></script>
 ```
 
+And additionally the dependencies defined in [bower.json](bower.json) before the above script.
+
 You can also include the stylesheet in the header:
 
 ```
 <link rel="stylesheet" href="bower_components/angular-semantic-faceted-search/dist/semantic-faceted-search.css">
-```
-
-Include `seco.facetedSearch` in your module dependenies:
-
-```
-angular.module('myApp', ['seco.facetedSearch'])
 ```
 
 Then you're good to go!
@@ -158,9 +160,9 @@ Then, in the template:
 ```
 
 ## Examples
-See the [WarSampo casualties demo](https://github.com/SemanticComputing/casualties-demo).
+[Simplistic demo using DBpedia](http://semanticcomputing.github.io/sparql-faceter-dbpedia-demo/#)
+(the code in the [repository](https://github.com/SemanticComputing/sparql-faceter-dbpedia-demo) contains helpful comments)
 
-Simplistic demo using DBpedia: [Demo](http://semanticcomputing.github.io/sparql-faceter-dbpedia-demo/#),
-[Demo repository](https://github.com/SemanticComputing/sparql-faceter-dbpedia-demo) (the code in the repo contains helpful comments)
+The [WarSampo casualties demo](https://github.com/SemanticComputing/casualties-demo) uses SPARQL Faceter.
 
 You can also see the tool in action in the [WarSampo photograph perspective](http://www.sotasampo.fi/en/photographs).
