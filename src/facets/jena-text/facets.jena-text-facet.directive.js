@@ -37,8 +37,7 @@
     *   If undefined, the facet will be disabled by default.
     * - **[predicate]** - `{string}` - The property to use in the search.
     *   See [Jena text query documentation](https://jena.apache.org/documentation/query/text-query.html#query-with-sparql).
-    * - **[priority]** - `{number}` - Priority for constraint sorting.
-    *   Default is 10.
+    * - **[priority]** - `{number}` - Priority for constraint sorting. Default is 0.
     * - **[limit]** - `{number}` - Limit for the text search results.
     *   See [Jena text query documentation](https://jena.apache.org/documentation/query/text-query.html#query-with-sparql).
     * - **[graph]** - `{string}` - The URI of the graph to use for the text search.

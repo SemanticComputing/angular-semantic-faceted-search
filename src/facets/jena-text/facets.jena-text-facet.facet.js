@@ -15,7 +15,7 @@
 
         function JenaTextFacet(options) {
             TextFacet.call(this, options);
-            this.config.priority = this.config.priority || 10;
+            this.config.priority = this.config.priority || 0;
         }
 
         function getConstraint() {
