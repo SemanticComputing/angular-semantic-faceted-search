@@ -18,7 +18,14 @@
         TimespanFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         TimespanFacetConstructor.prototype.buildQuery = buildQuery;
         TimespanFacetConstructor.prototype.fetchState = fetchState;
+        TimespanFacetConstructor.prototype.disable = disable;
+        TimespanFacetConstructor.prototype.enable = enable;
         TimespanFacetConstructor.prototype.getOtherSelections = getOtherSelections;
+        TimespanFacetConstructor.prototype.initState = initState;
+        TimespanFacetConstructor.prototype.getMinDate = getMinDate;
+        TimespanFacetConstructor.prototype.getMaxDate = getMaxDate;
+        TimespanFacetConstructor.prototype.getSelectedStartDate = getSelectedStartDate;
+        TimespanFacetConstructor.prototype.getSelectedEndDate = getSelectedEndDate;
 
         return TimespanFacetConstructor;
 
@@ -65,21 +72,7 @@
                 this.maxDate = this.config.max;
             }
 
-            this.state = {};
-
-            this.state.start = {
-                minDate: this.minDate,
-                maxDate: this.maxDate,
-                initDate: this.minDate,
-                startingDay: this.config.startingDay || 1
-            };
-
-            this.state.end = {
-                minDate: this.minDate,
-                maxDate: this.maxDate,
-                initDate: this.maxDate,
-                startingDay: this.config.startingDay || 1
-            };
+            this.initState();
 
             if (this.config.enabled) {
                 this.enable();
@@ -109,6 +102,43 @@
                     this.selectedValue.end = timespanMapperService.parseValue(initial.value.end);
                 }
             }
+        }
+
+        function initState() {
+            if (!this.state) {
+                this.state = {};
+            }
+
+            this.state.start = {
+                minDate: this.getMinDate(),
+                maxDate: this.getMaxDate(),
+                initDate: this.getMinDate(),
+                startingDay: this.config.startingDay || 1
+            };
+
+            this.state.end = {
+                minDate: this.getMinDate(),
+                maxDate: this.getMaxDate(),
+                initDate: this.getMaxDate(),
+                startingDay: this.config.startingDay || 1
+            };
+        }
+
+        function getMinDate() {
+            return _.clone(this.minDate);
+        }
+
+        function getMaxDate() {
+            return _.clone(this.maxDate);
+        }
+
+        function enable() {
+            BasicFacet.prototype.enable.call(this);
+        }
+
+        function disable() {
+            BasicFacet.prototype.disable.call(this);
+            this.initState();
         }
 
         function buildQueryTemplate(template) {
@@ -141,12 +171,14 @@
             return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
                 var state = _.first(results);
 
-                if (state.min < self.minDate) {
-                    state.min = self.minDate;
+                var minDate = self.getMinDate();
+                if (state.min < minDate) {
+                    state.min = minDate;
                 }
 
-                if (state.max > self.maxDate) {
-                    state.max = self.maxDate;
+                var maxDate = self.getMaxDate();
+                if (state.max > maxDate) {
+                    state.max = maxDate;
                 }
 
                 self.state.start.minDate = state.min;
@@ -157,6 +189,16 @@
                 self.state.end.maxDate = state.max;
                 self.state.end.initDate = state.max;
 
+                var selectedStart = self.getSelectedStartDate();
+                if (selectedStart > self.state.end.minDate) {
+                    self.state.end.minDate = selectedStart;
+                }
+
+                var selectedEnd = self.getSelectedEndDate();
+                if (selectedEnd < self.state.start.maxDate) {
+                    self.state.start.maxDate = selectedEnd;
+                }
+
                 self._error = false;
 
                 return self.state;
@@ -165,6 +207,14 @@
                 self._error = true;
                 return $q.reject(error);
             });
+        }
+
+        function getSelectedStartDate() {
+            return _.clone((this.selectedValue || {}).start);
+        }
+
+        function getSelectedEndDate() {
+            return _.clone((this.selectedValue || {}).end);
         }
 
         function getSelectedValue() {
