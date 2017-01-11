@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.4.0] - 2017-01-11
+
+### Changed
+- Selecting a value in a basic facet does not update the list of selections anymore.
+  This way the user can change the selection without clearing the selection first.
+- Facet selections should now work with all literal datatypes.
+
 ## [1.3.2] - 2016-12-15
 
 ### Fixed
@@ -66,7 +73,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.2...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.4.0...HEAD
+[1.4.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.2...1.4.0
 [1.3.2]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.1...1.3.2
 [1.3.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.0...1.3.1
 [1.3.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.2.1...1.3.0
