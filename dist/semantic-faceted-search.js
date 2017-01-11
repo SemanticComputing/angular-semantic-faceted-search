@@ -809,6 +809,7 @@
         BasicFacetConstructor.prototype.buildQuery = buildQuery;
         BasicFacetConstructor.prototype.buildServiceUnions = buildServiceUnions;
         BasicFacetConstructor.prototype.buildSelections = buildSelections;
+        BasicFacetConstructor.prototype.removeOwnConstraint = removeOwnConstraint;
         BasicFacetConstructor.prototype.getOtherSelections = getOtherSelections;
         BasicFacetConstructor.prototype.getDeselectUnionTemplate = getDeselectUnionTemplate;
         BasicFacetConstructor.prototype.disable = disable;
@@ -930,6 +931,12 @@
             }
             self.previousConstraints = _.clone(constraints.constraint);
 
+            var otherCons = this.getOtherSelections(constraints.constraint);
+            if (self.otherCons === otherCons) {
+                return $q.when(self.state);
+            }
+            self.otherCons = otherCons;
+
             self._isBusy = true;
 
             return self.fetchState(constraints).then(function(state) {
@@ -995,10 +1002,11 @@
         // Build the facet query
         function buildQuery(constraints) {
             constraints = constraints || [];
+            var otherConstraints = this.removeOwnConstraint(constraints);
             var query = this.queryTemplate
                 .replace(/<OTHER_SERVICES>/g, this.buildServiceUnions())
-                .replace(/<OTHER_SELECTIONS>/g, this.getOtherSelections(constraints))
-                .replace(/<SELECTIONS>/g, this.buildSelections(constraints))
+                .replace(/<OTHER_SELECTIONS>/g, otherConstraints.join(' '))
+                .replace(/<SELECTIONS>/g, this.buildSelections(otherConstraints))
                 .replace(/<PREF_LANG>/g, this.getPreferredLang());
 
             return query;
@@ -1011,10 +1019,13 @@
             return constraints;
         }
 
-        function getOtherSelections(constraints) {
+        function removeOwnConstraint(constraints) {
             var ownConstraint = this.getConstraint();
-            var deselections = _.reject(constraints, function(v) { return v === ownConstraint; });
-            return deselections.join(' ');
+            return _.reject(constraints, function(v) { return v === ownConstraint; });
+        }
+
+        function getOtherSelections(constraints) {
+            return this.removeOwnConstraint(constraints).join(' ');
         }
 
         function buildServiceUnions() {
