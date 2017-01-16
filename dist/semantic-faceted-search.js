@@ -1595,6 +1595,7 @@
         TimespanFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         TimespanFacetConstructor.prototype.buildQuery = buildQuery;
         TimespanFacetConstructor.prototype.fetchState = fetchState;
+        TimespanFacetConstructor.prototype.update = update;
         TimespanFacetConstructor.prototype.disable = disable;
         TimespanFacetConstructor.prototype.enable = enable;
         TimespanFacetConstructor.prototype.getOtherSelections = getOtherSelections;
@@ -1603,6 +1604,7 @@
         TimespanFacetConstructor.prototype.getMaxDate = getMaxDate;
         TimespanFacetConstructor.prototype.getSelectedStartDate = getSelectedStartDate;
         TimespanFacetConstructor.prototype.getSelectedEndDate = getSelectedEndDate;
+        TimespanFacetConstructor.prototype.updateState = updateState;
 
         return TimespanFacetConstructor;
 
@@ -1701,6 +1703,39 @@
             };
         }
 
+        function update(constraints) {
+            var self = this;
+            if (!self.isEnabled()) {
+                return $q.when();
+            }
+            if (!self._error && self.previousConstraints && _.isEqual(constraints.constraint,
+                    self.previousConstraints)) {
+                return $q.when();
+            }
+            self.previousConstraints = _.clone(constraints.constraint);
+
+            var otherCons = this.getOtherSelections(constraints.constraint);
+            if (self.otherCons === otherCons) {
+                // Only this facet's selection has changed
+                self.updateState({ min: self.getMinDate(), max: self.getMaxDate() });
+                return $q.when(self.state);
+            }
+            self.otherCons = otherCons;
+
+            self._isBusy = true;
+
+            return self.fetchState(constraints).then(function(state) {
+                if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
+                    return $q.reject('Facet state changed');
+                }
+                self.state = state;
+                self._isBusy = false;
+
+                return state;
+            });
+        }
+
+
         function getMinDate() {
             return _.clone(this.minDate);
         }
@@ -1748,33 +1783,7 @@
             return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
                 var state = _.first(results);
 
-                var minDate = self.getMinDate();
-                if (state.min < minDate) {
-                    state.min = minDate;
-                }
-
-                var maxDate = self.getMaxDate();
-                if (state.max > maxDate) {
-                    state.max = maxDate;
-                }
-
-                self.state.start.minDate = state.min;
-                self.state.start.initDate = state.min;
-                self.state.start.maxDate = state.max;
-
-                self.state.end.minDate = state.min;
-                self.state.end.maxDate = state.max;
-                self.state.end.initDate = state.max;
-
-                var selectedStart = self.getSelectedStartDate();
-                if (selectedStart > self.state.end.minDate) {
-                    self.state.end.minDate = selectedStart;
-                }
-
-                var selectedEnd = self.getSelectedEndDate();
-                if (selectedEnd < self.state.start.maxDate) {
-                    self.state.start.maxDate = selectedEnd;
-                }
+                self.updateState(state);
 
                 self._error = false;
 
@@ -1784,6 +1793,40 @@
                 self._error = true;
                 return $q.reject(error);
             });
+        }
+
+        function updateState(minMax) {
+            var self = this;
+
+            var minDate = self.getMinDate();
+            if (minMax.min < minDate) {
+                minMax.min = minDate;
+            }
+
+            var maxDate = self.getMaxDate();
+            if (minMax.max > maxDate) {
+                minMax.max = maxDate;
+            }
+
+            var selectedStart = self.getSelectedStartDate();
+            self.state.start.initDate = selectedStart || minMax.min;
+            self.state.start.minDate = minMax.min;
+            self.state.start.maxDate = minMax.max;
+
+            var selectedEnd = self.getSelectedEndDate();
+            self.state.end.initDate = selectedEnd || minMax.max;
+            self.state.end.minDate = minMax.min;
+            self.state.end.maxDate = minMax.max;
+
+            if (selectedEnd < self.state.start.maxDate) {
+                self.state.start.maxDate = selectedEnd;
+            }
+
+            if (selectedStart > self.state.end.minDate) {
+                self.state.end.minDate = selectedStart;
+            }
+
+            return self.state;
         }
 
         function getSelectedStartDate() {
@@ -1824,11 +1867,11 @@
 
             var startFilter =
             ' ?id <START_PROPERTY> <VAR> . ' +
-            ' FILTER(<VAR> >= "<START_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
+            ' FILTER(<http://www.w3.org/2001/XMLSchema#date>(<VAR>) >= "<START_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
 
             var endFilter =
             ' ?id <END_PROPERTY> <VAR> . ' +
-            ' FILTER(<VAR> <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
+            ' FILTER(<http://www.w3.org/2001/XMLSchema#date>(<VAR>) <= "<END_VALUE>"^^<http://www.w3.org/2001/XMLSchema#date>) ';
 
             var startVar = '?start_' + this.varSuffix;
             var endVar = '?end_' + this.varSuffix;

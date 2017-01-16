@@ -103,13 +103,13 @@ describe('TimespanFacet', function() {
             var val = { start: start, end: end };
             facet.selectedValue = val;
 
-            var filter = 'FILTER(?start_spanId >= "' + start.toISOString().slice(0, 10) +
+            var filter = 'FILTER(<http://www.w3.org/2001/XMLSchema#date>(?start_spanId) >= "' + start.toISOString().slice(0, 10) +
                     '"^^<http://www.w3.org/2001/XMLSchema#date>)';
 
             var isIncluded = (facet.getConstraint().indexOf(filter) > -1);
             expect(isIncluded).toBe(true);
 
-            filter = 'FILTER(?end_spanId <= "' + end.toISOString().slice(0, 10) +
+            filter = 'FILTER(<http://www.w3.org/2001/XMLSchema#date>(?end_spanId) <= "' + end.toISOString().slice(0, 10) +
                     '"^^<http://www.w3.org/2001/XMLSchema#date>)';
 
             isIncluded = (facet.getConstraint().indexOf(filter) > -1);
@@ -126,13 +126,13 @@ describe('TimespanFacet', function() {
             var val = { start: start, end: end };
             facet.selectedValue = val;
 
-            var filter = 'FILTER(?start_spanId >= "' + start.toISOString().slice(0, 10) +
+            var filter = 'FILTER(<http://www.w3.org/2001/XMLSchema#date>(?start_spanId) >= "' + start.toISOString().slice(0, 10) +
                     '"^^<http://www.w3.org/2001/XMLSchema#date>)';
 
             var isIncluded = (facet.getConstraint().indexOf(filter) > -1);
             expect(isIncluded).toBe(true);
 
-            filter = 'FILTER(?start_spanId <= "' + end.toISOString().slice(0, 10) +
+            filter = 'FILTER(<http://www.w3.org/2001/XMLSchema#date>(?start_spanId) <= "' + end.toISOString().slice(0, 10) +
                     '"^^<http://www.w3.org/2001/XMLSchema#date>)';
 
             isIncluded = (facet.getConstraint().indexOf(filter) > -1);
