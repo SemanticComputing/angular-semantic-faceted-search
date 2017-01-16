@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.4.1] - 2017-01-16
+
+### Changed
+- Values for the timespan facet are now cast as xsd:date in SPARQL
+
+### Fixed
+- Fix timespan facet date limits when selection changes
+
 ## [1.4.0] - 2017-01-11
 
 ### Changed
@@ -73,7 +81,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.4.0...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.4.1...HEAD
+[1.4.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.4.0...1.4.1
 [1.4.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.2...1.4.0
 [1.3.2]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.1...1.3.2
 [1.3.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.0...1.3.1
