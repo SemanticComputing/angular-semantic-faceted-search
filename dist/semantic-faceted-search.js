@@ -566,8 +566,10 @@
             // Update state, and broadcast it to listening facets.
             function update(event, constraint) {
                 event.stopPropagation();
-                self.state.facets[constraint.id] = constraint;
-                broadCastConstraints(EVENT_FACET_CONSTRAINTS);
+                if (self.state.facets[constraint.id] !== constraint) {
+                    self.state.facets[constraint.id] = constraint;
+                    broadCastConstraints(EVENT_FACET_CONSTRAINTS);
+                }
             }
 
             function broadCastInitial(event) {
@@ -656,7 +658,7 @@
     .controller('AbstractFacetController', AbstractFacetController);
 
     /* @ngInject */
-    function AbstractFacetController($scope, _, EVENT_FACET_CONSTRAINTS,
+    function AbstractFacetController($scope, $log, _, EVENT_FACET_CONSTRAINTS,
             EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS,
             FacetImpl) {
 
@@ -763,11 +765,13 @@
 
         function handleError(error) {
             if (!vm.facet.hasError()) {
+                $log.info(error);
                 // The facet has recovered from the error.
                 // This happens when an update has been cancelled
                 // due to changes in facet selections.
                 return;
             }
+            $log.error(error);
             vm.isLoadingFacet = false;
             if (error) {
                 vm.error = error;
@@ -925,11 +929,6 @@
             if (!self.isEnabled()) {
                 return $q.when();
             }
-            if (!self._error && self.previousConstraints && _.isEqual(constraints.constraint,
-                    self.previousConstraints)) {
-                return $q.when();
-            }
-            self.previousConstraints = _.clone(constraints.constraint);
 
             var otherCons = this.getOtherSelections(constraints.constraint);
             if (self.otherCons === otherCons) {
@@ -940,7 +939,7 @@
             self._isBusy = true;
 
             return self.fetchState(constraints).then(function(state) {
-                if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
+                if (!_.isEqual(otherCons, self.otherCons)) {
                     return $q.reject('Facet state changed');
                 }
                 self.state = state;
@@ -1708,11 +1707,6 @@
             if (!self.isEnabled()) {
                 return $q.when();
             }
-            if (!self._error && self.previousConstraints && _.isEqual(constraints.constraint,
-                    self.previousConstraints)) {
-                return $q.when();
-            }
-            self.previousConstraints = _.clone(constraints.constraint);
 
             var otherCons = this.getOtherSelections(constraints.constraint);
             if (self.otherCons === otherCons) {
@@ -1725,7 +1719,7 @@
             self._isBusy = true;
 
             return self.fetchState(constraints).then(function(state) {
-                if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
+                if (!_.isEqual(self.otherCons, otherCons)) {
                     return $q.reject('Facet state changed');
                 }
                 self.state = state;

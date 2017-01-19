@@ -98,8 +98,10 @@
             // Update state, and broadcast it to listening facets.
             function update(event, constraint) {
                 event.stopPropagation();
-                self.state.facets[constraint.id] = constraint;
-                broadCastConstraints(EVENT_FACET_CONSTRAINTS);
+                if (self.state.facets[constraint.id] !== constraint) {
+                    self.state.facets[constraint.id] = constraint;
+                    broadCastConstraints(EVENT_FACET_CONSTRAINTS);
+                }
             }
 
             function broadCastInitial(event) {

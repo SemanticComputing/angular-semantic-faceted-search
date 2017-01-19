@@ -5,7 +5,7 @@
     .controller('AbstractFacetController', AbstractFacetController);
 
     /* @ngInject */
-    function AbstractFacetController($scope, _, EVENT_FACET_CONSTRAINTS,
+    function AbstractFacetController($scope, $log, _, EVENT_FACET_CONSTRAINTS,
             EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS,
             FacetImpl) {
 
@@ -112,11 +112,13 @@
 
         function handleError(error) {
             if (!vm.facet.hasError()) {
+                $log.info(error);
                 // The facet has recovered from the error.
                 // This happens when an update has been cancelled
                 // due to changes in facet selections.
                 return;
             }
+            $log.error(error);
             vm.isLoadingFacet = false;
             if (error) {
                 vm.error = error;

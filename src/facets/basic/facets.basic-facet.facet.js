@@ -138,11 +138,6 @@
             if (!self.isEnabled()) {
                 return $q.when();
             }
-            if (!self._error && self.previousConstraints && _.isEqual(constraints.constraint,
-                    self.previousConstraints)) {
-                return $q.when();
-            }
-            self.previousConstraints = _.clone(constraints.constraint);
 
             var otherCons = this.getOtherSelections(constraints.constraint);
             if (self.otherCons === otherCons) {
@@ -153,7 +148,7 @@
             self._isBusy = true;
 
             return self.fetchState(constraints).then(function(state) {
-                if (!_.isEqual(self.previousConstraints, constraints.constraint)) {
+                if (!_.isEqual(otherCons, self.otherCons)) {
                     return $q.reject('Facet state changed');
                 }
                 self.state = state;
