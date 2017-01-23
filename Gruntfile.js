@@ -9,7 +9,8 @@ module.exports = function(grunt) {
                 src: [
                     'src/facets/basic/facets.basic-facet.directive.html',
                     'src/facets/text/facets.text-facet.directive.html',
-                    'src/facets/timespan/facets.timespan-facet.directive.html'
+                    'src/facets/timespan/facets.timespan-facet.directive.html',
+                    'src/facets/predicate/facets.predicate-facet.directive.html'
                 ],
                 dest: 'dist/templates.js'
             }
@@ -38,6 +39,10 @@ module.exports = function(grunt) {
                     'src/facets/timespan/facets.timespan-facet.facet.js',
                     'src/facets/timespan/facets.timespan-facet.controller.js',
                     'src/facets/timespan/facets.timespan-facet.directive.js',
+                    'src/facets/predicate/facets.predicate-mapper-service.js',
+                    'src/facets/predicate/facets.predicate-facet.facet.js',
+                    'src/facets/predicate/facets.predicate-facet.controller.js',
+                    'src/facets/predicate/facets.predicate-facet.directive.js',
                     'src/facets/hierarchy/facets.hierarchy-facet.facet.js',
                     'src/facets/hierarchy/facets.hierarchy-facet.controller.js',
                     'src/facets/hierarchy/facets.hierarchy-facet.directive.js',

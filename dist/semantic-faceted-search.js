@@ -192,7 +192,9 @@
      # SPARQL Faceter - Client-Side Faceted Search Using SPARQL
      * Main module.
      */
-    angular.module('seco.facetedSearch', ['sparql', 'ui.bootstrap', 'angularSpinner'])
+    angular.module('seco.facetedSearch', [
+        'sparql', 'ui.bootstrap', 'angularSpinner', 'checklist-model'
+    ])
     .constant('_', _) // eslint-disable-line no-undef
     .constant('PREFIXES',
         ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
@@ -1975,6 +1977,217 @@
     }
 })();
 
+(function() {
+    'use strict';
+
+    angular.module('seco.facetedSearch')
+
+    .factory('predicateMapperService', predicateMapperService);
+
+    /* ngInject */
+    function predicateMapperService(_, objectMapperService) {
+        PredicateMapper.prototype.makeObject = makeObject;
+
+        var proto = Object.getPrototypeOf(objectMapperService);
+        PredicateMapper.prototype = angular.extend({}, proto, PredicateMapper.prototype);
+
+        return new PredicateMapper();
+
+        function PredicateMapper() {
+            this.objectClass = Object;
+        }
+
+        function makeObject(obj) {
+            var o = new this.objectClass();
+
+            o.value = obj.value.value;
+            o.text = obj.label.value;
+
+            return o;
+        }
+    }
+})();
+
+
+/*
+* Facet for selecting a date range
+*/
+(function() {
+    'use strict';
+
+    angular.module('seco.facetedSearch')
+    .factory('PredicateFacet', PredicateFacet);
+
+    /* ngInject */
+    function PredicateFacet($q, _, AdvancedSparqlService, predicateMapperService, BasicFacet,
+            PREFIXES) {
+        PredicateFacet.prototype = Object.create(BasicFacet.prototype);
+
+        PredicateFacet.prototype.getConstraint = getConstraint;
+        PredicateFacet.prototype.buildQueryTemplate = buildQueryTemplate;
+        PredicateFacet.prototype.buildQuery = buildQuery;
+        PredicateFacet.prototype.fetchState = fetchState;
+        PredicateFacet.prototype.getOtherSelections = getOtherSelections;
+
+        return PredicateFacet;
+
+        function PredicateFacet(options) {
+
+            var queryTemplate = PREFIXES +
+            ' SELECT DISTINCT ?value ?label WHERE { ' +
+            '  <PREDICATE_UNION> ' +
+            ' } ';
+
+            var predTemplate =
+            ' { ' +
+            '   ?id <PREDICATE> [] . ' +
+            '   BIND("<LABEL>" as ?label) ' +
+            ' } ';
+
+            var defaultConfig = {};
+
+            this.config = angular.extend({}, defaultConfig, options);
+
+            this.name = this.config.name;
+            this.facetId = this.config.facetId;
+            this.state = {};
+
+            if (this.config.enabled) {
+                this.enable();
+            } else {
+                this.disable();
+            }
+
+            this.endpoint = new AdvancedSparqlService(this.config.endpointUrl,
+                predicateMapperService);
+
+            this.queryTemplate = this.buildQueryTemplate(queryTemplate, predTemplate);
+
+            this.varSuffix = this.facetId;
+
+            this.selectedValue = {};
+
+            // Initial value
+            var initial = _.get(options, 'initial[' + this.facetId + '].value');
+            if (initial) {
+                this._isEnabled = true;
+                this.selectedValue = { value: initial };
+            }
+        }
+
+        function buildQueryTemplate(template, predTemplate) {
+            var unions = '';
+            this.config.predicates.forEach(function(pred) {
+                var union = predTemplate
+                    .replace(/<PREDICATE>/g, pred.predicate)
+                    .replace(/<LABEL>/g, pred.label);
+                if (unions) {
+                    union = ' UNION ' + union;
+                }
+                unions += union;
+            });
+
+            return template
+                .replace(/<PREDICATE_UNION>/g, unions)
+                .replace(/\s+/g, ' ');
+        }
+
+        function buildQuery(constraints) {
+            constraints = constraints || [];
+            var query = this.queryTemplate
+                .replace(/<SELECTIONS>/g, this.getOtherSelections(constraints));
+            return query;
+        }
+
+        function getOtherSelections(constraints) {
+            var ownConstraint = this.getConstraint();
+
+            var selections = _.reject(constraints, function(v) { return v === ownConstraint; });
+            return selections.join(' ');
+        }
+
+        // Build a query with the facet selection and use it to get the facet state.
+        function fetchState(constraints) {
+            var self = this;
+
+            var query = self.buildQuery(constraints.constraint);
+
+            return self.endpoint.getObjects(query).then(function(results) {
+                self._error = false;
+                return predicateMapperService.makeObjectListNoGrouping(results);
+            }).catch(function(error) {
+                self._isBusy = false;
+                self._error = true;
+                return $q.reject(error);
+            });
+        }
+
+        function getConstraint() {
+            var selections = _.compact(this.getSelectedValue());
+            if (!(selections.length)) {
+                return;
+            }
+            var res = '';
+            selections.forEach(function(val) {
+                res += ' ?id ' + val + ' [] . ';
+            });
+
+            return res;
+        }
+    }
+})();
+
+(function() {
+    'use strict';
+
+    angular.module('seco.facetedSearch')
+    .controller('PredicateFacetController', PredicateFacetController);
+
+    /* ngInject */
+    function PredicateFacetController($scope, $controller, PredicateFacet) {
+        var args = { $scope: $scope, FacetImpl: PredicateFacet };
+        return $controller('AbstractFacetController', args);
+    }
+})();
+
+(function() {
+    'use strict';
+
+    /**
+    * @ngdoc directive
+    * @name seco.facetedSearch.directive:secoPredicateFacetFacet
+    * @restrict 'E'
+    * @element ANY
+    * @description
+    * A facet for selecting resources based on the existence of triples.
+    *
+    * @param {Object} options The configuration object with the following structure:
+    * - **facetId** - `{string}` - A friendly id for the facet.
+    *   Should be unique in the set of facets, and should be usable as a SPARQL variable.
+    * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
+    * - **predicates** - `{Array}` - A list of predicates to use. Each element in the list
+    *   should be an object: `{ predicate: '<predicate_uri>', label: 'predicate label' }`.
+    * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
+    *   If undefined, the facet will be disabled by default.
+    * - **[priority]** - `{number}` - Priority for constraint sorting.
+    *   Undefined by default.
+    */
+    angular.module('seco.facetedSearch')
+    .directive('secoPredicateFacet', predicateFacet);
+
+    function predicateFacet() {
+        return {
+            restrict: 'E',
+            scope: {
+                options: '='
+            },
+            controller: 'PredicateFacetController',
+            controllerAs: 'vm',
+            templateUrl: 'src/facets/predicate/facets.predicate-facet.directive.html'
+        };
+    }
+})();
+
 /*
 * Facet for selecting a simple value.
 */
@@ -2385,6 +2598,65 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "            datepicker-options=\"vm.facet.state.end\"\n" +
     "            close-text=\"Close\" />\n" +
     "          </span>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
+    "    </div>\n" +
+    "  </div>\n" +
+    "  <div class=\"facet\" ng-if=!vm.facet.isEnabled()>\n" +
+    "    <div class=\"well well-sm\">\n" +
+    "      <div class=\"row\">\n" +
+    "        <div class=\"col-xs-12\">\n" +
+    "          <div class=\"row vertical-align\">\n" +
+    "            <div class=\"col-xs-10 text-left\">\n" +
+    "              <h5 class=\"facet-name\">{{ vm.facet.name }}</h5>\n" +
+    "            </div>\n" +
+    "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
+    "              <button\n" +
+    "                ng-disabled=\"vm.isLoading()\"\n" +
+    "                ng-click=\"vm.enableFacet()\"\n" +
+    "                class=\"facet-enable-btn btn btn-default btn-xs pull-right glyphicon glyphicon-plus\">\n" +
+    "              </button>\n" +
+    "            </div>\n" +
+    "          </div>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
+    "    </div>\n" +
+    "  </div>\n" +
+    "</div>\n"
+  );
+
+
+  $templateCache.put('src/facets/predicate/facets.predicate-facet.directive.html',
+    "<div class=\"facet-wrapper\">\n" +
+    "  <div class=\"facet\" ng-if=vm.facet.isEnabled()>\n" +
+    "    <div class=\"well well-sm\">\n" +
+    "      <div class=\"row\">\n" +
+    "        <div class=\"col-xs-12 text-left\">\n" +
+    "          <div class=\"alert alert-danger\" ng-if=\"vm.error\">{{ vm.error|limitTo:100 }}</div>\n" +
+    "          <span spinner-key=\"vm.getSpinnerKey()\" spinner-start-active=\"true\"\n" +
+    "            us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoading()\"></span>\n" +
+    "          <h5 class=\"facet-name pull-left\">{{ vm.facet.name }}</h5>\n" +
+    "          <button\n" +
+    "            ng-disabled=\"vm.isLoading()\"\n" +
+    "            ng-click=\"vm.disableFacet()\"\n" +
+    "            class=\"btn btn-danger btn-xs pull-right glyphicon glyphicon-remove\">\n" +
+    "          </button>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
+    "      <div class=\"row\">\n" +
+    "        <div class=\"col-xs-12 text-left\">\n" +
+    "          <div class=\"facet-input-container\">\n" +
+    "            <label ng-repeat=\"pred in options.predicates\">\n" +
+    "              <input type=\"checkbox\"\n" +
+    "              checklist-change=\"vm.changed()\"\n" +
+    "              ng-disabled=\"vm.isLoading()\"\n" +
+    "              id=\"{{ ::vm.facet.name + '_select' }}\"\n" +
+    "              class=\"selector form-control\"\n" +
+    "              checklist-model=\"vm.facet.selectedValue.value\"\n" +
+    "              checklist-value=\"pred.predicate\" />\n" +
+    "              {{ pred.label }}\n" +
+    "            </label>\n" +
+    "          </div>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +

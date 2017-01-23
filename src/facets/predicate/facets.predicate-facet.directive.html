@@ -12,24 +12,21 @@
             ng-click="vm.disableFacet()"
             class="btn btn-danger btn-xs pull-right glyphicon glyphicon-remove">
           </button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xs-12 text-left">
           <div class="facet-input-container">
-            <input
-            ng-disabled="vm.isLoading()"
-            type="text"
-            class="form-control"
-            ng-model="textFilter" />
-            <div ng-repeat="pred in vm.config.predicates">
-              <label>
-                {{ pred.text }}
+            <label ng-repeat="pred in options.predicates">
               <input type="checkbox"
-              ng-change="vm.changed()"
+              checklist-change="vm.changed()"
               ng-disabled="vm.isLoading()"
-              ng-attr-size="{{ vm.getFacetSize(vm.facet.getState()) }}"
               id="{{ ::vm.facet.name + '_select' }}"
               class="selector form-control"
-              ng-model="vm.facet.selectedValue[pred.predicate]" />
-              </label>
-            </div>
+              checklist-model="vm.facet.selectedValue.value"
+              checklist-value="pred.predicate" />
+              {{ pred.label }}
+            </label>
           </div>
         </div>
       </div>

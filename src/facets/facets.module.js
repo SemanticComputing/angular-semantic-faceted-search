@@ -192,7 +192,9 @@
      # SPARQL Faceter - Client-Side Faceted Search Using SPARQL
      * Main module.
      */
-    angular.module('seco.facetedSearch', ['sparql', 'ui.bootstrap', 'angularSpinner'])
+    angular.module('seco.facetedSearch', [
+        'sparql', 'ui.bootstrap', 'angularSpinner', 'checklist-model'
+    ])
     .constant('_', _) // eslint-disable-line no-undef
     .constant('PREFIXES',
         ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +

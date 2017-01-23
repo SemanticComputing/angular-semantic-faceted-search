@@ -31,7 +31,7 @@
             var predTemplate =
             ' { ' +
             '   ?id <PREDICATE> [] . ' +
-            '   BIND(<LABEL> as ?label) ' +
+            '   BIND("<LABEL>" as ?label) ' +
             ' } ';
 
             var defaultConfig = {};
@@ -113,8 +113,8 @@
         }
 
         function getConstraint() {
-            var selections = this.getSelectedValue();
-            if (!(selections && selections.length)) {
+            var selections = _.compact(this.getSelectedValue());
+            if (!(selections.length)) {
                 return;
             }
             var res = '';
