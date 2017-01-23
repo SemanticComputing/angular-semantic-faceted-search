@@ -2646,16 +2646,18 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
     "          <div class=\"facet-input-container\">\n" +
-    "            <label ng-repeat=\"pred in options.predicates\">\n" +
+    "            <div class=\"checkbox\" ng-repeat=\"pred in options.predicates\">\n" +
+    "            <label>\n" +
     "              <input type=\"checkbox\"\n" +
     "              checklist-change=\"vm.changed()\"\n" +
     "              ng-disabled=\"vm.isLoading()\"\n" +
     "              id=\"{{ ::vm.facet.name + '_select' }}\"\n" +
-    "              class=\"selector form-control\"\n" +
+    "              class=\"selector checkbox\"\n" +
     "              checklist-model=\"vm.facet.selectedValue.value\"\n" +
     "              checklist-value=\"pred.predicate\" />\n" +
     "              {{ pred.label }}\n" +
     "            </label>\n" +
+    "            </div>\n" +
     "          </div>\n" +
     "        </div>\n" +
     "      </div>\n" +
