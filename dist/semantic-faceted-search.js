@@ -2011,8 +2011,8 @@
             ' { ' +
             '  SELECT DISTINCT (COUNT(DISTINCT(?id)) AS ?cnt) ?value ("<LABEL>" AS ?facet_text) { ' +
             '   <SELECTIONS> ' +
-            '   BIND(<PREDICATE> AS ?value) ' +
-            '   ?id ?value [] . ' +
+            '   BIND("<ID>" AS ?value) ' +
+            '   <PREDICATE> ' +
             '  } GROUP BY ?value ' +
             ' } ';
 
@@ -2051,6 +2051,7 @@
             var unions = '';
             this.config.predicates.forEach(function(pred) {
                 var union = predTemplate
+                    .replace(/<ID>/g, pred.id)
                     .replace(/<PREDICATE>/g, pred.predicate)
                     .replace(/<LABEL>/g, pred.label);
                 if (unions) {
@@ -2095,13 +2096,14 @@
         }
 
         function getConstraint() {
-            var selections = _.compact(this.getSelectedValue());
+            var self = this;
+            var selections = _.compact(self.getSelectedValue());
             if (!(selections.length)) {
                 return;
             }
             var res = '';
             selections.forEach(function(val) {
-                var cons = ' ?id ' + val + ' [] . ';
+                var cons = _.get(_.find(self.config.predicates, ['id', val.replace(/"/g, '')]), 'predicate');
                 if (res) {
                     cons = ' UNION { ' + cons + ' } ';
                 } else if (selections.length > 1) {
