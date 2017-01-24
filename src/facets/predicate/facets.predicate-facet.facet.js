@@ -9,7 +9,7 @@
     .factory('PredicateFacet', PredicateFacet);
 
     /* ngInject */
-    function PredicateFacet($q, _, AdvancedSparqlService, predicateMapperService, BasicFacet,
+    function PredicateFacet($q, _, AdvancedSparqlService, facetMapperService, BasicFacet,
             PREFIXES) {
         PredicateFacet.prototype = Object.create(BasicFacet.prototype);
 
@@ -24,14 +24,17 @@
         function PredicateFacet(options) {
 
             var queryTemplate = PREFIXES +
-            ' SELECT DISTINCT ?value ?label WHERE { ' +
+            ' SELECT DISTINCT ?value ?facet_text ?cnt WHERE { ' +
             '  <PREDICATE_UNION> ' +
             ' } ';
 
             var predTemplate =
             ' { ' +
-            '   ?id <PREDICATE> [] . ' +
-            '   BIND("<LABEL>" as ?label) ' +
+            '  SELECT DISTINCT (COUNT(DISTINCT(?id)) AS ?cnt) ?value ("<LABEL>" AS ?facet_text) { ' +
+            '   <SELECTIONS> ' +
+            '   BIND(<PREDICATE> AS ?value) ' +
+            '   ?id ?value [] . ' +
+            '  } GROUP BY ?value ' +
             ' } ';
 
             var defaultConfig = {};
@@ -49,7 +52,7 @@
             }
 
             this.endpoint = new AdvancedSparqlService(this.config.endpointUrl,
-                predicateMapperService);
+                facetMapperService);
 
             this.queryTemplate = this.buildQueryTemplate(queryTemplate, predTemplate);
 
@@ -102,9 +105,9 @@
 
             var query = self.buildQuery(constraints.constraint);
 
-            return self.endpoint.getObjects(query).then(function(results) {
+            return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
                 self._error = false;
-                return predicateMapperService.makeObjectListNoGrouping(results);
+                return results;
             }).catch(function(error) {
                 self._isBusy = false;
                 self._error = true;

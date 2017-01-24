@@ -1977,37 +1977,6 @@
     }
 })();
 
-(function() {
-    'use strict';
-
-    angular.module('seco.facetedSearch')
-
-    .factory('predicateMapperService', predicateMapperService);
-
-    /* ngInject */
-    function predicateMapperService(_, objectMapperService) {
-        PredicateMapper.prototype.makeObject = makeObject;
-
-        var proto = Object.getPrototypeOf(objectMapperService);
-        PredicateMapper.prototype = angular.extend({}, proto, PredicateMapper.prototype);
-
-        return new PredicateMapper();
-
-        function PredicateMapper() {
-            this.objectClass = Object;
-        }
-
-        function makeObject(obj) {
-            var o = new this.objectClass();
-
-            o.value = obj.value.value;
-            o.text = obj.label.value;
-
-            return o;
-        }
-    }
-})();
-
 
 /*
 * Facet for selecting a date range
@@ -2019,7 +1988,7 @@
     .factory('PredicateFacet', PredicateFacet);
 
     /* ngInject */
-    function PredicateFacet($q, _, AdvancedSparqlService, predicateMapperService, BasicFacet,
+    function PredicateFacet($q, _, AdvancedSparqlService, facetMapperService, BasicFacet,
             PREFIXES) {
         PredicateFacet.prototype = Object.create(BasicFacet.prototype);
 
@@ -2034,14 +2003,17 @@
         function PredicateFacet(options) {
 
             var queryTemplate = PREFIXES +
-            ' SELECT DISTINCT ?value ?label WHERE { ' +
+            ' SELECT DISTINCT ?value ?facet_text ?cnt WHERE { ' +
             '  <PREDICATE_UNION> ' +
             ' } ';
 
             var predTemplate =
             ' { ' +
-            '   ?id <PREDICATE> [] . ' +
-            '   BIND("<LABEL>" as ?label) ' +
+            '  SELECT DISTINCT (COUNT(DISTINCT(?id)) AS ?cnt) ?value ("<LABEL>" AS ?facet_text) { ' +
+            '   <SELECTIONS> ' +
+            '   BIND(<PREDICATE> AS ?value) ' +
+            '   ?id ?value [] . ' +
+            '  } GROUP BY ?value ' +
             ' } ';
 
             var defaultConfig = {};
@@ -2059,7 +2031,7 @@
             }
 
             this.endpoint = new AdvancedSparqlService(this.config.endpointUrl,
-                predicateMapperService);
+                facetMapperService);
 
             this.queryTemplate = this.buildQueryTemplate(queryTemplate, predTemplate);
 
@@ -2112,9 +2084,9 @@
 
             var query = self.buildQuery(constraints.constraint);
 
-            return self.endpoint.getObjects(query).then(function(results) {
+            return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
                 self._error = false;
-                return predicateMapperService.makeObjectListNoGrouping(results);
+                return results;
             }).catch(function(error) {
                 self._isBusy = false;
                 self._error = true;
@@ -2652,16 +2624,16 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
     "          <div class=\"facet-input-container\">\n" +
-    "            <div class=\"checkbox\" ng-repeat=\"pred in options.predicates\">\n" +
+    "            <div class=\"checkbox\" ng-repeat=\"pred in vm.facet.getState()\">\n" +
     "            <label>\n" +
     "              <input type=\"checkbox\"\n" +
     "              checklist-change=\"vm.changed()\"\n" +
-    "              ng-disabled=\"vm.isLoading()\"\n" +
+    "              ng-disabled=\"(vm.isLoading() || !pred.count)\"\n" +
     "              id=\"{{ ::vm.facet.name + '_select' }}\"\n" +
     "              class=\"selector checkbox\"\n" +
     "              checklist-model=\"vm.facet.selectedValue.value\"\n" +
-    "              checklist-value=\"pred.predicate\" />\n" +
-    "              {{ pred.label }}\n" +
+    "              checklist-value=\"pred.value\" />\n" +
+    "              {{ pred.text }} ({{ pred.count }})\n" +
     "            </label>\n" +
     "            </div>\n" +
     "          </div>\n" +
