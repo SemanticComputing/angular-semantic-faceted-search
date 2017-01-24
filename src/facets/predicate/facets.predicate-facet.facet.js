@@ -119,7 +119,13 @@
             }
             var res = '';
             selections.forEach(function(val) {
-                res += ' ?id ' + val + ' [] . ';
+                var cons = ' ?id ' + val + ' [] . ';
+                if (res) {
+                    cons = ' UNION { ' + cons + ' } ';
+                } else if (selections.length > 1) {
+                    cons = ' { ' + cons + ' } ';
+                }
+                res += cons;
             });
 
             return res;
