@@ -17,16 +17,16 @@
       <div class="row">
         <div class="col-xs-12 text-left">
           <div class="facet-input-container">
-            <div class="checkbox" ng-repeat="pred in vm.facet.getState()">
+            <div class="checkbox" ng-repeat="choice in vm.facet.getState()">
             <label>
               <input type="checkbox"
               checklist-change="vm.changed()"
-              ng-disabled="(vm.isLoading() || !pred.count)"
+              ng-disabled="(vm.isLoading() || !choice.count)"
               id="{{ ::vm.facet.name + '_select' }}"
               class="selector checkbox"
               checklist-model="vm.facet.selectedValue.value"
-              checklist-value="pred.value" />
-              {{ pred.text }} ({{ pred.count }})
+              checklist-value="choice.value" />
+              {{ choice.text }} ({{ choice.count }})
             </label>
             </div>
           </div>

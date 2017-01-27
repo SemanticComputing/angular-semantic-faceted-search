@@ -1985,22 +1985,22 @@
     'use strict';
 
     angular.module('seco.facetedSearch')
-    .factory('PredicateFacet', PredicateFacet);
+    .factory('CheckboxFacet', CheckboxFacet);
 
     /* ngInject */
-    function PredicateFacet($q, _, AdvancedSparqlService, facetMapperService, BasicFacet,
+    function CheckboxFacet($q, _, AdvancedSparqlService, facetMapperService, BasicFacet,
             PREFIXES) {
-        PredicateFacet.prototype = Object.create(BasicFacet.prototype);
+        CheckboxFacet.prototype = Object.create(BasicFacet.prototype);
 
-        PredicateFacet.prototype.getConstraint = getConstraint;
-        PredicateFacet.prototype.buildQueryTemplate = buildQueryTemplate;
-        PredicateFacet.prototype.buildQuery = buildQuery;
-        PredicateFacet.prototype.fetchState = fetchState;
-        PredicateFacet.prototype.getOtherSelections = getOtherSelections;
+        CheckboxFacet.prototype.getConstraint = getConstraint;
+        CheckboxFacet.prototype.buildQueryTemplate = buildQueryTemplate;
+        CheckboxFacet.prototype.buildQuery = buildQuery;
+        CheckboxFacet.prototype.fetchState = fetchState;
+        CheckboxFacet.prototype.getOtherSelections = getOtherSelections;
 
-        return PredicateFacet;
+        return CheckboxFacet;
 
-        function PredicateFacet(options) {
+        function CheckboxFacet(options) {
 
             var queryTemplate = PREFIXES +
             ' SELECT DISTINCT ?value ?facet_text ?cnt WHERE { ' +
@@ -2049,10 +2049,10 @@
 
         function buildQueryTemplate(template, predTemplate) {
             var unions = '';
-            this.config.predicates.forEach(function(pred) {
+            this.config.choices.forEach(function(pred) {
                 var union = predTemplate
                     .replace(/<ID>/g, pred.id)
-                    .replace(/<PREDICATE>/g, pred.predicate)
+                    .replace(/<PREDICATE>/g, pred.pattern)
                     .replace(/<LABEL>/g, pred.label);
                 if (unions) {
                     union = ' UNION ' + union;
@@ -2103,7 +2103,7 @@
             }
             var res = '';
             selections.forEach(function(val) {
-                var cons = _.get(_.find(self.config.predicates, ['id', val.replace(/"/g, '')]), 'predicate');
+                var cons = _.get(_.find(self.config.choices, ['id', val.replace(/"/g, '')]), 'pattern');
                 if (res) {
                     cons = ' UNION { ' + cons + ' } ';
                 } else if (selections.length > 1) {
@@ -2121,11 +2121,11 @@
     'use strict';
 
     angular.module('seco.facetedSearch')
-    .controller('PredicateFacetController', PredicateFacetController);
+    .controller('CheckboxFacetController', CheckboxFacetController);
 
     /* ngInject */
-    function PredicateFacetController($scope, $controller, PredicateFacet) {
-        var args = { $scope: $scope, FacetImpl: PredicateFacet };
+    function CheckboxFacetController($scope, $controller, CheckboxFacet) {
+        var args = { $scope: $scope, FacetImpl: CheckboxFacet };
         return $controller('AbstractFacetController', args);
     }
 })();
@@ -2135,35 +2135,48 @@
 
     /**
     * @ngdoc directive
-    * @name seco.facetedSearch.directive:secoPredicateFacetFacet
+    * @name seco.facetedSearch.directive:secoCheckboxFacet
     * @restrict 'E'
     * @element ANY
     * @description
-    * A facet for selecting resources based on the existence of triples.
+    * A facet for a checkbox selector based on a triple pattern.
+    *
+    * If multiple checkboxes are selected, the resulting SPARQL constraint
+    * will be a union of the selections.
     *
     * @param {Object} options The configuration object with the following structure:
     * - **facetId** - `{string}` - A friendly id for the facet.
     *   Should be unique in the set of facets, and should be usable as a SPARQL variable.
     * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
-    * - **predicates** - `{Array}` - A list of predicates to use. Each element in the list
-    *   should be an object: `{ predicate: '<predicate_uri>', label: 'predicate label' }`.
+    * - **choices** - `{Array}` - A list of choices and their definitions.
+    *   Each element in the list should be an object:
+    *   `{ id: 'uniqueIdForThisChoice', pattern: '[SPARQL pattern]', label: 'choice label' }`.
+    *   `[SPARQL pattern]` is any SPARQL pattern where `?id` is the variable bound to the
+    *   result resource. Example:
+    *       {
+    *         id: 'hobby',
+    *         pattern: '?id <http://schema.org/hobby> [] .',
+    *         label: 'Hobby'
+    *       }
+    *   This would create a checkbox which would restrict the results to those
+    *   resources that have a value for the property `<http://schema.org/hobby>`.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
     * - **[priority]** - `{number}` - Priority for constraint sorting.
     *   Undefined by default.
     */
     angular.module('seco.facetedSearch')
-    .directive('secoPredicateFacet', predicateFacet);
+    .directive('secoCheckboxFacet', checkboxFacet);
 
-    function predicateFacet() {
+    function checkboxFacet() {
         return {
             restrict: 'E',
             scope: {
                 options: '='
             },
-            controller: 'PredicateFacetController',
+            controller: 'CheckboxFacetController',
             controllerAs: 'vm',
-            templateUrl: 'src/facets/predicate/facets.predicate-facet.directive.html'
+            templateUrl: 'src/facets/checkbox/facets.checkbox-facet.directive.html'
         };
     }
 })();
@@ -2606,7 +2619,7 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
   );
 
 
-  $templateCache.put('src/facets/predicate/facets.predicate-facet.directive.html',
+  $templateCache.put('src/facets/checkbox/facets.checkbox-facet.directive.html',
     "<div class=\"facet-wrapper\">\n" +
     "  <div class=\"facet\" ng-if=vm.facet.isEnabled()>\n" +
     "    <div class=\"well well-sm\">\n" +
@@ -2626,16 +2639,16 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
     "          <div class=\"facet-input-container\">\n" +
-    "            <div class=\"checkbox\" ng-repeat=\"pred in vm.facet.getState()\">\n" +
+    "            <div class=\"checkbox\" ng-repeat=\"choice in vm.facet.getState()\">\n" +
     "            <label>\n" +
     "              <input type=\"checkbox\"\n" +
     "              checklist-change=\"vm.changed()\"\n" +
-    "              ng-disabled=\"(vm.isLoading() || !pred.count)\"\n" +
+    "              ng-disabled=\"(vm.isLoading() || !choice.count)\"\n" +
     "              id=\"{{ ::vm.facet.name + '_select' }}\"\n" +
     "              class=\"selector checkbox\"\n" +
     "              checklist-model=\"vm.facet.selectedValue.value\"\n" +
-    "              checklist-value=\"pred.value\" />\n" +
-    "              {{ pred.text }} ({{ pred.count }})\n" +
+    "              checklist-value=\"choice.value\" />\n" +
+    "              {{ choice.text }} ({{ choice.count }})\n" +
     "            </label>\n" +
     "            </div>\n" +
     "          </div>\n" +

@@ -6,22 +6,22 @@
     'use strict';
 
     angular.module('seco.facetedSearch')
-    .factory('PredicateFacet', PredicateFacet);
+    .factory('CheckboxFacet', CheckboxFacet);
 
     /* ngInject */
-    function PredicateFacet($q, _, AdvancedSparqlService, facetMapperService, BasicFacet,
+    function CheckboxFacet($q, _, AdvancedSparqlService, facetMapperService, BasicFacet,
             PREFIXES) {
-        PredicateFacet.prototype = Object.create(BasicFacet.prototype);
+        CheckboxFacet.prototype = Object.create(BasicFacet.prototype);
 
-        PredicateFacet.prototype.getConstraint = getConstraint;
-        PredicateFacet.prototype.buildQueryTemplate = buildQueryTemplate;
-        PredicateFacet.prototype.buildQuery = buildQuery;
-        PredicateFacet.prototype.fetchState = fetchState;
-        PredicateFacet.prototype.getOtherSelections = getOtherSelections;
+        CheckboxFacet.prototype.getConstraint = getConstraint;
+        CheckboxFacet.prototype.buildQueryTemplate = buildQueryTemplate;
+        CheckboxFacet.prototype.buildQuery = buildQuery;
+        CheckboxFacet.prototype.fetchState = fetchState;
+        CheckboxFacet.prototype.getOtherSelections = getOtherSelections;
 
-        return PredicateFacet;
+        return CheckboxFacet;
 
-        function PredicateFacet(options) {
+        function CheckboxFacet(options) {
 
             var queryTemplate = PREFIXES +
             ' SELECT DISTINCT ?value ?facet_text ?cnt WHERE { ' +
@@ -70,10 +70,10 @@
 
         function buildQueryTemplate(template, predTemplate) {
             var unions = '';
-            this.config.predicates.forEach(function(pred) {
+            this.config.choices.forEach(function(pred) {
                 var union = predTemplate
                     .replace(/<ID>/g, pred.id)
-                    .replace(/<PREDICATE>/g, pred.predicate)
+                    .replace(/<PREDICATE>/g, pred.pattern)
                     .replace(/<LABEL>/g, pred.label);
                 if (unions) {
                     union = ' UNION ' + union;
@@ -124,7 +124,7 @@
             }
             var res = '';
             selections.forEach(function(val) {
-                var cons = _.get(_.find(self.config.predicates, ['id', val.replace(/"/g, '')]), 'predicate');
+                var cons = _.get(_.find(self.config.choices, ['id', val.replace(/"/g, '')]), 'pattern');
                 if (res) {
                     cons = ' UNION { ' + cons + ' } ';
                 } else if (selections.length > 1) {
