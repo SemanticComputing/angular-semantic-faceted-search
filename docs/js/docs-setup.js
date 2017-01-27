@@ -32,6 +32,15 @@ NG_DOCS={
     },
     {
       "section": "api",
+      "id": "seco.facetedSearch.directive:secoCheckboxFacet",
+      "shortName": "secoCheckboxFacet",
+      "type": "directive",
+      "moduleName": "seco.facetedSearch",
+      "shortDescription": "A facet for a checkbox selector based on a triple pattern.",
+      "keywords": "api based bound checkbox checkboxes choice choices configuration constraint create default definitions directive disabled displayed element enabled example facet facetedsearch facets friendly hobby label list multiple object options org pattern priority property resource resources restrict result seco selected selections selector set sorting sparql structure title triple undefined union unique uniqueidforthischoice usable users variable"
+    },
+    {
+      "section": "api",
       "id": "seco.facetedSearch.directive:secoHierarchyFacet",
       "shortName": "secoHierarchyFacet",
       "type": "directive",
