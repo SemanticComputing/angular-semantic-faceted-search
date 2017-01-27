@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Checkbox facet (secoCheckboxFacet)
+
 ### Changed
 
 - Simplified facet state update
