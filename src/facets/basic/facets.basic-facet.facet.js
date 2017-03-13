@@ -9,19 +9,21 @@
     .factory('BasicFacet', BasicFacet);
 
     /* ngInject */
-    function BasicFacet($q, _, SparqlService, facetMapperService, NO_SELECTION_STRING, PREFIXES) {
+    function BasicFacet($q, _, AdvancedSparqlService, facetMapperService, NO_SELECTION_STRING, PREFIXES) {
 
         BasicFacetConstructor.prototype.update = update;
         BasicFacetConstructor.prototype.getState = getState;
         BasicFacetConstructor.prototype.fetchState = fetchState;
+        BasicFacetConstructor.prototype.fetchFacetTextFromServices = fetchFacetTextFromServices;
+        BasicFacetConstructor.prototype.finalizeFacetValues = finalizeFacetValues;
         BasicFacetConstructor.prototype.getConstraint = getConstraint;
         BasicFacetConstructor.prototype.getTriplePattern = getTriplePattern;
         BasicFacetConstructor.prototype.getSpecifier = getSpecifier;
         BasicFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         BasicFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         BasicFacetConstructor.prototype.buildQuery = buildQuery;
-        BasicFacetConstructor.prototype.buildServiceUnions = buildServiceUnions;
         BasicFacetConstructor.prototype.buildSelections = buildSelections;
+        BasicFacetConstructor.prototype.buildLabelPart = buildLabelPart;
         BasicFacetConstructor.prototype.removeOwnConstraint = removeOwnConstraint;
         BasicFacetConstructor.prototype.getOtherSelections = getOtherSelections;
         BasicFacetConstructor.prototype.getDeselectUnionTemplate = getDeselectUnionTemplate;
@@ -49,29 +51,15 @@
             ' OPTIONAL {' +
             '  ?value rdfs:label ?lbl . ' +
             '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
-            ' }' +
-            ' OPTIONAL {' +
-            '  ?value skos:prefLabel ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "")) .' +
-            ' }' +
-            ' OPTIONAL {' +
-            '  ?value rdfs:label ?lbl . ' +
-            '  FILTER(langMatches(lang(?lbl), "")) .' +
-            ' } ';
-
-            var serviceUnionLabelPart =
-            ' { ' +
-            '  ?value skos:prefLabel|rdfs:label [] . ' +
-               labelPart +
-            '  FILTER(BOUND(?lbl)) ' +
             ' }';
 
-            var serviceLabelPart = serviceUnionLabelPart +
-            ' UNION { ' +
-            '  FILTER(!ISURI(?value)) ' +
-            '  BIND(STR(?value) AS ?lbl) ' +
-            '  FILTER(BOUND(?lbl)) ' +
-            ' } ';
+            var serviceQueryTemplate = PREFIXES +
+            ' SELECT DISTINCT ?facet_text ?value {' +
+            '  VALUES ?value { <VALUES> } ' +
+            '  ?value skos:prefLabel|rdfs:label [] . ' +
+            '  <LABEL_PART>' +
+            '  FILTER(?facet_text != "")' +
+            ' }';
 
             var queryTemplate = PREFIXES +
             ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
@@ -92,9 +80,6 @@
             '    } ' +
             '    FILTER(BOUND(?value)) ' +
             '    <LABEL_PART> ' +
-            '    <OTHER_SERVICES> ' +
-            '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value),' +
-            '     "^.+/(.+?)$", "$1"), STR(?value))) AS ?facet_text)' +
             '   } ORDER BY ?facet_text ' +
             '  }' +
             ' } ';
@@ -102,14 +87,11 @@
             var defaultConfig = {
                 preferredLang: 'fi',
                 queryTemplate: queryTemplate,
+                serviceQueryTemplate: serviceQueryTemplate,
                 labelPart: labelPart,
-                noSelectionString: NO_SELECTION_STRING
+                noSelectionString: NO_SELECTION_STRING,
+                usePost: true
             };
-
-            if (options.services) {
-                defaultConfig.labelPart = serviceLabelPart;
-                defaultConfig.serviceUnionLabelPart = serviceUnionLabelPart;
-            }
 
             this.config = angular.extend({}, defaultConfig, options);
 
@@ -123,7 +105,11 @@
                 this.disable();
             }
 
-            this.endpoint = new SparqlService(this.config.endpointUrl);
+            var endpointConfig = {
+                endpointUrl: this.config.endpointUrl,
+                usePost: this.config.usePost
+            };
+            this.endpoint = new AdvancedSparqlService(endpointConfig, facetMapperService);
 
             // Initial value
             var constVal = _.get(options, 'initial.' + this.facetId);
@@ -133,7 +119,9 @@
                 this.selectedValue = { value: constVal.value };
             }
 
+            this.labelPart = this.buildLabelPart();
             this.queryTemplate = this.buildQueryTemplate(this.config.queryTemplate);
+            this.serviceQueryTemplate = this.buildQueryTemplate(this.config.serviceQueryTemplate);
         }
 
         function update(constraints) {
@@ -171,13 +159,53 @@
 
             var query = self.buildQuery(constraints.constraint);
 
-            return self.endpoint.getObjects(query).then(function(results) {
+            return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
+                if (self.config.services) {
+                    return self.fetchFacetTextFromServices(results);
+                }
                 self._error = false;
-                return facetMapperService.makeObjectListNoGrouping(results);
+                return results;
+            }).then(function(res) {
+                res = self.finalizeFacetValues(res);
+                self._error = false;
+                return res;
             }).catch(function(error) {
                 self._isBusy = false;
                 self._error = true;
                 return $q.reject(error);
+            });
+        }
+
+        function finalizeFacetValues(results) {
+            results.forEach(function(r) {
+                if (!r.text) {
+                    r.text = r.value.replace(/^.+\/(.+?)>$/, '$1');
+                }
+            });
+            return [_.head(results)].concat(_.sortBy(_.tail(results), 'text'));
+        }
+
+        function fetchFacetTextFromServices(results) {
+            var self = this;
+            var emptyLabels = _.filter(results, function(r) { return !r.text; });
+            var values = _.map(emptyLabels, function(r) { return r.value; });
+            var promises = _.map(self.config.services, function(s) {
+                var endpointConfig = {
+                    endpointUrl: s.replace(/[<>]/g, ''),
+                    usePost: self.config.usePost
+                };
+                var endpoint = new AdvancedSparqlService(endpointConfig, facetMapperService);
+                var qry = self.serviceQueryTemplate
+                    .replace(/<VALUES>/g, values.join(' '))
+                    .replace(/<PREF_LANG>/g, self.getPreferredLang());
+                return endpoint.getObjectsNoGrouping(qry);
+            });
+            return $q.all(promises).then(function(res) {
+                var all = _.flatten(res);
+                all.forEach(function(objWithText) {
+                    _.find(results, ['value', objWithText.value]).text = objWithText.text;
+                });
+                return results;
             });
         }
 
@@ -215,7 +243,6 @@
             constraints = constraints || [];
             var otherConstraints = this.removeOwnConstraint(constraints);
             var query = this.queryTemplate
-                .replace(/<OTHER_SERVICES>/g, this.buildServiceUnions())
                 .replace(/<OTHER_SELECTIONS>/g, otherConstraints.join(' '))
                 .replace(/<SELECTIONS>/g, this.buildSelections(otherConstraints))
                 .replace(/<PREF_LANG>/g, this.getPreferredLang());
@@ -239,18 +266,15 @@
             return this.removeOwnConstraint(constraints).join(' ');
         }
 
-        function buildServiceUnions() {
+        function buildLabelPart() {
             var self = this;
-            var unions = '';
-            _.forEach(self.config.services, function(service) {
-                unions = unions +
-                ' UNION { ' +
-                '  SERVICE ' + service + ' { ' +
-                    self.config.serviceUnionLabelPart +
-                '  } ' +
-                ' } ';
+            var res = '';
+            var langs = _.castArray(self.config.preferredLang).concat(['']);
+            langs.forEach(function(lang) {
+                res += self.config.labelPart.replace(/<PREF_LANG>/g, lang);
             });
-            return unions;
+            res += ' BIND(COALESCE(?lbl, IF(!ISURI(?value), ?value, "")) AS ?facet_text)';
+            return res;
         }
 
         // Replace placeholders in the query template using the configuration.
@@ -258,7 +282,7 @@
             var templateSubs = [
                 {
                     placeHolder: /<LABEL_PART>/g,
-                    value: this.config.labelPart
+                    value: this.labelPart
                 },
                 {
                     placeHolder: /<NO_SELECTION_STRING>/g,

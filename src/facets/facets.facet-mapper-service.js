@@ -27,8 +27,8 @@
             var o = new this.objectClass();
 
             o.value = parseValue(obj.value);
-            o.text = obj.facet_text.value;
-            o.count = parseInt(obj.cnt.value);
+            o.text = _.get(obj, 'facet_text.value');
+            o.count = obj.cnt ? parseInt(obj.cnt.value) : undefined;
 
             return o;
         }
