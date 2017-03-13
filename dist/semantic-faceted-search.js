@@ -852,12 +852,14 @@
             '  FILTER(langMatches(lang(?lbl), "")) .' +
             ' } ';
 
-            var serviceLabelPart =
+            var serviceUnionLabelPart =
             ' { ' +
             '  ?value skos:prefLabel|rdfs:label [] . ' +
                labelPart +
             '  FILTER(BOUND(?lbl)) ' +
-            ' }' +
+            ' }';
+
+            var serviceLabelPart = serviceUnionLabelPart +
             ' UNION { ' +
             '  FILTER(!ISURI(?value)) ' +
             '  BIND(STR(?value) AS ?lbl) ' +
@@ -899,6 +901,7 @@
 
             if (options.services) {
                 defaultConfig.labelPart = serviceLabelPart;
+                defaultConfig.serviceUnionLabelPart = serviceUnionLabelPart;
             }
 
             this.config = angular.extend({}, defaultConfig, options);
@@ -1036,7 +1039,7 @@
                 unions = unions +
                 ' UNION { ' +
                 '  SERVICE ' + service + ' { ' +
-                    self.config.labelPart +
+                    self.config.serviceUnionLabelPart +
                 '  } ' +
                 ' } ';
             });
