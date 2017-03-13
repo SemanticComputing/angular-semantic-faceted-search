@@ -13,6 +13,7 @@
     /* ngInject */
     function facetMapperService(_, objectMapperService) {
         FacetMapper.prototype.makeObject = makeObject;
+        FacetMapper.prototype.makeObjectListNoGrouping = makeObjectListNoGrouping;
 
         var proto = Object.getPrototypeOf(objectMapperService);
         FacetMapper.prototype = angular.extend({}, proto, FacetMapper.prototype);
@@ -31,6 +32,22 @@
             o.count = parseInt(obj.cnt.value);
 
             return o;
+        }
+
+        function makeObjectListNoGrouping(objects) {
+            var self = this;
+            var obj_list = _.transform(objects, function(result, obj) {
+                obj = self.makeObject(obj);
+                var last = _.last(result);
+                if (last && last.value === obj.value) {
+                    if (obj.facet_text) {
+                        last.facet_text = last.facet_text ? last.face_text + ', ' + obj.face_text : obj.face_text;
+                    }
+                } else {
+                    result.push(obj);
+                }
+            });
+            return obj_list;
         }
 
         function parseValue(value) {
