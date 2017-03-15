@@ -3,19 +3,21 @@
 
 describe('BasicFacet', function() {
     var $rootScope, $q, $timeout, mock, mockConstructor, BasicFacet, facet,
-        options, natResponse, genResponse, genValues, natValues;
+        options, natResponse, genResponse;
 
     beforeEach(module('seco.facetedSearch'));
 
     beforeEach(module(function($provide) {
-        mock = { getObjects: getResponse };
+        mock = {
+            getObjectsNoGrouping: getResponse
+        };
         mockConstructor = function() { return mock; };
 
-        $provide.value('SparqlService', mockConstructor);
+        $provide.value('AdvancedSparqlService', mockConstructor);
     }));
 
     beforeEach(inject(function(){
-        spyOn(mock, 'getObjects').and.callThrough();
+        spyOn(mock, 'getObjectsNoGrouping').and.callThrough();
     }));
 
     beforeEach(inject(function(_$timeout_, _$q_, _$rootScope_, _BasicFacet_) {
@@ -34,11 +36,16 @@ describe('BasicFacet', function() {
 
         facet = new BasicFacet(options);
 
-        genValues = [
+        genResponse = [
             {
                 'value': undefined,
                 'text': '-- No Selection --',
                 'count': 94696
+            },
+            {
+                'value': '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Mies>',
+                'text': 'Mies',
+                'count': 94286
             },
             {
                 'value': '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Nainen>',
@@ -49,68 +56,24 @@ describe('BasicFacet', function() {
                 'value': '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Tuntematon>',
                 'text': 'Tuntematon',
                 'count': 5
-            },
-            {
-                'value': '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Mies>',
-                'text': 'Mies',
-                'count': 94286
-            }
-        ];
-
-        genResponse = [
-            {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '94696' } ,
-                'facet_text': { 'type': 'literal' , 'value': '-- No Selection --' }
-            },
-            {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '405' } ,
-                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Nainen' } ,
-                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Nainen' }
-            },
-            {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '5' } ,
-                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Tuntematon' } ,
-                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Tuntematon' }
-            },
-            {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '94286' } ,
-                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Mies' } ,
-                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Mies' }
-            }
-        ];
-
-        natValues = [
-            {
-                'value': undefined,
-                'text': '-- No Selection --',
-                'count': 5
-            },
-            {
-                'value': '<http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Ruotsi>',
-                'text': 'Ruotsi',
-                'count': 1
-            },
-            {
-                'value': '<http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Suomi>',
-                'text': 'Suomi',
-                'count': 4
             }
         ];
 
         natResponse = [
             {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '5' } ,
-                'facet_text': { 'type': 'literal' , 'value': '-- No Selection --' }
+                value: undefined,
+                text: '-- No Selection --',
+                count: 5
             },
             {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '1' } ,
-                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Ruotsi' } ,
-                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Ruotsi' }
+                value: '<http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Ruotsi>',
+                text: 'Ruotsi',
+                count: 1
             },
             {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '4' } ,
-                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Suomi' } ,
-                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Suomi' }
+                value: '<http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Suomi>',
+                text: 'Suomi',
+                count: 4
             }
         ];
 
@@ -217,8 +180,7 @@ describe('BasicFacet', function() {
             '     ?value rdfs:label ?lbl . ' +
             '     FILTER(langMatches(lang(?lbl), "")) .' +
             '    } ' +
-            '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value),' +
-            '     "^.+/(.+?)$", "$1"), STR(?value))) AS ?facet_text)' +
+            '     BIND(COALESCE(?lbl, IF(!ISURI(?value), ?value, "")) AS ?facet_text)' +
             '   } ORDER BY ?facet_text ' +
             '  }' +
             ' } ';
@@ -226,96 +188,6 @@ describe('BasicFacet', function() {
             expect(facet.buildQuery(cons).replace(/\s+/g, ' ')).toEqual(expected.replace(/\s+/g, ' '));
         });
 
-        it('should build a service query when a service is given', function() {
-            var cons = ['?id <p> <o> .'];
-            options.services = ['<service>'];
-
-            facet = new BasicFacet(options);
-
-            var expected =
-            ' PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> ' +
-            ' PREFIX skos: <http://www.w3.org/2004/02/skos/core#> ' +
-            ' PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> ' +
-            ' SELECT DISTINCT ?cnt ?facet_text ?value WHERE {' +
-            ' { ' +
-            '  { ' +
-            '   SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) { ' +
-            '    ?id <p> <o> . ' +
-            '   } ' +
-            '  } ' +
-            '  BIND("-- No Selection --" AS ?facet_text) ' +
-            ' } UNION ' +
-            '  {' +
-            '   SELECT DISTINCT ?cnt ?value ?facet_text { ' +
-            '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value {' +
-            '      ?id <p> <o> . ' +
-            '      ?id <pred> ?value . ' +
-            '     } GROUP BY ?value ' +
-            '    } ' +
-            '    FILTER(BOUND(?value)) ' +
-            '    { ' +
-            '     ?value skos:prefLabel|rdfs:label [] . ' +
-            '     OPTIONAL {' +
-            '      ?value skos:prefLabel ?lbl . ' +
-            '      FILTER(langMatches(lang(?lbl), "fi")) .' +
-            '     }' +
-            '     OPTIONAL {' +
-            '      ?value rdfs:label ?lbl . ' +
-            '      FILTER(langMatches(lang(?lbl), "fi")) .' +
-            '     }' +
-            '     OPTIONAL {' +
-            '      ?value skos:prefLabel ?lbl . ' +
-            '      FILTER(langMatches(lang(?lbl), "")) .' +
-            '     }' +
-            '     OPTIONAL {' +
-            '      ?value rdfs:label ?lbl . ' +
-            '      FILTER(langMatches(lang(?lbl), "")) .' +
-            '     } ' +
-            '     FILTER(BOUND(?lbl)) ' +
-            '    }' +
-            '    UNION { ' +
-            '     FILTER(!ISURI(?value)) ' +
-            '     BIND(STR(?value) AS ?lbl) ' +
-            '     FILTER(BOUND(?lbl)) ' +
-            '    } ' +
-            '    UNION { ' +
-            '     SERVICE <service> { ' +
-            '      { ' +
-            '       ?value skos:prefLabel|rdfs:label [] . ' +
-            '       OPTIONAL {' +
-            '        ?value skos:prefLabel ?lbl . ' +
-            '        FILTER(langMatches(lang(?lbl), "fi")) .' +
-            '       }' +
-            '       OPTIONAL {' +
-            '        ?value rdfs:label ?lbl . ' +
-            '        FILTER(langMatches(lang(?lbl), "fi")) .' +
-            '       }' +
-            '       OPTIONAL {' +
-            '        ?value skos:prefLabel ?lbl . ' +
-            '        FILTER(langMatches(lang(?lbl), "")) .' +
-            '       }' +
-            '       OPTIONAL {' +
-            '        ?value rdfs:label ?lbl . ' +
-            '        FILTER(langMatches(lang(?lbl), "")) .' +
-            '       } ' +
-            '       FILTER(BOUND(?lbl)) ' +
-            '      }' +
-            '      UNION { ' +
-            '       FILTER(!ISURI(?value)) ' +
-            '       BIND(STR(?value) AS ?lbl) ' +
-            '       FILTER(BOUND(?lbl)) ' +
-            '      } ' +
-            '     } ' +
-            '    } ' +
-            '    BIND(COALESCE(?lbl, IF(ISURI(?value), REPLACE(STR(?value),' +
-            '     "^.+/(.+?)$", "$1"), STR(?value))) AS ?facet_text)' +
-            '   } ORDER BY ?facet_text ' +
-            '  }' +
-            ' } ';
-
-            expect(facet.buildQuery(cons).replace(/\s+/g, ' ')).toEqual(expected.replace(/\s+/g, ' '));
-        });
     });
 
     describe('update', function() {
@@ -331,11 +203,11 @@ describe('BasicFacet', function() {
                 qryRes = res;
             });
 
-            expect(mock.getObjects).toHaveBeenCalled();
+            expect(mock.getObjectsNoGrouping).toHaveBeenCalled();
 
             $rootScope.$apply();
 
-            expect(qryRes).toEqual(natValues);
+            expect(qryRes).toEqual(natResponse);
         });
 
         it('should not fetch results if facet is disabled', function() {
@@ -352,7 +224,7 @@ describe('BasicFacet', function() {
             $rootScope.$apply();
 
             expect(qryRes).toBeUndefined();
-            expect(mock.getObjects).not.toHaveBeenCalled();
+            expect(mock.getObjectsNoGrouping).not.toHaveBeenCalled();
         });
 
         it('should abort if it is called again with different constraints', function() {
@@ -384,12 +256,13 @@ describe('BasicFacet', function() {
 
             $timeout.flush();
 
-            expect(qryRes).toEqual(genValues);
+            expect(qryRes).toEqual(genResponse);
         });
 
         it('should make the facet busy', function() {
             var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
             var data = { facets: {}, constraint: cons };
+            mock.response = natResponse;
 
             expect(facet.isLoading()).toBeFalsy();
 
@@ -400,6 +273,29 @@ describe('BasicFacet', function() {
             $rootScope.$apply();
 
             expect(facet.isLoading()).toBe(false);
+        });
+
+        it('should make a query to each service given in the config', function() {
+            options.services = ['<service>'];
+            facet = new BasicFacet(options);
+
+            var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
+            var data = { facets: {}, constraint: cons };
+            mock.response = natResponse;
+
+            facet.update(data);
+            $rootScope.$apply();
+
+            expect(mock.getObjectsNoGrouping).toHaveBeenCalledTimes(2);
+            mock.getObjectsNoGrouping.calls.reset();
+
+            options.services = ['<service>', '<service2>'];
+            facet = new BasicFacet(options);
+
+            facet.update(data);
+            $rootScope.$apply();
+
+            expect(mock.getObjectsNoGrouping).toHaveBeenCalledTimes(3);
         });
     });
 
