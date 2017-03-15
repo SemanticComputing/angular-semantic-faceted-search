@@ -28,7 +28,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A basic select box facet with text filtering.",
-      "keywords": "api basic bound box case config configuration constraint currently default define defined defines directive disabled displayed en enabled endpoint example facet facetedsearch facethandler facets filtering friendly generate generated globally helpful kinds label labels language multiple object optional options org pattern patterns people predicate preferred priority properties property rdfs resource restriction seco select selectable selection set skos sorting sparql specifier structure subjects supported tag text title triple undefined unique uri url usable users values variable"
+      "keywords": "additional api basic bound box case config configuration constraint default define defined defines directive disabled displayed en enabled endpoint endpoints example facet facetedsearch facethandler facets filtering friendly generate generated globally helpful kinds label labels language languages list multiple object optional options order org pattern patterns people predicate preferred priority properties property query rdfs resource restriction retrieve seco select selectable selection separate service set skos sorting sparql specifier structure subjects supported tag text title triple undefined unique uri uris url usable users values variable"
     },
     {
       "section": "api",
@@ -46,7 +46,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A select box facet for hierarchical values.",
-      "keywords": "api box case config configuration constraint currently default defines directive disabled displayed en enabled endpoint facet facetedsearch facethandler facets friendly globally hierarchical hierarchy label labels language level object optional options path predicate preferred priority properties property rdfs resource resources seco select set skos sorting sparql structure supported tag title top undefined unique uri url usable users values variable"
+      "keywords": "api box case config configuration constraint default defines directive disabled displayed en enabled endpoint facet facetedsearch facethandler facets friendly globally hierarchical hierarchy label labels language languages level list object optional options order path predicate preferred priority properties property rdfs resource resources seco select set skos sorting sparql structure supported tag title top undefined unique uri url usable users values variable"
     },
     {
       "section": "api",
