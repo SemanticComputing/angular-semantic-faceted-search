@@ -22,7 +22,6 @@
               <input type="checkbox"
               checklist-change="vm.changed()"
               ng-disabled="(vm.isLoading() || !choice.count)"
-              id="{{ ::vm.facet.name + '_select' }}"
               class="selector checkbox"
               checklist-model="vm.facet.selectedValue.value"
               checklist-value="choice.value" />

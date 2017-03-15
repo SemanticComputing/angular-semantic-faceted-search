@@ -17,7 +17,6 @@
         CheckboxFacet.prototype.buildQueryTemplate = buildQueryTemplate;
         CheckboxFacet.prototype.buildQuery = buildQuery;
         CheckboxFacet.prototype.fetchState = fetchState;
-        CheckboxFacet.prototype.getOtherSelections = getOtherSelections;
 
         return CheckboxFacet;
 
@@ -30,11 +29,11 @@
 
             var predTemplate =
             ' { ' +
-            '  SELECT DISTINCT (COUNT(DISTINCT(?id)) AS ?cnt) ?value ("<LABEL>" AS ?facet_text) { ' +
+            '  SELECT DISTINCT (COUNT(DISTINCT(?id)) AS ?cnt) ("<ID>" AS ?value) ("<LABEL>" AS ?facet_text) { ' +
             '   <SELECTIONS> ' +
-            '   BIND("<ID>" AS ?value) ' +
+            '   BIND("<ID>" AS ?val) ' +
             '   <PREDICATE> ' +
-            '  } GROUP BY ?value ' +
+            '  } GROUP BY ?val ' +
             ' } ';
 
             var defaultConfig = {};
@@ -93,13 +92,6 @@
             return query;
         }
 
-        function getOtherSelections(constraints) {
-            var ownConstraint = this.getConstraint();
-
-            var selections = _.reject(constraints, function(v) { return v === ownConstraint; });
-            return selections.join(' ');
-        }
-
         // Build a query with the facet selection and use it to get the facet state.
         function fetchState(constraints) {
             var self = this;
@@ -107,6 +99,7 @@
             var query = self.buildQuery(constraints.constraint);
 
             return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
+                console.log(results);
                 self._error = false;
                 return results;
             }).catch(function(error) {
