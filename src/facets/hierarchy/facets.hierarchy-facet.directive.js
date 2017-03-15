@@ -21,11 +21,12 @@
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
     *   Optional, as it can also be given globally in
     *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
-    * - **[preferredLang]** - `{string}` - The language tag that is preferred
+    * - **[preferredLang]** - `{string|Array}` - The language tag that is preferred
     *   when getting labels for facet values, in case the value is a resource.
     *   The default is 'en'.
-    *   Currently only one language can be given.
-    *   If a label is not found in the given language, a label without a
+    *   Can also be a list of languages, in which case the languages are tried
+    *   in order.
+    *   If a label is not found in the given languages, a label without a
     *   language tag is used. If a label is still not found,
     *   the end part of the resource URI is used.
     *   Supported label properties are `skos:prefLabel`, and `rdfs:label`.
