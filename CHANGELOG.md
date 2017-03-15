@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Simplified facet state update
+- BasicFacet no longer does federated queries - a separate query for each
+  service is produced instead.
 
 ## [1.4.1] - 2017-01-16
 

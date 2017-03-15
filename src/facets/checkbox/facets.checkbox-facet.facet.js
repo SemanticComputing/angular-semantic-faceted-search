@@ -29,7 +29,8 @@
 
             var predTemplate =
             ' { ' +
-            '  SELECT DISTINCT (COUNT(DISTINCT(?id)) AS ?cnt) ("<ID>" AS ?value) ("<LABEL>" AS ?facet_text) { ' +
+            '  SELECT DISTINCT (COUNT(DISTINCT(?id)) AS ?cnt) ("<ID>" AS ?value)' +
+            '     ("<LABEL>" AS ?facet_text) { ' +
             '   <SELECTIONS> ' +
             '   BIND("<ID>" AS ?val) ' +
             '   <PREDICATE> ' +
@@ -99,7 +100,6 @@
             var query = self.buildQuery(constraints.constraint);
 
             return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
-                console.log(results);
                 self._error = false;
                 return results;
             }).catch(function(error) {
