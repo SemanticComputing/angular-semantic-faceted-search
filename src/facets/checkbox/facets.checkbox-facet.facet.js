@@ -37,7 +37,9 @@
             '  } GROUP BY ?val ' +
             ' } ';
 
-            var defaultConfig = {};
+            var defaultConfig = {
+                usePost: true
+            };
 
             this.config = angular.extend({}, defaultConfig, options);
 
@@ -51,12 +53,14 @@
                 this.disable();
             }
 
-            this.endpoint = new AdvancedSparqlService(this.config.endpointUrl,
-                facetMapperService);
+            var endpointConfig = {
+                endpointUrl: this.config.endpointUrl,
+                usePost: this.config.usePost
+            };
+
+            this.endpoint = new AdvancedSparqlService(endpointConfig, facetMapperService);
 
             this.queryTemplate = this.buildQueryTemplate(queryTemplate, predTemplate);
-
-            this.varSuffix = this.facetId;
 
             this.selectedValue = {};
 
