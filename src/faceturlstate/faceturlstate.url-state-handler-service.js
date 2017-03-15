@@ -44,7 +44,7 @@
             facets = facets.facets || facets;
             var params = {};
             _(facets).forOwn(function(val, id) {
-                if (val && val.value) {
+                if (val && val.value && !(_.isObject(val.value) && _.isEmpty(val.value))) {
                     params[id] = { value: val.value, constraint: val.constraint };
                 }
             });
