@@ -180,8 +180,8 @@ describe('BasicFacet', function() {
             '     ?value rdfs:label ?lbl . ' +
             '     FILTER(langMatches(lang(?lbl), "")) .' +
             '    } ' +
-            '     BIND(COALESCE(?lbl, IF(!ISURI(?value), ?value, "")) AS ?facet_text)' +
-            '   } ORDER BY ?facet_text ' +
+            '    BIND(COALESCE(?lbl, IF(!ISURI(?value), ?value, "")) AS ?facet_text)' +
+            '   }' +
             '  }' +
             ' } ';
 

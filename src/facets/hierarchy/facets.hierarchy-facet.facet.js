@@ -9,7 +9,7 @@
     .factory('HierarchyFacet', HierarchyFacet);
 
     /* ngInject */
-    function HierarchyFacet(_, BasicFacet, PREFIXES) {
+    function HierarchyFacet($q, _, BasicFacet, PREFIXES) {
 
         HierarchyFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
@@ -18,6 +18,7 @@
         HierarchyFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         HierarchyFacetConstructor.prototype.buildQuery = buildQuery;
         HierarchyFacetConstructor.prototype.getHierarchyClasses = getHierarchyClasses;
+        HierarchyFacetConstructor.prototype.fetchState = fetchState;
 
         return HierarchyFacetConstructor;
 
@@ -91,7 +92,7 @@
                 },
                 {
                     placeHolder: /<LABEL_PART>/g,
-                    value: this.config.labelPart
+                    value: this.labelPart
                 },
                 {
                     placeHolder: /<NO_SELECTION_STRING>/g,
@@ -108,14 +109,6 @@
                 {
                     placeHolder: /<CLASS_VAR>/g,
                     value: 'seco_class_' + this.facetId
-                },
-                {
-                    placeHolder: /<LABEL_PART>/g,
-                    value: this.config.labelPart
-                },
-                {
-                    placeHolder: /<NO_SELECTION_STRING>/g,
-                    value: this.config.noSelectionString
                 },
                 {
                     placeHolder: /\s+/g,
@@ -151,14 +144,28 @@
             return val;
         }
 
+        function fetchState(constraints) {
+            var self = this;
+
+            var query = self.buildQuery(constraints.constraint);
+
+            return self.endpoint.getObjectsNoGrouping(query).then(function(results) {
+                self._error = false;
+                return results;
+            }).catch(function(error) {
+                self._isBusy = false;
+                self._error = true;
+                return $q.reject(error);
+            });
+        }
+
         // Build the facet query
         function buildQuery(constraints) {
             constraints = constraints || [];
             var query = this.queryTemplate
                 .replace(/<OTHER_SELECTIONS>/g, this.getOtherSelections(constraints))
                 .replace(/<HIERARCHY_CLASSES>/g,
-                    this.getSelectedValue() || this.getHierarchyClasses().join(' '))
-                .replace(/<PREF_LANG>/g, this.getPreferredLang());
+                    this.getSelectedValue() || this.getHierarchyClasses().join(' '));
 
             return query;
         }

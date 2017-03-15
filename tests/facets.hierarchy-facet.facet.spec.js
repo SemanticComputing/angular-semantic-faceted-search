@@ -3,19 +3,19 @@
 
 describe('HierarchyFacet', function() {
     var $rootScope, $q, $timeout, mock, mockConstructor, HierarchyFacet, facet,
-        options, natResponse, genResponse, genValues, natValues;
+        options, natResponse, genResponse;
 
     beforeEach(module('seco.facetedSearch'));
 
     beforeEach(module(function($provide) {
-        mock = { getObjects: getResponse };
+        mock = { getObjectsNoGrouping: getResponse };
         mockConstructor = function() { return mock; };
 
-        $provide.value('SparqlService', mockConstructor);
+        $provide.value('AdvancedSparqlService', mockConstructor);
     }));
 
     beforeEach(inject(function(){
-        spyOn(mock, 'getObjects').and.callThrough();
+        spyOn(mock, 'getObjectsNoGrouping').and.callThrough();
     }));
 
     beforeEach(inject(function(_$timeout_, _$q_, _$rootScope_, _HierarchyFacet_) {
@@ -38,11 +38,16 @@ describe('HierarchyFacet', function() {
 
         // These are the same as the ones in BasicFacet tests, but in this regard
         // the facets work the exact same way.
-        genValues = [
+        genResponse = [
             {
                 'value': undefined,
                 'text': '-- No Selection --',
                 'count': 94696
+            },
+            {
+                'value': '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Mies>',
+                'text': 'Mies',
+                'count': 94286
             },
             {
                 'value': '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Nainen>',
@@ -53,68 +58,24 @@ describe('HierarchyFacet', function() {
                 'value': '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Tuntematon>',
                 'text': 'Tuntematon',
                 'count': 5
-            },
-            {
-                'value': '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Mies>',
-                'text': 'Mies',
-                'count': 94286
-            }
-        ];
-
-        genResponse = [
-            {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '94696' } ,
-                'facet_text': { 'type': 'literal' , 'value': '-- No Selection --' }
-            },
-            {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '405' } ,
-                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Nainen' } ,
-                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Nainen' }
-            },
-            {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '5' } ,
-                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Tuntematon' } ,
-                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Tuntematon' }
-            },
-            {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '94286' } ,
-                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Mies' } ,
-                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Mies' }
-            }
-        ];
-
-        natValues = [
-            {
-                'value': undefined,
-                'text': '-- No Selection --',
-                'count': 5
-            },
-            {
-                'value': '<http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Ruotsi>',
-                'text': 'Ruotsi',
-                'count': 1
-            },
-            {
-                'value': '<http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Suomi>',
-                'text': 'Suomi',
-                'count': 4
             }
         ];
 
         natResponse = [
             {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '5' } ,
-                'facet_text': { 'type': 'literal' , 'value': '-- No Selection --' }
+                value: undefined,
+                text: '-- No Selection --',
+                count: 5
             },
             {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '1' } ,
-                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Ruotsi' } ,
-                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Ruotsi' }
+                value: '<http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Ruotsi>',
+                text: 'Ruotsi',
+                count: 1
             },
             {
-                'cnt': { 'datatype': 'http://www.w3.org/2001/XMLSchema#integer' , 'type': 'typed-literal' , 'value': '4' } ,
-                'facet_text': { 'type': 'literal' , 'xml:lang': 'fi' , 'value': 'Suomi' } ,
-                'value': { 'type': 'uri' , 'value': 'http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Suomi' }
+                value: '<http://ldf.fi/narc-menehtyneet1939-45/kansalaisuus/Suomi>',
+                text: 'Suomi',
+                count: 4
             }
         ];
 
@@ -263,11 +224,11 @@ describe('HierarchyFacet', function() {
                 qryRes = res;
             });
 
-            expect(mock.getObjects).toHaveBeenCalled();
+            expect(mock.getObjectsNoGrouping).toHaveBeenCalled();
 
             $rootScope.$apply();
 
-            expect(qryRes).toEqual(natValues);
+            expect(qryRes).toEqual(natResponse);
         });
 
         it('should not fetch results if facet is disabled', function() {
@@ -284,7 +245,7 @@ describe('HierarchyFacet', function() {
             $rootScope.$apply();
 
             expect(qryRes).toBeUndefined();
-            expect(mock.getObjects).not.toHaveBeenCalled();
+            expect(mock.getObjectsNoGrouping).not.toHaveBeenCalled();
         });
 
         it('should abort if it is called again with different constraints', function() {
@@ -316,12 +277,13 @@ describe('HierarchyFacet', function() {
 
             $timeout.flush();
 
-            expect(qryRes).toEqual(genValues);
+            expect(qryRes).toEqual(genResponse);
         });
 
         it('should make the facet busy', function() {
             var cons = [' ?id a <http://ldf.fi/schema/narc-menehtyneet1939-45/DeathRecord> . ?id skos:prefLabel ?name .'];
             var data = { facets: {}, constraint: cons };
+            mock.response = natResponse;
 
             expect(facet.isLoading()).toBeFalsy();
 
