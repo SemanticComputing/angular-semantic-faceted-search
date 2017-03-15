@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2017-03-15
+
 ### Added
 
 - Checkbox facet (secoCheckboxFacet)
@@ -16,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Simplified facet state update
 - BasicFacet no longer does federated queries - a separate query for each
   service is produced instead.
+- Multiple languages can now be given as the `preferredLang`.
 
 ## [1.4.1] - 2017-01-16
 
@@ -93,7 +96,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.4.1...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.0...HEAD
+[1.4.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.4.1...1.5.0
 [1.4.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.4.0...1.4.1
 [1.4.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.2...1.4.0
 [1.3.2]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.3.1...1.3.2
