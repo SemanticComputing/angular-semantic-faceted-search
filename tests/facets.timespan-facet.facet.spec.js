@@ -2,12 +2,13 @@
 /* global inject, module  */
 
 describe('TimespanFacet', function() {
-    var TimespanFacet, facet, options;
+    var TimespanFacet, timespanMapperService, facet, options;
 
     beforeEach(module('seco.facetedSearch'));
-    beforeEach(inject(function(_TimespanFacet_) {
+    beforeEach(inject(function(_TimespanFacet_, _timespanMapperService_) {
 
         TimespanFacet = _TimespanFacet_;
+        timespanMapperService = _timespanMapperService_;
 
         options = {
             name: 'Timespan',
@@ -137,6 +138,120 @@ describe('TimespanFacet', function() {
 
             isIncluded = (facet.getConstraint().indexOf(filter) > -1);
             expect(isIncluded).toBe(true);
+        });
+    });
+
+    describe('updateState', function() {
+        it('should update the facet state based on the given dates', function() {
+            var val = {
+                min: timespanMapperService.parseValue('1940-10-10'),
+                max: timespanMapperService.parseValue('1941-10-11')
+            };
+
+            var expected = {
+                start: {
+                    minDate: timespanMapperService.parseValue('1940-10-10'),
+                    maxDate: timespanMapperService.parseValue('1941-10-11'),
+                    initDate: timespanMapperService.parseValue('1940-10-10'),
+                    startingDay: 1
+                },
+                end: {
+                    minDate: timespanMapperService.parseValue('1940-10-10'),
+                    maxDate: timespanMapperService.parseValue('1941-10-11'),
+                    initDate: timespanMapperService.parseValue('1941-10-11'),
+                    startingDay: 1
+                }
+            };
+            expect(facet.updateState(val)).toEqual(expected);
+        });
+
+        it('should respect the configured minimum and maximum dates', function() {
+            var val = {
+                min: timespanMapperService.parseValue('1910-10-10'),
+                max: timespanMapperService.parseValue('2000-10-11')
+            };
+
+            var expected = {
+                start: {
+                    minDate: timespanMapperService.parseValue('1939-10-01'),
+                    maxDate: timespanMapperService.parseValue('1989-12-31'),
+                    initDate: timespanMapperService.parseValue('1939-10-01'),
+                    startingDay: 1
+                },
+                end: {
+                    minDate: timespanMapperService.parseValue('1939-10-01'),
+                    maxDate: timespanMapperService.parseValue('1989-12-31'),
+                    initDate: timespanMapperService.parseValue('1989-12-31'),
+                    startingDay: 1
+                }
+            };
+            expect(facet.updateState(val)).toEqual(expected);
+        });
+
+        it('should update only the maximum selectable date if the minumum is too early', function() {
+            var val = {
+                min: timespanMapperService.parseValue('1910-10-10'),
+                max: timespanMapperService.parseValue('1950-10-11')
+            };
+
+            var expected = {
+                start: {
+                    minDate: timespanMapperService.parseValue('1939-10-01'),
+                    maxDate: timespanMapperService.parseValue('1950-10-11'),
+                    initDate: timespanMapperService.parseValue('1939-10-01'),
+                    startingDay: 1
+                },
+                end: {
+                    minDate: timespanMapperService.parseValue('1939-10-01'),
+                    maxDate: timespanMapperService.parseValue('1950-10-11'),
+                    initDate: timespanMapperService.parseValue('1950-10-11'),
+                    startingDay: 1
+                }
+            };
+            expect(facet.updateState(val)).toEqual(expected);
+        });
+
+        it('should update only the minumum selectable date if the maximum is too late', function() {
+            var val = {
+                min: timespanMapperService.parseValue('1950-10-11'),
+                max: timespanMapperService.parseValue('2000-10-11')
+            };
+
+            var expected = {
+                start: {
+                    minDate: timespanMapperService.parseValue('1950-10-11'),
+                    maxDate: timespanMapperService.parseValue('1989-12-31'),
+                    initDate: timespanMapperService.parseValue('1950-10-11'),
+                    startingDay: 1
+                },
+                end: {
+                    minDate: timespanMapperService.parseValue('1950-10-11'),
+                    maxDate: timespanMapperService.parseValue('1989-12-31'),
+                    initDate: timespanMapperService.parseValue('1989-12-31'),
+                    startingDay: 1
+                }
+            };
+            expect(facet.updateState(val)).toEqual(expected);
+        });
+
+        it('should not break if it is called with undefined dates', function() {
+            var val = { min: undefined, max: undefined };
+
+            var expected = {
+                start: {
+                    minDate: timespanMapperService.parseValue('1939-10-01'),
+                    maxDate: timespanMapperService.parseValue('1989-12-31'),
+                    initDate: timespanMapperService.parseValue('1939-10-01'),
+                    startingDay: 1
+                },
+                end: {
+                    minDate: timespanMapperService.parseValue('1939-10-01'),
+                    maxDate: timespanMapperService.parseValue('1989-12-31'),
+                    initDate: timespanMapperService.parseValue('1989-12-31'),
+                    startingDay: 1
+                }
+            };
+            expect(facet.updateState(val)).toEqual(expected);
         });
     });
 });

@@ -217,12 +217,12 @@
             var self = this;
 
             var minDate = self.getMinDate();
-            if (minMax.min < minDate) {
+            if (!minMax.min || minMax.min < minDate) {
                 minMax.min = minDate;
             }
 
             var maxDate = self.getMaxDate();
-            if (minMax.max > maxDate) {
+            if (!minMax.max || minMax.max > maxDate) {
                 minMax.max = maxDate;
             }
 
