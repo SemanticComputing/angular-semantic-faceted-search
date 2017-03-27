@@ -57,6 +57,7 @@
             '  VALUES ?value { <VALUES> } ' +
             '  ?value skos:prefLabel|rdfs:label [] . ' +
             '  <LABEL_PART>' +
+            '  BIND(?lbl AS ?facet_text)' +
             '  FILTER(?facet_text != "")' +
             ' }';
 
