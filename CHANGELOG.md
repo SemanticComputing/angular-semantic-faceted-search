@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.2] - 2017-03-27
+
+### Fixed
+
+- Queries to additional endpoints now return labels for values.
+
 ## [1.5.1] - 2017-03-24
 
 ### Fixed
@@ -102,7 +108,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.1...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.2...HEAD
+[1.5.2]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.1...1.5.2
 [1.5.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.0...1.5.1
 [1.5.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.4.1...1.5.0
 [1.4.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.4.0...1.4.1
