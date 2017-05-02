@@ -27,7 +27,7 @@
         * @description
         * Service for retrieving SPARQL results based on facet selections.
         *
-        * @param {string} endpointUrl The URL of the SPARQL endpoint.
+        * @param {string} endpoint The URL of the SPARQL endpoint, or a config object.
         * @param {Object} resultOptions Configuration object.
         *   The object has the following properties:
         *
@@ -63,7 +63,7 @@
         *     for more information.
         *
         */
-        function ResultHandler(endpointUrl, resultOptions) {
+        function ResultHandler(endpointConfig, resultOptions) {
             // Default options
             var options = {
                 resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
@@ -82,7 +82,7 @@
 
             var qryBuilder = new QueryBuilderService(options.prefixes);
 
-            var endpoint = new AdvancedSparqlService(endpointUrl, options.mapper);
+            var endpoint = new AdvancedSparqlService(endpointConfig, options.mapper);
 
             /**
             * @ngdoc method
@@ -108,7 +108,7 @@
                     return endpoint.getObjects(qry.query, options.resultsPerPage, qry.resultSetQuery,
                             options.pagesPerQuery);
                 } else {
-                    return endpoint.getObjects(qry);
+                    return endpoint.getObjects(qry.query);
                 }
             }
         }
