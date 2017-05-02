@@ -107,7 +107,7 @@ NG_DOCS={
       "type": "function",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "Service for retrieving SPARQL results based on facet selections.",
-      "keywords": "angular-paging-sparql-service api based best block broadcast comparators configuration constraint default defined en endpoint endpointurl example facet facetedsearch facethandler facetresulthandler facets facetselections filter function getresults github http https included insure io mapper method number object objectmapperservice optional options order package paged paging parameter placeholder prefixes properties query querytemplate rdf rdfs reflect required resources restrict result resultoptions retrieve retrieving seco select selections service skos sort sorting sparql template true truthy url variable variables wrap"
+      "keywords": "advancedsparqlservice angular-paging-sparql-service api based best block broadcast comparators configuration constraint default defined en endpoint endpointconfig example facet facetedsearch facethandler facetresulthandler facets facetselections filter function getresults github http https included insure io mapper method number object objectmapperservice optional options order package paged paging parameter placeholder prefixes properties query querytemplate rdf rdfs reflect required resources restrict result resultoptions retrieve retrieving seco select selections service skos sort sorting sparql template true truthy url variable variables wrap"
     },
     {
       "section": "api",
