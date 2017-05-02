@@ -27,7 +27,9 @@
         * @description
         * Service for retrieving SPARQL results based on facet selections.
         *
-        * @param {string} endpoint The URL of the SPARQL endpoint, or a config object.
+        * @param {string} endpointConfig The URL of the SPARQL endpoint,
+        *  or a configuration object as taken by {@link http://semanticcomputing.github.io/angular-paging-sparql-service/#/api/sparql.AdvancedSparqlService `AdvancedSparqlService`}.
+        *  See the {@link https://github.com/SemanticComputing/angular-paging-sparql-service angular-paging-sparql-service} package.
         * @param {Object} resultOptions Configuration object.
         *   The object has the following properties:
         *
