@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.4] - 2017-07-11
+
+### Fixed
+
+- Hierarchical facet now always shows all values.
+
 ## [1.5.3] - 2017-05-02
 
 ### Fixed
