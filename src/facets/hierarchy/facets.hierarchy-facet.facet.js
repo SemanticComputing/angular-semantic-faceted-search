@@ -164,8 +164,7 @@
             constraints = constraints || [];
             var query = this.queryTemplate
                 .replace(/<OTHER_SELECTIONS>/g, this.getOtherSelections(constraints))
-                .replace(/<HIERARCHY_CLASSES>/g,
-                    this.getSelectedValue() || this.getHierarchyClasses().join(' '));
+                .replace(/<HIERARCHY_CLASSES>/g, this.getHierarchyClasses().join(' '));
 
             return query;
         }

@@ -326,7 +326,9 @@
         * @description
         * Service for retrieving SPARQL results based on facet selections.
         *
-        * @param {string} endpointUrl The URL of the SPARQL endpoint.
+        * @param {string} endpointConfig The URL of the SPARQL endpoint,
+        *  or a configuration object as taken by {@link http://semanticcomputing.github.io/angular-paging-sparql-service/#/api/sparql.AdvancedSparqlService `AdvancedSparqlService`}.
+        *  See the {@link https://github.com/SemanticComputing/angular-paging-sparql-service angular-paging-sparql-service} package.
         * @param {Object} resultOptions Configuration object.
         *   The object has the following properties:
         *
@@ -362,7 +364,7 @@
         *     for more information.
         *
         */
-        function ResultHandler(endpointUrl, resultOptions) {
+        function ResultHandler(endpointConfig, resultOptions) {
             // Default options
             var options = {
                 resultsPerPage: DEFAULT_RESULTS_PER_PAGE,
@@ -381,7 +383,7 @@
 
             var qryBuilder = new QueryBuilderService(options.prefixes);
 
-            var endpoint = new AdvancedSparqlService(endpointUrl, options.mapper);
+            var endpoint = new AdvancedSparqlService(endpointConfig, options.mapper);
 
             /**
             * @ngdoc method
@@ -2369,8 +2371,7 @@
             constraints = constraints || [];
             var query = this.queryTemplate
                 .replace(/<OTHER_SELECTIONS>/g, this.getOtherSelections(constraints))
-                .replace(/<HIERARCHY_CLASSES>/g,
-                    this.getSelectedValue() || this.getHierarchyClasses().join(' '));
+                .replace(/<HIERARCHY_CLASSES>/g, this.getHierarchyClasses().join(' '));
 
             return query;
         }
