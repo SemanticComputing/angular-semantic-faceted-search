@@ -11,6 +11,7 @@
     "grunt-angular-templates": "^1.0.3",
     "grunt-contrib-clean": "^1.0.0",
     "grunt-contrib-concat": "^1.0.0",
+    "grunt-ng-annotate": "^3.0.0",
     "grunt-ngdocs": "^0.2.10",
     "jasmine": "^2.4.1",
     "jasmine-core": "^2.4.1",

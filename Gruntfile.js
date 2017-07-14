@@ -63,17 +63,29 @@ module.exports = function(grunt) {
             options: {
                 title: 'SPARQL Faceter'
             }
-        }
+        },
+        ngAnnotate: {
+            options: {
+                singleQuotes: true
+            },
+            dist: {
+                files: {
+                    'dist/semantic-faceted-search.js': 'dist/semantic-faceted-search.js',
+                }
+            }
+        },
     });
 
     grunt.loadNpmTasks('grunt-angular-templates');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-clean');
+    grunt.loadNpmTasks('grunt-ng-annotate');
     grunt.loadNpmTasks('grunt-ngdocs');
 
     grunt.registerTask('build', [
         'ngtemplates',
         'concat:js',
+        'ngAnnotate',
         'concat:css',
         'clean:templates'
     ]);
