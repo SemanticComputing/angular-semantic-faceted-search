@@ -214,6 +214,7 @@
     'use strict';
 
     /* eslint-disable angular/no-service-method */
+    facetUrlStateHandlerService.$inject = ['$location', '_'];
     angular.module('seco.facetedSearch')
 
     /**
@@ -304,6 +305,7 @@
     * @ngdoc object
     * @name seco.facetedSearch.FacetResultHandler
     */
+    FacetResultHandler.$inject = ['_', 'DEFAULT_PAGES_PER_QUERY', 'DEFAULT_RESULTS_PER_PAGE', 'PREFIXES', 'AdvancedSparqlService', 'objectMapperService', 'QueryBuilderService'];
     angular.module('seco.facetedSearch')
     .constant('DEFAULT_PAGES_PER_QUERY', 1)
     .constant('DEFAULT_RESULTS_PER_PAGE', 10)
@@ -424,6 +426,7 @@
     *
     * Author Erkki Heino.
     */
+    facetMapperService.$inject = ['_', 'objectMapperService'];
     angular.module('seco.facetedSearch')
 
     .factory('facetMapperService', facetMapperService);
@@ -477,6 +480,7 @@
     * @ngdoc object
     * @name seco.facetedSearch.FacetHandler
     */
+    FacetHandler.$inject = ['_', 'EVENT_FACET_CONSTRAINTS', 'EVENT_FACET_CHANGED', 'EVENT_REQUEST_CONSTRAINTS', 'EVENT_INITIAL_CONSTRAINTS'];
     angular.module('seco.facetedSearch')
     .factory('FacetHandler', FacetHandler);
 
@@ -630,7 +634,7 @@
     'use strict';
 
     angular.module('seco.facetedSearch')
-    .filter('textWithSelection', function(_) {
+    .filter('textWithSelection', ['_', function(_) {
         return function(values, text, selection) {
             if (!text) {
                 return values;
@@ -652,12 +656,13 @@
                     _.includes(selectedValues, val.value);
             });
         };
-    });
+    }]);
 })();
 
 (function() {
     'use strict';
 
+    AbstractFacetController.$inject = ['$scope', '$log', '_', 'EVENT_FACET_CONSTRAINTS', 'EVENT_FACET_CHANGED', 'EVENT_REQUEST_CONSTRAINTS', 'EVENT_INITIAL_CONSTRAINTS', 'FacetImpl'];
     angular.module('seco.facetedSearch')
     .controller('AbstractFacetController', AbstractFacetController);
 
@@ -800,6 +805,7 @@
 (function() {
     'use strict';
 
+    BasicFacet.$inject = ['$q', '_', 'AdvancedSparqlService', 'facetMapperService', 'NO_SELECTION_STRING', 'PREFIXES'];
     angular.module('seco.facetedSearch')
     .factory('BasicFacet', BasicFacet);
 
@@ -1119,6 +1125,7 @@
 (function() {
     'use strict';
 
+    BasicFacetController.$inject = ['$scope', '$controller', 'BasicFacet'];
     angular.module('seco.facetedSearch')
     .controller('BasicFacetController', BasicFacetController);
 
@@ -1196,6 +1203,7 @@
 (function() {
     'use strict';
 
+    TextFacet.$inject = ['_'];
     angular.module('seco.facetedSearch')
     .factory('TextFacet', TextFacet);
 
@@ -1287,6 +1295,7 @@
 (function() {
     'use strict';
 
+    TextFacetController.$inject = ['$scope', '_', 'EVENT_FACET_CHANGED', 'EVENT_REQUEST_CONSTRAINTS', 'EVENT_INITIAL_CONSTRAINTS', 'TextFacet'];
     angular.module('seco.facetedSearch')
     .controller('TextFacetController', TextFacetController);
 
@@ -1401,6 +1410,7 @@
 (function() {
     'use strict';
 
+    JenaTextFacet.$inject = ['_', 'TextFacet', 'textQueryPredicate'];
     angular.module('seco.facetedSearch')
     .value('textQueryPredicate', '<http://jena.apache.org/text#query>')
     .factory('JenaTextFacet', JenaTextFacet);
@@ -1475,6 +1485,7 @@
 (function() {
     'use strict';
 
+    JenaTextFacetController.$inject = ['$controller', '$scope', 'JenaTextFacet'];
     angular.module('seco.facetedSearch')
     .controller('JenaTextFacetController', JenaTextFacetController);
 
@@ -1566,6 +1577,7 @@
 (function() {
     'use strict';
 
+    timespanMapperService.$inject = ['_', 'objectMapperService'];
     angular.module('seco.facetedSearch')
 
     .factory('timespanMapperService', timespanMapperService);
@@ -1610,6 +1622,7 @@
 (function() {
     'use strict';
 
+    TimespanFacet.$inject = ['$q', '_', 'AdvancedSparqlService', 'timespanMapperService', 'BasicFacet', 'PREFIXES'];
     angular.module('seco.facetedSearch')
     .factory('TimespanFacet', TimespanFacet);
 
@@ -1941,6 +1954,7 @@
 (function() {
     'use strict';
 
+    TimespanFacetController.$inject = ['$scope', '$controller', 'TimespanFacet'];
     angular.module('seco.facetedSearch')
     .controller('TimespanFacetController', TimespanFacetController);
 
@@ -2011,6 +2025,7 @@
 (function() {
     'use strict';
 
+    CheckboxFacet.$inject = ['$q', '_', 'AdvancedSparqlService', 'facetMapperService', 'BasicFacet', 'PREFIXES'];
     angular.module('seco.facetedSearch')
     .factory('CheckboxFacet', CheckboxFacet);
 
@@ -2144,6 +2159,7 @@
 (function() {
     'use strict';
 
+    CheckboxFacetController.$inject = ['$scope', '$controller', 'CheckboxFacet'];
     angular.module('seco.facetedSearch')
     .controller('CheckboxFacetController', CheckboxFacetController);
 
@@ -2211,6 +2227,7 @@
 (function() {
     'use strict';
 
+    HierarchyFacet.$inject = ['$q', '_', 'BasicFacet', 'PREFIXES'];
     angular.module('seco.facetedSearch')
 
     .factory('HierarchyFacet', HierarchyFacet);
@@ -2381,6 +2398,7 @@
 (function() {
     'use strict';
 
+    HierarchyFacetController.$inject = ['$scope', '$controller', 'HierarchyFacet'];
     angular.module('seco.facetedSearch')
     .controller('HierarchyFacetController', HierarchyFacetController);
 
