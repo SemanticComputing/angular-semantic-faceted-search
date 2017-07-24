@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.1] - 2017-07-24
+
+### Changed
+
+- Update angular-spinner dependency.
+
 ## [1.6.0] - 2017-07-14
 
 ### Changed
@@ -126,7 +132,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.6.0...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.6.1...HEAD
+[1.6.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.6.0...1.6.1
 [1.6.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.4...1.6.0
 [1.5.4]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.3...1.5.4
 [1.5.3]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.2...1.5.3
