@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2017-07-26
+
+### Changed
+
+- Hierarchical facet now supports multiple levels in the hierarchy.
+  The `classes` option is no longer needed.
+
 ## [1.6.1] - 2017-07-24
 
 ### Changed
@@ -132,7 +139,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.6.1...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.7.0...HEAD
+[1.7.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.6.1...1.7.0
 [1.6.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.6.0...1.6.1
 [1.6.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.4...1.6.0
 [1.5.4]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.3...1.5.4
