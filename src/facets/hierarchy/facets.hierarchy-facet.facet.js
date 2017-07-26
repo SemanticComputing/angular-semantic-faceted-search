@@ -53,6 +53,7 @@
             ' } ';
 
             options.queryTemplate = options.queryTemplate || queryTemplate;
+            options.depth = angular.isUndefined(options.depth) ? 3 : options.depth;
 
             BasicFacet.call(this, options);
 

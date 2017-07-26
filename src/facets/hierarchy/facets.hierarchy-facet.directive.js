@@ -14,7 +14,7 @@
     *   Should be unique in the set of facets, and should be usable as a SPARQL variable.
     * - **predicate** - `{string}` - The predicate or property path that defines the facet values.
     * - **hierarchy** - `{string}` - The predicate or property path that defines the hierarchy of values.
-    * - **classes** - `{Array}` - The top level resources (URIs) of the hierarchy.
+    * - **depth** - `{number}` - The maximum depth of the hierarchy. Default is 3.
     * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
