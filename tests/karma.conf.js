@@ -9,7 +9,7 @@ module.exports = function(config) {
         '../bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
         '../bower_components/angular-paging-sparql-service/dist/sparql-service.js',
         '../bower_components/spin.js/spin.js',
-        '../bower_components/angular-spinner/angular-spinner.js',
+        '../bower_components/angular-spinner/dist/angular-spinner.js',
         '../bower_components/checklist-model/checklist-model.js',
         '../src/facets/facets.module.js',
         '../src/**/*.js',

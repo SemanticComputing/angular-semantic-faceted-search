@@ -31,7 +31,8 @@ describe('HierarchyFacet', function() {
             predicate: '<pred>',
             hierarchy: '<hierarchy>',
             classes: ['<class1>', '<class2>'],
-            enabled: true
+            enabled: true,
+            depth: 3
         };
 
         facet = new HierarchyFacet(options);
@@ -137,12 +138,8 @@ describe('HierarchyFacet', function() {
             facet.selectedValue = { value: '<obj>' };
 
             var expected =
-            ' VALUES ?seco_class_textId { ' +
-            '  <obj> ' +
-            ' } ' +
-            ' ?seco_h_textId <hierarchy> ?seco_class_textId . ' +
-            ' ?seco_v_textId <hierarchy> ?seco_h_textId . ' +
-            ' ?id <pred> ?seco_v_textId .';
+            ' ?id <pred> ?seco_v_textId . ' +
+            ' ?seco_v_textId (<hierarchy>)* <obj> . ';
 
             expect(facet.getConstraint()).toEqual(expected.replace(/\s+/g, ' '));
 
@@ -172,15 +169,29 @@ describe('HierarchyFacet', function() {
             '  {' +
             '   SELECT DISTINCT ?cnt ?value ?facet_text {' +
             '    {' +
-            '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value ?class {' +
-            '      VALUES ?class { ' +
-            '       <class1> <class2> ' +
+            '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value ?hierarchy ?lvl {' +
+            '      { SELECT DISTINCT ?h { [] <pred> ?h . } } ' +
+            '      ?h (<hierarchy>)* ?value . ' +
+            '      OPTIONAL { ' +
+            '       ?value <hierarchy> ?u0 . ?u0 <hierarchy> ?u1 . ?u1 <hierarchy> ?u2 . ' +
+            '       BIND(CONCAT(STR(?u2),STR(?u1),STR(?u0),STR(?value)) AS ?_h) ' +
+            '       BIND("------ " AS ?lvl) ' +
             '      } ' +
-            '      ?value <hierarchy> ?class . ' +
-            '      ?h <hierarchy> ?value . ' +
+            '      OPTIONAL { ' +
+            '       ?value <hierarchy> ?u0 . ?u0 <hierarchy> ?u1 . ' +
+            '       BIND(CONCAT(STR(?u1),STR(?u0),STR(?value)) AS ?_h) ' +
+            '       BIND("---- " AS ?lvl) ' +
+            '      } ' +
+            '      OPTIONAL { ' +
+            '       ?value <hierarchy> ?u0 . ' +
+            '       BIND(CONCAT(STR(?u0),STR(?value)) AS ?_h) ' +
+            '       BIND("-- " AS ?lvl) ' +
+            '      } ' +
+            '      OPTIONAL { BIND("" AS ?lvl) } ' +
+            '      BIND(COALESCE(?_h, STR(?value)) AS ?hierarchy) ' +
             '      ?id <pred> ?h .' +
             '      ?id <p> <o> . ' +
-            '     } GROUP BY ?class ?value ' +
+            '     } GROUP BY ?hierarchy ?value ?lvl ORDER BY ?hierarchy ' +
             '    } ' +
             '    FILTER(BOUND(?value))' +
             '    OPTIONAL {' +
@@ -199,10 +210,9 @@ describe('HierarchyFacet', function() {
             '     ?value rdfs:label ?lbl . ' +
             '     FILTER(langMatches(lang(?lbl), "")) .' +
             '    } ' +
-            '    BIND(COALESCE(?lbl, STR(?value)) as ?label)' +
-            '    BIND(IF(?value = ?class, ?label, CONCAT("-- ", ?label)) as ?facet_text)' +
-            '    BIND(IF(?value = ?class, 0, 1) as ?order)' +
-            '   } ORDER BY ?class ?order ?facet_text' +
+            '    BIND(COALESCE(?lbl, STR(?value)) as ?label) ' +
+            '    BIND(CONCAT(?lvl, ?label) as ?facet_text)' +
+            '   }' +
             '  } ' +
             ' } ';
 
