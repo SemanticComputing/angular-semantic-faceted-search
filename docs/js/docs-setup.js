@@ -46,7 +46,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A select box facet for hierarchical values.",
-      "keywords": "api box case config configuration constraint default defines directive disabled displayed en enabled endpoint facet facetedsearch facethandler facets friendly globally hierarchical hierarchy label labels language languages level list object optional options order path predicate preferred priority properties property rdfs resource resources seco select set skos sorting sparql structure supported tag title top undefined unique uri url usable users values variable"
+      "keywords": "api box case config configuration constraint default defines depth directive disabled displayed en enabled endpoint facet facetedsearch facethandler facets friendly globally hierarchical hierarchy label labels language languages list maximum object optional options order path predicate preferred priority properties property rdfs resource seco select set skos sorting sparql structure supported tag title undefined unique uri url usable users values variable"
     },
     {
       "section": "api",
