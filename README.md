@@ -88,17 +88,9 @@ vm.facets = {
         name: 'Rank',
         facetId: 'rank',
         predicate: '<http://ldf.fi/schema/narc-menehtyneet1939-45/sotilasarvo>',
-        hierarchy: '<http://purl.org/dc/terms/isPartOf>*|(<http://rdf.muninn-project.org/ontologies/organization#equalTo>/<http://purl.org/dc/terms/isPartOf>*)',
+        hierarchy: '<http://purl.org/dc/terms/isPartOf>',
         enabled: true,
-        classes: [
-            '<http://ldf.fi/warsa/actors/ranks/Upseeri>',
-            '<http://ldf.fi/warsa/actors/ranks/Aliupseeri>',
-            '<http://ldf.fi/warsa/actors/ranks/Miehistoe>',
-            '<http://ldf.fi/warsa/actors/ranks/Jaeaekaeriarvo>',
-            '<http://ldf.fi/warsa/actors/ranks/Virkahenkiloestoe>',
-            '<http://ldf.fi/warsa/actors/ranks/Lottahenkiloestoe>',
-            '<http://ldf.fi/warsa/actors/ranks/Muu>'
-        ]
+        depth: 3
     }
 };
 
