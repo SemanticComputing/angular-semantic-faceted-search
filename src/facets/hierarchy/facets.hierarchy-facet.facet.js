@@ -157,7 +157,7 @@
             for (var i = count; i > 0; i--) {
                 var hierarchy = _.map(_.range(i - 1), function(n) { return '?u' + n + ' <PROPERTY> ?u' + (n + 1) + ' . '; }).join('') +
                     'BIND(CONCAT(' + _.map(_.rangeRight(i), function(n) { return 'STR(?u' + n + '),'; }).join('') + 'STR(?value)) AS ?_h) ' +
-                    'BIND("' + _.repeat('--', i) + ' " AS ?lvl)';
+                    'BIND("' + _.repeat('-', i) + ' " AS ?lvl)';
                 res = res += template.replace('<HIERARCHY>', hierarchy);
             }
             var end = ' OPTIONAL { BIND("" AS ?lvl) } BIND(COALESCE(?_h, STR(?value)) AS ?hierarchy) ';
