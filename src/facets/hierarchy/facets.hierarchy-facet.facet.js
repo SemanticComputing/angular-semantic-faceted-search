@@ -37,7 +37,7 @@
             '   SELECT DISTINCT ?cnt ?value ?facet_text {' +
             '    {' +
             '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value ?hierarchy ?lvl {' +
-            '      { SELECT DISTINCT ?h { [] <ID> ?h . } } ' +
+            '      { SELECT DISTINCT ?h { [] <ID> ?h . <SPECIFIER> } } ' +
             '      ?h (<HIERARCHY>)* ?value . ' +
             '      <LEVELS> ' +
             '      ?id <ID> ?h .' +
@@ -67,7 +67,7 @@
             }
 
             var triplePatternTemplate =
-                ' ?id <ID> ?<V_VAR> . ?<V_VAR> (<HIERARCHY>)* <SELECTED_VAL> . ';
+                ' ?id <ID> ?<V_VAR> . ?<V_VAR> (<HIERARCHY>)* <SELECTED_VAL> . <SPECIFIER> ';
 
             this.triplePatternTemplate = this.buildQueryTemplate(triplePatternTemplate);
         }
@@ -111,7 +111,8 @@
                 return;
             }
             var res = this.triplePatternTemplate
-                .replace(/<SELECTED_VAL>/g, this.getSelectedValue());
+                .replace(/<SELECTED_VAL>/g, this.getSelectedValue())
+                .replace(/<SPECIFIER>/g, this.getSpecifier().replace(/\?value/g, '?seco_v_' + this.facetId));
 
             return res;
         }
@@ -144,7 +145,8 @@
             constraints = constraints || [];
             var query = this.queryTemplate
                 .replace(/<OTHER_SELECTIONS>/g, this.getOtherSelections(constraints))
-                .replace(/<LEVELS>/g, buildLevels(this.config.depth, this.config.hierarchy));
+                .replace(/<LEVELS>/g, buildLevels(this.config.depth, this.config.hierarchy))
+                .replace(/<SPECIFIER>/g, this.getSpecifier().replace(/\?value\b/g, '?h'));
 
             return query;
         }
