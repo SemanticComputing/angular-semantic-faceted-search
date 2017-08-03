@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.1] - 2017-08-03
+
+### Changed
+
+- Hierarchical facet now supports the `specifier` option.
+- Hierarchical facet now displays only one dash per level in the hierarchy.
+
 ## [1.7.0] - 2017-07-26
 
 ### Changed
@@ -139,7 +146,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.7.0...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.7.1...HEAD
+[1.7.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.7.0...1.7.1
 [1.7.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.6.1...1.7.0
 [1.6.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.6.0...1.6.1
 [1.6.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.5.4...1.6.0
