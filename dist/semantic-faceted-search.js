@@ -2261,7 +2261,7 @@
             '   SELECT DISTINCT ?cnt ?value ?facet_text {' +
             '    {' +
             '     SELECT DISTINCT (count(DISTINCT ?id) as ?cnt) ?value ?hierarchy ?lvl {' +
-            '      { SELECT DISTINCT ?h { [] <ID> ?h . } } ' +
+            '      { SELECT DISTINCT ?h { [] <ID> ?h . <SPECIFIER> } } ' +
             '      ?h (<HIERARCHY>)* ?value . ' +
             '      <LEVELS> ' +
             '      ?id <ID> ?h .' +
@@ -2291,7 +2291,7 @@
             }
 
             var triplePatternTemplate =
-                ' ?id <ID> ?<V_VAR> . ?<V_VAR> (<HIERARCHY>)* <SELECTED_VAL> . ';
+                ' ?id <ID> ?<V_VAR> . ?<V_VAR> (<HIERARCHY>)* <SELECTED_VAL> . <SPECIFIER> ';
 
             this.triplePatternTemplate = this.buildQueryTemplate(triplePatternTemplate);
         }
@@ -2335,7 +2335,8 @@
                 return;
             }
             var res = this.triplePatternTemplate
-                .replace(/<SELECTED_VAL>/g, this.getSelectedValue());
+                .replace(/<SELECTED_VAL>/g, this.getSelectedValue())
+                .replace(/<SPECIFIER>/g, this.getSpecifier().replace(/\?value/g, '?seco_v_' + this.facetId));
 
             return res;
         }
@@ -2368,7 +2369,8 @@
             constraints = constraints || [];
             var query = this.queryTemplate
                 .replace(/<OTHER_SELECTIONS>/g, this.getOtherSelections(constraints))
-                .replace(/<LEVELS>/g, buildLevels(this.config.depth, this.config.hierarchy));
+                .replace(/<LEVELS>/g, buildLevels(this.config.depth, this.config.hierarchy))
+                .replace(/<SPECIFIER>/g, this.getSpecifier().replace(/\?value\b/g, '?h'));
 
             return query;
         }
@@ -2379,7 +2381,7 @@
             for (var i = count; i > 0; i--) {
                 var hierarchy = _.map(_.range(i - 1), function(n) { return '?u' + n + ' <PROPERTY> ?u' + (n + 1) + ' . '; }).join('') +
                     'BIND(CONCAT(' + _.map(_.rangeRight(i), function(n) { return 'STR(?u' + n + '),'; }).join('') + 'STR(?value)) AS ?_h) ' +
-                    'BIND("' + _.repeat('--', i) + ' " AS ?lvl)';
+                    'BIND("' + _.repeat('-', i) + ' " AS ?lvl)';
                 res = res += template.replace('<HIERARCHY>', hierarchy);
             }
             var end = ' OPTIONAL { BIND("" AS ?lvl) } BIND(COALESCE(?_h, STR(?value)) AS ?hierarchy) ';
@@ -2420,6 +2422,15 @@
     * - **hierarchy** - `{string}` - The predicate or property path that defines the hierarchy of values.
     * - **depth** - `{number}` - The maximum depth of the hierarchy. Default is 3.
     * - **name** - `{string}` - The title of the facet. Will be displayed to end users.
+    * - **[specifier]** `{string}` - Restriction on the values as a SPARQL triple pattern.
+    *   Helpful if multiple facets need to be generated from the same predicate,
+    *   or not all values defined by the given predicate should be selectable.
+    *   `?value` is the variable to which the facet selection is bound.
+    *   For example, if `predicate` has been defined as
+    *   `<http://purl.org/dc/terms/subject>` (subject),
+    *   and there are different kinds of subjects for the resource, and you want
+    *   to select people (`<http://xmlns.com/foaf/0.1/Person>`) only, you would
+    *   define `specifier` as `'?value a <http://xmlns.com/foaf/0.1/Person> .'`.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
