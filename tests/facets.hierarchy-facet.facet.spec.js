@@ -138,10 +138,9 @@ describe('HierarchyFacet', function() {
             facet.selectedValue = { value: '<obj>' };
 
             var expected =
-            ' ?id <pred> ?seco_v_textId . ' +
-            ' ?seco_v_textId (<hierarchy>)* <obj> . ';
+            ' ?id <pred> ?seco_v_textId . ?seco_v_textId (<hierarchy>)* <obj> . ';
 
-            expect(facet.getConstraint()).toEqual(expected.replace(/\s+/g, ' '));
+            expect(facet.getConstraint().replace(/\s+/g, ' ')).toEqual(expected.replace(/\s+/g, ' '));
 
             facet.selectedValue = undefined;
 
@@ -175,17 +174,17 @@ describe('HierarchyFacet', function() {
             '      OPTIONAL { ' +
             '       ?value <hierarchy> ?u0 . ?u0 <hierarchy> ?u1 . ?u1 <hierarchy> ?u2 . ' +
             '       BIND(CONCAT(STR(?u2),STR(?u1),STR(?u0),STR(?value)) AS ?_h) ' +
-            '       BIND("------ " AS ?lvl) ' +
+            '       BIND("--- " AS ?lvl) ' +
             '      } ' +
             '      OPTIONAL { ' +
             '       ?value <hierarchy> ?u0 . ?u0 <hierarchy> ?u1 . ' +
             '       BIND(CONCAT(STR(?u1),STR(?u0),STR(?value)) AS ?_h) ' +
-            '       BIND("---- " AS ?lvl) ' +
+            '       BIND("-- " AS ?lvl) ' +
             '      } ' +
             '      OPTIONAL { ' +
             '       ?value <hierarchy> ?u0 . ' +
             '       BIND(CONCAT(STR(?u0),STR(?value)) AS ?_h) ' +
-            '       BIND("-- " AS ?lvl) ' +
+            '       BIND("- " AS ?lvl) ' +
             '      } ' +
             '      OPTIONAL { BIND("" AS ?lvl) } ' +
             '      BIND(COALESCE(?_h, STR(?value)) AS ?hierarchy) ' +
@@ -215,7 +214,6 @@ describe('HierarchyFacet', function() {
             '   }' +
             '  } ' +
             ' } ';
-
             expect(facet.buildQuery(cons).replace(/\s+/g, ' ')).toEqual(expected.replace(/\s+/g, ' '));
         });
     });
