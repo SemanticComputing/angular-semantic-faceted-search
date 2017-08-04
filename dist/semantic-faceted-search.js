@@ -574,7 +574,7 @@
             // Update state, and broadcast it to listening facets.
             function update(event, constraint) {
                 event.stopPropagation();
-                if (self.state.facets[constraint.id] !== constraint) {
+                if (!_.isEqual(self.state.facets[constraint.id], constraint)) {
                     self.state.facets[constraint.id] = constraint;
                     broadCastConstraints(EVENT_FACET_CONSTRAINTS);
                 }
@@ -743,7 +743,8 @@
             var args = {
                 id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
-                value: val
+                value: val,
+                priority: vm.facet.getPriority()
             };
             $scope.$emit(EVENT_FACET_CHANGED, args);
         }
@@ -820,6 +821,7 @@
         BasicFacetConstructor.prototype.getConstraint = getConstraint;
         BasicFacetConstructor.prototype.getTriplePattern = getTriplePattern;
         BasicFacetConstructor.prototype.getSpecifier = getSpecifier;
+        BasicFacetConstructor.prototype.getPriority = getPriority;
         BasicFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         BasicFacetConstructor.prototype.buildQuery = buildQuery;
         BasicFacetConstructor.prototype.buildSelections = buildSelections;
@@ -1022,6 +1024,10 @@
             return this.specifier ? this.specifier : '';
         }
 
+        function getPriority() {
+            return this.config.priority;
+        }
+
         function getConstraint() {
             if (!this.getSelectedValue()) {
                 return;
@@ -1211,6 +1217,7 @@
     function TextFacet(_) {
 
         TextFacetConstructor.prototype.getConstraint = getConstraint;
+        TextFacetConstructor.prototype.getPriority = getPriority;
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         TextFacetConstructor.prototype.disable = disable;
         TextFacetConstructor.prototype.enable = enable;
@@ -1273,6 +1280,10 @@
             return this.selectedValue;
         }
 
+        function getPriority() {
+            return this.config.priority;
+        }
+
         function clear() {
             this.selectedValue = undefined;
         }
@@ -1330,11 +1341,11 @@
         }
 
         function emitChange() {
-            var val = vm.facet.getSelectedValue();
             var args = {
                 id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
-                value: val
+                value: vm.facet.getSelectedValue(),
+                priority: vm.facet.getPriority()
             };
             $scope.$emit(EVENT_FACET_CHANGED, args);
         }
