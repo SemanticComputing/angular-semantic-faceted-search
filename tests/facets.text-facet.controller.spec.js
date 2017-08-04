@@ -3,12 +3,13 @@
 describe('TextFacetController', function() {
     beforeEach(module('seco.facetedSearch'));
 
-    var $controller, $rootScope, $scope, mock, constraints, controller;
+    var $controller, $rootScope, $scope, mock, constraints, initial, controller;
 
     beforeEach(module(function($provide) {
         mock = {
             getSelectedValue: function() { return 'text'; },
             getConstraint: function() { return 'constraint'; },
+            getPriority: function() { return 1; },
             facetId: 'textId',
             clear: function() { },
             enable: function() { },
@@ -25,11 +26,20 @@ describe('TextFacetController', function() {
         $controller = _$controller_;
         $scope = $rootScope.$new();
 
+        initial = {
+            config: {
+                scope: $scope,
+                constraint: ['default', 'constraint'],
+                preferredLang : 'fi'
+            }
+        };
+
         constraints = {
             facets: {
                 textId: {
                     constraint: 'constraint',
-                    value: 'text'
+                    value: 'text',
+                    priority: 1
                 }
             },
             constraint: ['default', 'constraint']
@@ -40,7 +50,7 @@ describe('TextFacetController', function() {
         $scope.options = {};
         controller = $controller('TextFacetController', { $scope: $scope });
         $scope.$digest();
-        $scope.$broadcast('sf-initial-constraints', constraints);
+        $scope.$broadcast('sf-initial-constraints', initial);
     });
 
     it('should listen for initial values initially', function() {
@@ -59,7 +69,7 @@ describe('TextFacetController', function() {
             $scope.options = {};
             controller = $controller('TextFacetController', { $scope: $scope });
             $scope.$digest();
-            $scope.$broadcast('sf-initial-constraints', constraints);
+            $scope.$broadcast('sf-initial-constraints', initial);
         });
 
         it('should emit the state of the facet', function() {
@@ -67,7 +77,7 @@ describe('TextFacetController', function() {
 
             controller.changed();
 
-            var args = { id: 'textId', constraint: 'constraint', value: 'text' };
+            var args = { id: 'textId', constraint: 'constraint', value: 'text', priority: 1 };
             expect($scope.$emit).toHaveBeenCalledWith('sf-facet-changed', args);
         });
     });

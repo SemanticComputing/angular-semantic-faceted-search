@@ -8,6 +8,7 @@
     function TextFacet(_) {
 
         TextFacetConstructor.prototype.getConstraint = getConstraint;
+        TextFacetConstructor.prototype.getPriority = getPriority;
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         TextFacetConstructor.prototype.disable = disable;
         TextFacetConstructor.prototype.enable = enable;
@@ -68,6 +69,10 @@
 
         function getSelectedValue() {
             return this.selectedValue;
+        }
+
+        function getPriority() {
+            return this.config.priority;
         }
 
         function clear() {

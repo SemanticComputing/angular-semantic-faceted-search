@@ -35,11 +35,11 @@
         }
 
         function emitChange() {
-            var val = vm.facet.getSelectedValue();
             var args = {
                 id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
-                value: val
+                value: vm.facet.getSelectedValue(),
+                priority: vm.facet.getPriority()
             };
             $scope.$emit(EVENT_FACET_CHANGED, args);
         }

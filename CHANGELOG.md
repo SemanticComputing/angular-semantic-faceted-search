@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Make the `priority` option work.
+
 ## [1.7.1] - 2017-08-03
 
 ### Changed

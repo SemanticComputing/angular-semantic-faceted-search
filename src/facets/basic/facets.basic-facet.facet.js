@@ -19,6 +19,7 @@
         BasicFacetConstructor.prototype.getConstraint = getConstraint;
         BasicFacetConstructor.prototype.getTriplePattern = getTriplePattern;
         BasicFacetConstructor.prototype.getSpecifier = getSpecifier;
+        BasicFacetConstructor.prototype.getPriority = getPriority;
         BasicFacetConstructor.prototype.buildQueryTemplate = buildQueryTemplate;
         BasicFacetConstructor.prototype.buildQuery = buildQuery;
         BasicFacetConstructor.prototype.buildSelections = buildSelections;
@@ -219,6 +220,10 @@
 
         function getSpecifier() {
             return this.specifier ? this.specifier : '';
+        }
+
+        function getPriority() {
+            return this.config.priority;
         }
 
         function getConstraint() {

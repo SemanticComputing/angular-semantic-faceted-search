@@ -81,7 +81,8 @@
             var args = {
                 id: vm.facet.facetId,
                 constraint: vm.facet.getConstraint(),
-                value: val
+                value: val,
+                priority: vm.facet.getPriority()
             };
             $scope.$emit(EVENT_FACET_CHANGED, args);
         }
