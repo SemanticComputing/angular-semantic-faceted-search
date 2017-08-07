@@ -138,6 +138,21 @@ describe('BasicFacet', function() {
         });
     });
 
+    describe('getPriority', function() {
+        it('should return the priority value', function() {
+            expect(facet.getPriority()).toBeUndefined();
+
+            facet.config.priority = 20;
+
+            expect(facet.getPriority()).toEqual(20);
+
+            options.priority = 30;
+            facet = new BasicFacet(options);
+
+            expect(facet.getPriority()).toEqual(30);
+        });
+    });
+
     describe('buildQuery', function() {
         it('should build a valid query', function() {
             var cons = ['?id <p> <o> .'];
