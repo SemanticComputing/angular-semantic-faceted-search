@@ -1,4 +1,4 @@
-<a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/edit/master/src/facets/facets.facet-handler.service.js" class="improve-docs"><i class="icon-edit"> </i>Improve this doc</a><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/e92e79f/src/facets/facets.facet-handler.service.js#L74" class="view-source"><i class="icon-eye-open"> </i>View source</a><h1><code ng:non-bindable="">FacetHandler</code>
+<a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/edit/master/src/facets/facets.facet-handler.service.js" class="improve-docs"><i class="icon-edit"> </i>Improve this doc</a><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/2c657af/src/facets/facets.facet-handler.service.js#L75" class="view-source"><i class="icon-eye-open"> </i>View source</a><h1><code ng:non-bindable="">FacetHandler</code>
 <div><span class="hint">service in module <code ng:non-bindable="">seco.facetedSearch</code>
 </span>
 </div>
@@ -42,14 +42,15 @@ broadcasting and listening for events.</li>
 <li><strong>[endpointUrl]</strong> - <code>{string}</code> - The SPARQL endpoint URL. Optional,
 as it is just sent to all listening facets at init, and can also
 be given to facets individually.</li>
+<li><strong>[headers]</strong> <code>{Object}</code> - Additional HTTP headers.</li>
 <li><strong>[constraint]</strong> - <code>{string}</code> - A SPARQL triple pattern that selects
 all the resources that are being faceted.</li>
 <li><strong>[rdfClass]</strong> - <code>{string}</code> - The <code>rdf:type</code> of the resources being
 faceted. A shorthand for <code>constraint: &#39;?id a &lt;class&gt; .&#39;</code>.</li>
-<li><strong>[preferredLang]</strong> - <code>{string}</code> - The language tag that is preferred
+<li><strong>[preferredLang]</strong> - <code>{string|Array}</code> - The language tag that is preferred
 when getting labels for facet values, in case the value is a resource.
+If the value is an Array, the specified languages are tried in order.
 The default is &#39;en&#39;.
-Currently only one language can be given.
 This argument can also be given directly to the individual facets.</li>
 <li><strong>[initialState]</strong> - <code>{Object}</code> - The initial state of the facets.
 Used when loading the state from URL parameters, for example.
@@ -60,7 +61,7 @@ although the above fields are the only ones used by FacetHandler and the
 built-in facets.</p>
 </div></td></tr></tbody></table></div>
 <div class="member method"><h2 id="methods">Methods</h2>
-<ul class="methods"><li><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/e92e79f/src/facets/facets.facet-handler.service.js#L149" class="view-source icon-eye-open"> </a><h3 id="methods_removelisteners">removeListeners()</h3>
+<ul class="methods"><li><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/2c657af/src/facets/facets.facet-handler.service.js#L150" class="view-source icon-eye-open"> </a><h3 id="methods_removelisteners">removeListeners()</h3>
 <div class="removelisteners"><div class="seco-facetedsearch-facethandler-removelisteners-page"><p>Remove event listeners from the scope.
 Probably only needed if you, for some reason, need to
 use <code>$rootScope</code> as the communication scope.</p>

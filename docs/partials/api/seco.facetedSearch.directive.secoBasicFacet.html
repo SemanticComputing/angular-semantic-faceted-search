@@ -1,4 +1,4 @@
-<a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/edit/master/src/facets/basic/facets.basic-facet.directive.js" class="improve-docs"><i class="icon-edit"> </i>Improve this doc</a><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/e92e79f/src/facets/basic/facets.basic-facet.directive.js#L49" class="view-source"><i class="icon-eye-open"> </i>View source</a><h1><code ng:non-bindable="">secoBasicFacet</code>
+<a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/edit/master/src/facets/basic/facets.basic-facet.directive.js" class="improve-docs"><i class="icon-edit"> </i>Improve this doc</a><a href="https://github.com/SemanticComputing/angular-semantic-faceted-search/blob/2c657af/src/facets/basic/facets.basic-facet.directive.js#L52" class="view-source"><i class="icon-eye-open"> </i>View source</a><h1><code ng:non-bindable="">secoBasicFacet</code>
 <div><span class="hint">directive in module <code ng:non-bindable="">seco.facetedSearch</code>
 </span>
 </div>
@@ -33,6 +33,9 @@ If undefined, the facet will be disabled by default.</li>
 <li><strong>[endpointUrl]</strong> <code>{string}</code> - The URL of the SPARQL endpoint.
 Optional, as it can also be given globally in
 <a href="#/api/seco.facetedSearch.FacetHandler"><code>FacetHandler</code></a> config.</li>
+<li><strong>[headers]</strong> <code>{Object}</code> - Additional HTTP headers.
+Note that currently it is not possible to specify separate headers for separate
+services.</li>
 <li><strong>[services]</strong> <code>{Array}</code> - In case labels for the facet values are (partially)
 found in another SPARQL endpoint, those endpoints can be given as a list of URIs.
 A separate query is made to each additional service to retrieve the labels.</li>

@@ -28,7 +28,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A basic select box facet with text filtering.",
-      "keywords": "additional api basic bound box case config configuration constraint default define defined defines directive disabled displayed en enabled endpoint endpoints example facet facetedsearch facethandler facets filtering friendly generate generated globally helpful kinds label labels language languages list multiple object optional options order org pattern patterns people predicate preferred priority properties property query rdfs resource restriction retrieve seco select selectable selection separate service set skos sorting sparql specifier structure subjects supported tag text title triple undefined unique uri uris url usable users values variable"
+      "keywords": "additional api basic bound box case config configuration constraint currently default define defined defines directive disabled displayed en enabled endpoint endpoints example facet facetedsearch facethandler facets filtering friendly generate generated globally headers helpful http kinds label labels language languages list multiple note object optional options order org pattern patterns people predicate preferred priority properties property query rdfs resource restriction retrieve seco select selectable selection separate service services set skos sorting sparql specifier structure subjects supported tag text title triple undefined unique uri uris url usable users values variable"
     },
     {
       "section": "api",
@@ -37,7 +37,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A facet for a checkbox selector based on a triple pattern.",
-      "keywords": "api based bound checkbox checkboxes choice choices configuration constraint create default definitions directive disabled displayed element enabled example facet facetedsearch facets friendly hobby label list multiple object options org pattern priority property resource resources restrict result seco selected selections selector set sorting sparql structure title triple undefined union unique uniqueidforthischoice usable users variable"
+      "keywords": "additional api based bound checkbox checkboxes choice choices config configuration constraint create default definitions directive disabled displayed element enabled endpoint example facet facetedsearch facethandler facets friendly globally headers hobby http label list multiple object optional options org pattern priority property resource resources restrict result seco selected selections selector set sorting sparql structure title triple undefined union unique uniqueidforthischoice url usable users variable"
     },
     {
       "section": "api",
@@ -46,7 +46,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A select box facet for hierarchical values.",
-      "keywords": "api bound box case config configuration constraint default define defined defines depth directive disabled displayed en enabled endpoint example facet facetedsearch facethandler facets friendly generated globally helpful hierarchical hierarchy kinds label labels language languages list maximum multiple object optional options order org path pattern people predicate preferred priority properties property rdfs resource restriction seco select selectable selection set skos sorting sparql specifier structure subjects supported tag title triple undefined unique uri url usable users values variable"
+      "keywords": "additional api bound box case config configuration constraint default define defined defines depth directive disabled displayed en enabled endpoint example facet facetedsearch facethandler facets friendly generated globally headers helpful hierarchical hierarchy http kinds label labels language languages list maximum multiple object optional options order org path pattern people predicate preferred priority properties property rdfs resource restriction seco select selectable selection set skos sorting sparql specifier structure subjects supported tag title triple undefined unique uri url usable users values variable"
     },
     {
       "section": "api",
@@ -73,7 +73,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A facet for selecting date ranges.",
-      "keywords": "api based configuration constraint currently data dates default defines directive disabled discarded displayed earliest enabled facet facetedsearch facets format friendly iso issues lead maximum minimum object options org path predefined predicate priority property range ranges restricts retrieved seco selectable selecting selections set sorting sparql start string structure support supports timezone timezones title type undefined underlying unique usable user users values variable w3"
+      "keywords": "additional api based config configuration constraint currently data dates default defines directive disabled discarded displayed earliest enabled endpoint facet facetedsearch facethandler facets format friendly globally headers http iso issues lead maximum minimum object optional options org path predefined predicate priority property range ranges restricts retrieved seco selectable selecting selections set sorting sparql start string structure support supports timezone timezones title type undefined underlying unique url usable user users values variable w3"
     },
     {
       "section": "api",
@@ -82,7 +82,7 @@ NG_DOCS={
       "type": "function",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "Service for mediating the communication between facets.",
-      "keywords": "$rootscope api argument broadcast broadcasting broadcasts built-in case collection communication config configuration constants constraint constraints created currently default defined directly emitted en endpoint event event_facet_changed event_facet_constraints event_initial_constraints event_request_constraints events example extra facet faceted facetedsearch facethandler facetid facets faceturlstatehandlerservice fields function generated included individual individually init initial injectable instantiating key labels language listeners listening listens loading mediating method names needed object omitting optional parameters parent pattern preferred properties rdf reason remove removelisteners resource resources response scope seco selects service sf-facet-changed sf-facet-constraints sf-facets-changed sf-initial-constraints sf-request-constraints shorthand sparql structure tag triple url values"
+      "keywords": "$rootscope additional api argument array broadcast broadcasting broadcasts built-in case collection communication config configuration constants constraint constraints created default defined directly emitted en endpoint event event_facet_changed event_facet_constraints event_initial_constraints event_request_constraints events example extra facet faceted facetedsearch facethandler facetid facets faceturlstatehandlerservice fields function generated headers http included individual individually init initial injectable instantiating key labels language languages listeners listening listens loading mediating method names needed object omitting optional order parameters parent pattern preferred properties rdf reason remove removelisteners resource resources response scope seco selects service sf-facet-changed sf-facet-constraints sf-facets-changed sf-initial-constraints sf-request-constraints shorthand sparql structure tag triple url values"
     },
     {
       "section": "api",
