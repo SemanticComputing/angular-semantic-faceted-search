@@ -108,7 +108,7 @@
 
                 if (options.paging) {
                     return endpoint.getObjects(qry.query, options.resultsPerPage, qry.resultSetQuery,
-                            options.pagesPerQuery);
+                        options.pagesPerQuery);
                 } else {
                     return endpoint.getObjects(qry.query);
                 }

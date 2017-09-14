@@ -9,7 +9,7 @@
     .factory('BasicFacet', BasicFacet);
 
     /* ngInject */
-    function BasicFacet($q, _, AdvancedSparqlService, facetMapperService, NO_SELECTION_STRING, PREFIXES) {
+    function BasicFacet($q, _, facetEndpoint, NO_SELECTION_STRING, PREFIXES) {
 
         BasicFacetConstructor.prototype.update = update;
         BasicFacetConstructor.prototype.getState = getState;
@@ -107,11 +107,7 @@
                 this.disable();
             }
 
-            var endpointConfig = {
-                endpointUrl: this.config.endpointUrl,
-                usePost: this.config.usePost
-            };
-            this.endpoint = new AdvancedSparqlService(endpointConfig, facetMapperService);
+            this.endpoint = facetEndpoint.getEndpoint(this.config);
 
             // Initial value
             var constVal = _.get(options, 'initial.' + this.facetId);
@@ -194,9 +190,10 @@
             var promises = _.map(self.config.services, function(s) {
                 var endpointConfig = {
                     endpointUrl: s.replace(/[<>]/g, ''),
-                    usePost: self.config.usePost
+                    usePost: self.config.usePost,
+                    headers: self.config.headers
                 };
-                var endpoint = new AdvancedSparqlService(endpointConfig, facetMapperService);
+                var endpoint = facetEndpoint.getEndpoint(endpointConfig);
                 var qry = self.serviceQueryTemplate
                     .replace(/<VALUES>/g, values.join(' '));
                 return endpoint.getObjectsNoGrouping(qry);

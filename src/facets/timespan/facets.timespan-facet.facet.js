@@ -9,7 +9,7 @@
     .factory('TimespanFacet', TimespanFacet);
 
     /* ngInject */
-    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet,
+    function TimespanFacet($q, _, facetEndpoint, timespanMapperService, BasicFacet,
             PREFIXES) {
         TimespanFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
@@ -82,8 +82,9 @@
                 this.disable();
             }
 
-            this.endpoint = new AdvancedSparqlService(this.config.endpointUrl,
-                timespanMapperService);
+            this.config.mapper = timespanMapperService;
+
+            this.endpoint = facetEndpoint.getEndpoint(this.config);
 
             this.queryTemplate = this.buildQueryTemplate(
                 this.startPredicate === this.endPredicate ? simpleTemplate : separateTemplate);

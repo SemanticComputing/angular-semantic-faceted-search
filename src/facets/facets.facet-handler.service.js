@@ -54,14 +54,15 @@
         *   - **[endpointUrl]** - `{string}` - The SPARQL endpoint URL. Optional,
         *   as it is just sent to all listening facets at init, and can also
         *   be given to facets individually.
+        * - **[headers]** `{Object}` - Additional HTTP headers.
         *   - **[constraint]** - `{string}` - A SPARQL triple pattern that selects
         *   all the resources that are being faceted.
         *   - **[rdfClass]** - `{string}` - The `rdf:type` of the resources being
         *   faceted. A shorthand for `constraint: '?id a <class> .'`.
-        *   - **[preferredLang]** - `{string}` - The language tag that is preferred
+        *   - **[preferredLang]** - `{string|Array}` - The language tag that is preferred
         *   when getting labels for facet values, in case the value is a resource.
+        *   If the value is an Array, the specified languages are tried in order.
         *   The default is 'en'.
-        *   Currently only one language can be given.
         *   This argument can also be given directly to the individual facets.
         *   - **[initialState]** - `{Object}` - The initial state of the facets.
         *   Used when loading the state from URL parameters, for example.

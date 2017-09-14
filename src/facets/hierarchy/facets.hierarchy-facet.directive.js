@@ -30,6 +30,7 @@
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
     *   Optional, as it can also be given globally in
     *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
+    * - **[headers]** `{Object}` - Additional HTTP headers.
     * - **[preferredLang]** - `{string|Array}` - The language tag that is preferred
     *   when getting labels for facet values, in case the value is a resource.
     *   The default is 'en'.

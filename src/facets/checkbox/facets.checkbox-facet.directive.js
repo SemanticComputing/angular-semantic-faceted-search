@@ -30,6 +30,10 @@
     *   resources that have a value for the property `<http://schema.org/hobby>`.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
+    * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
+    *   Optional, as it can also be given globally in
+    *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
+    * - **[headers]** `{Object}` - Additional HTTP headers.
     * - **[priority]** - `{number}` - Priority for constraint sorting.
     *   Undefined by default.
     */

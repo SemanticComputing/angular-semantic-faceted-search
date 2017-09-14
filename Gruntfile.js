@@ -21,6 +21,7 @@ module.exports = function(grunt) {
                     'src/facets/facets.module.js',
                     'src/faceturlstate/faceturlstate.url-state-handler-service.js',
                     'src/results/results.service.js',
+                    'src/facets/facets.facetEndpoint.service.js',
                     'src/facets/facets.facet-mapper-service.js',
                     'src/facets/facets.facet-selection-formatter.js',
                     'src/facets/facets.facet-handler.service.js',

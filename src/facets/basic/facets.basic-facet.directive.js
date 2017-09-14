@@ -31,6 +31,9 @@
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
     *   Optional, as it can also be given globally in
     *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
+    * - **[headers]** `{Object}` - Additional HTTP headers.
+    *   Note that currently it is not possible to specify separate headers for separate
+    *   services.
     * - **[services]** `{Array}` - In case labels for the facet values are (partially)
     *   found in another SPARQL endpoint, those endpoints can be given as a list of URIs.
     *   A separate query is made to each additional service to retrieve the labels.

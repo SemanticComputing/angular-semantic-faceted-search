@@ -9,8 +9,7 @@
     .factory('CheckboxFacet', CheckboxFacet);
 
     /* ngInject */
-    function CheckboxFacet($q, _, AdvancedSparqlService, facetMapperService, BasicFacet,
-            PREFIXES) {
+    function CheckboxFacet($q, _, facetEndpoint, BasicFacet, PREFIXES) {
         CheckboxFacet.prototype = Object.create(BasicFacet.prototype);
 
         CheckboxFacet.prototype.getConstraint = getConstraint;
@@ -53,12 +52,7 @@
                 this.disable();
             }
 
-            var endpointConfig = {
-                endpointUrl: this.config.endpointUrl,
-                usePost: this.config.usePost
-            };
-
-            this.endpoint = new AdvancedSparqlService(endpointConfig, facetMapperService);
+            this.endpoint = facetEndpoint.getEndpoint(this.config);
 
             this.queryTemplate = this.buildQueryTemplate(queryTemplate, predTemplate);
 
