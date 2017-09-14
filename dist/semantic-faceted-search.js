@@ -409,11 +409,34 @@
 
                 if (options.paging) {
                     return endpoint.getObjects(qry.query, options.resultsPerPage, qry.resultSetQuery,
-                            options.pagesPerQuery);
+                        options.pagesPerQuery);
                 } else {
                     return endpoint.getObjects(qry.query);
                 }
             }
+        }
+    }
+})();
+
+(function() {
+    'use strict';
+
+    facetEndpoint.$inject = ['AdvancedSparqlService', 'facetMapperService'];
+    angular.module('seco.facetedSearch')
+    .service('facetEndpoint', facetEndpoint);
+
+    /* @ngInject */
+    function facetEndpoint(AdvancedSparqlService, facetMapperService) {
+
+        this.getEndpoint = getEndpoint;
+
+        function getEndpoint(config) {
+            var endpointConfig = {
+                endpointUrl: config.endpointUrl,
+                usePost: config.usePost,
+                headers: config.headers
+            };
+            return new AdvancedSparqlService(endpointConfig, config.mapper || facetMapperService);
         }
     }
 })();
@@ -530,14 +553,15 @@
         *   - **[endpointUrl]** - `{string}` - The SPARQL endpoint URL. Optional,
         *   as it is just sent to all listening facets at init, and can also
         *   be given to facets individually.
+        * - **[headers]** `{Object}` - Additional HTTP headers.
         *   - **[constraint]** - `{string}` - A SPARQL triple pattern that selects
         *   all the resources that are being faceted.
         *   - **[rdfClass]** - `{string}` - The `rdf:type` of the resources being
         *   faceted. A shorthand for `constraint: '?id a <class> .'`.
-        *   - **[preferredLang]** - `{string}` - The language tag that is preferred
+        *   - **[preferredLang]** - `{string|Array}` - The language tag that is preferred
         *   when getting labels for facet values, in case the value is a resource.
+        *   If the value is an Array, the specified languages are tried in order.
         *   The default is 'en'.
-        *   Currently only one language can be given.
         *   This argument can also be given directly to the individual facets.
         *   - **[initialState]** - `{Object}` - The initial state of the facets.
         *   Used when loading the state from URL parameters, for example.
@@ -806,12 +830,12 @@
 (function() {
     'use strict';
 
-    BasicFacet.$inject = ['$q', '_', 'AdvancedSparqlService', 'facetMapperService', 'NO_SELECTION_STRING', 'PREFIXES'];
+    BasicFacet.$inject = ['$q', '_', 'facetEndpoint', 'NO_SELECTION_STRING', 'PREFIXES'];
     angular.module('seco.facetedSearch')
     .factory('BasicFacet', BasicFacet);
 
     /* ngInject */
-    function BasicFacet($q, _, AdvancedSparqlService, facetMapperService, NO_SELECTION_STRING, PREFIXES) {
+    function BasicFacet($q, _, facetEndpoint, NO_SELECTION_STRING, PREFIXES) {
 
         BasicFacetConstructor.prototype.update = update;
         BasicFacetConstructor.prototype.getState = getState;
@@ -909,11 +933,7 @@
                 this.disable();
             }
 
-            var endpointConfig = {
-                endpointUrl: this.config.endpointUrl,
-                usePost: this.config.usePost
-            };
-            this.endpoint = new AdvancedSparqlService(endpointConfig, facetMapperService);
+            this.endpoint = facetEndpoint.getEndpoint(this.config);
 
             // Initial value
             var constVal = _.get(options, 'initial.' + this.facetId);
@@ -996,9 +1016,10 @@
             var promises = _.map(self.config.services, function(s) {
                 var endpointConfig = {
                     endpointUrl: s.replace(/[<>]/g, ''),
-                    usePost: self.config.usePost
+                    usePost: self.config.usePost,
+                    headers: self.config.headers
                 };
-                var endpoint = new AdvancedSparqlService(endpointConfig, facetMapperService);
+                var endpoint = facetEndpoint.getEndpoint(endpointConfig);
                 var qry = self.serviceQueryTemplate
                     .replace(/<VALUES>/g, values.join(' '));
                 return endpoint.getObjectsNoGrouping(qry);
@@ -1175,6 +1196,9 @@
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
     *   Optional, as it can also be given globally in
     *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
+    * - **[headers]** `{Object}` - Additional HTTP headers.
+    *   Note that currently it is not possible to specify separate headers for separate
+    *   services.
     * - **[services]** `{Array}` - In case labels for the facet values are (partially)
     *   found in another SPARQL endpoint, those endpoints can be given as a list of URIs.
     *   A separate query is made to each additional service to retrieve the labels.
@@ -1633,12 +1657,12 @@
 (function() {
     'use strict';
 
-    TimespanFacet.$inject = ['$q', '_', 'AdvancedSparqlService', 'timespanMapperService', 'BasicFacet', 'PREFIXES'];
+    TimespanFacet.$inject = ['$q', '_', 'facetEndpoint', 'timespanMapperService', 'BasicFacet', 'PREFIXES'];
     angular.module('seco.facetedSearch')
     .factory('TimespanFacet', TimespanFacet);
 
     /* ngInject */
-    function TimespanFacet($q, _, AdvancedSparqlService, timespanMapperService, BasicFacet,
+    function TimespanFacet($q, _, facetEndpoint, timespanMapperService, BasicFacet,
             PREFIXES) {
         TimespanFacetConstructor.prototype = Object.create(BasicFacet.prototype);
 
@@ -1711,8 +1735,9 @@
                 this.disable();
             }
 
-            this.endpoint = new AdvancedSparqlService(this.config.endpointUrl,
-                timespanMapperService);
+            this.config.mapper = timespanMapperService;
+
+            this.endpoint = facetEndpoint.getEndpoint(this.config);
 
             this.queryTemplate = this.buildQueryTemplate(
                 this.startPredicate === this.endPredicate ? simpleTemplate : separateTemplate);
@@ -2010,6 +2035,10 @@
     *   than the user's may lead to timezone issues.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
+    * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
+    *   Optional, as it can also be given globally in
+    *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
+    * - **[headers]** `{Object}` - Additional HTTP headers.
     * - **[priority]** - `{number}` - Priority for constraint sorting.
     *   Undefined by default.
     */
@@ -2036,13 +2065,12 @@
 (function() {
     'use strict';
 
-    CheckboxFacet.$inject = ['$q', '_', 'AdvancedSparqlService', 'facetMapperService', 'BasicFacet', 'PREFIXES'];
+    CheckboxFacet.$inject = ['$q', '_', 'facetEndpoint', 'BasicFacet', 'PREFIXES'];
     angular.module('seco.facetedSearch')
     .factory('CheckboxFacet', CheckboxFacet);
 
     /* ngInject */
-    function CheckboxFacet($q, _, AdvancedSparqlService, facetMapperService, BasicFacet,
-            PREFIXES) {
+    function CheckboxFacet($q, _, facetEndpoint, BasicFacet, PREFIXES) {
         CheckboxFacet.prototype = Object.create(BasicFacet.prototype);
 
         CheckboxFacet.prototype.getConstraint = getConstraint;
@@ -2085,12 +2113,7 @@
                 this.disable();
             }
 
-            var endpointConfig = {
-                endpointUrl: this.config.endpointUrl,
-                usePost: this.config.usePost
-            };
-
-            this.endpoint = new AdvancedSparqlService(endpointConfig, facetMapperService);
+            this.endpoint = facetEndpoint.getEndpoint(this.config);
 
             this.queryTemplate = this.buildQueryTemplate(queryTemplate, predTemplate);
 
@@ -2213,6 +2236,10 @@
     *   resources that have a value for the property `<http://schema.org/hobby>`.
     * - **[enabled]** `{boolean}` - Whether or not the facet is enabled by default.
     *   If undefined, the facet will be disabled by default.
+    * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
+    *   Optional, as it can also be given globally in
+    *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
+    * - **[headers]** `{Object}` - Additional HTTP headers.
     * - **[priority]** - `{number}` - Priority for constraint sorting.
     *   Undefined by default.
     */
@@ -2447,6 +2474,7 @@
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
     *   Optional, as it can also be given globally in
     *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
+    * - **[headers]** `{Object}` - Additional HTTP headers.
     * - **[preferredLang]** - `{string|Array}` - The language tag that is preferred
     *   when getting labels for facet values, in case the value is a resource.
     *   The default is 'en'.
