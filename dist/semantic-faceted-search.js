@@ -2329,7 +2329,7 @@
             }
 
             var triplePatternTemplate =
-                ' ?id <ID> ?<V_VAR> . ?<V_VAR> (<HIERARCHY>)* <SELECTED_VAL> . <SPECIFIER> ';
+                ' ?<V_VAR> (<HIERARCHY>)* <SELECTED_VAL> . <SPECIFIER> ?id <ID> ?<V_VAR> . ';
 
             this.triplePatternTemplate = this.buildQueryTemplate(triplePatternTemplate);
         }
