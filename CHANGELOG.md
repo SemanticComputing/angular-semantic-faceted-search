@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.1] - 2017-10-16
+
+### Changed
+
+- Optimize hierarchy facet constraint.
+
 ## [1.8.0] - 2017-09-14
 
 ### Changed
@@ -158,7 +164,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.8.0...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.8.1...HEAD
+[1.8.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.8.0...1.8.1
 [1.8.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.7.1...1.8.0
 [1.7.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.7.0...1.7.1
 [1.7.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.6.1...1.7.0
