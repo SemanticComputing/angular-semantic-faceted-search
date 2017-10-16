@@ -138,7 +138,7 @@ describe('HierarchyFacet', function() {
             facet.selectedValue = { value: '<obj>' };
 
             var expected =
-            ' ?id <pred> ?seco_v_textId . ?seco_v_textId (<hierarchy>)* <obj> . ';
+            ' ?seco_v_textId (<hierarchy>)* <obj> . ?id <pred> ?seco_v_textId . ';
 
             expect(facet.getConstraint().replace(/\s+/g, ' ')).toEqual(expected.replace(/\s+/g, ' '));
 
