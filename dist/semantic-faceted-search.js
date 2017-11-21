@@ -871,11 +871,11 @@
 
             var labelPart =
             ' OPTIONAL {' +
-            '  ?value skos:prefLabel ?lbl . ' +
+            '  ?labelValue skos:prefLabel ?lbl . ' +
             '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
             ' }' +
             ' OPTIONAL {' +
-            '  ?value rdfs:label ?lbl . ' +
+            '  ?labelValue rdfs:label ?lbl . ' +
             '  FILTER(langMatches(lang(?lbl), "<PREF_LANG>")) .' +
             ' }';
 
@@ -883,6 +883,7 @@
             ' SELECT DISTINCT ?facet_text ?value {' +
             '  VALUES ?value { <VALUES> } ' +
             '  ?value skos:prefLabel|rdfs:label [] . ' +
+            '  BIND(?value AS ?labelValue) ' +
             '  <LABEL_PART>' +
             '  BIND(?lbl AS ?facet_text)' +
             '  FILTER(?facet_text != "")' +
@@ -905,7 +906,8 @@
             '      <SELECTIONS> ' +
             '     } GROUP BY ?value ' +
             '    } ' +
-            '    FILTER(BOUND(?value)) ' +
+            '    FILTER(BOUND(?value))' +
+            '    BIND(COALESCE(?value, <http://ldf.fi/NONEXISTENT_URI>) AS ?labelValue) ' +
             '    <LABEL_PART> ' +
             '    BIND(COALESCE(?lbl, IF(!ISURI(?value), ?value, "")) AS ?facet_text)' +
             '   } ' +
@@ -2307,6 +2309,7 @@
             '     } GROUP BY ?hierarchy ?value ?lvl ORDER BY ?hierarchy ' +
             '    } ' +
             '    FILTER(BOUND(?value))' +
+            '    BIND(COALESCE(?value, <http://ldf.fi/NONEXISTENT_URI>) AS ?labelValue) ' +
             '    <LABEL_PART> ' +
             '    BIND(COALESCE(?lbl, STR(?value)) as ?label) ' +
             '    BIND(CONCAT(?lvl, ?label) as ?facet_text)' +

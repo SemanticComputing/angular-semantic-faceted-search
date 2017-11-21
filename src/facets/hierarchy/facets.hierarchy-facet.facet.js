@@ -45,6 +45,7 @@
             '     } GROUP BY ?hierarchy ?value ?lvl ORDER BY ?hierarchy ' +
             '    } ' +
             '    FILTER(BOUND(?value))' +
+            '    BIND(COALESCE(?value, <http://ldf.fi/NONEXISTENT_URI>) AS ?labelValue) ' +
             '    <LABEL_PART> ' +
             '    BIND(COALESCE(?lbl, STR(?value)) as ?label) ' +
             '    BIND(CONCAT(?lvl, ?label) as ?facet_text)' +
