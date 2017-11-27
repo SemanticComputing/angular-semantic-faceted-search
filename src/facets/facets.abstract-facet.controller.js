@@ -119,9 +119,9 @@
                 // due to changes in facet selections.
                 return;
             }
-            $log.error(error.statusText);
+            $log.error(error.statusText || error);
             vm.isLoadingFacet = false;
-            vm.error = 'Error (' + error.status + ')';
+            vm.error = 'Error' + (error.status ? ' (' + error.status + ')' : '');
         }
 
         function getFacetSize(facetStates) {
