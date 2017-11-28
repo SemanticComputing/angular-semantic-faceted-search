@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.9.1] - 2017-11-28
+
+### Fixed
+
+- Disabling and enabling a facet now works, instead of leaving the facet
+  unresponsive.
+
 ## [1.9.0] - 2017-11-27
 
 ### Changed
