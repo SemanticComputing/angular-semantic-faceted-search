@@ -26,17 +26,17 @@
         // Wait until the options attribute has been set.
         var watcher = $scope.$watch('options', function(val) {
             if (val) {
-                init(FacetImpl);
+                init();
                 watcher();
             }
         });
 
-        function init(Facet) {
+        function init(facet) {
             var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
                 var opts = _.cloneDeep($scope.options);
                 opts = angular.extend({}, cons.config, opts);
                 opts.initial = cons.facets;
-                vm.facet = new Facet(opts);
+                vm.facet = facet || new FacetImpl(opts);
                 if (vm.facet.isEnabled()) {
                     vm.previousVal = _.cloneDeep(vm.facet.getSelectedValue());
                     listen();
@@ -96,7 +96,7 @@
             listen();
             vm.isLoadingFacet = true;
             vm.facet.enable();
-            emitChange(true);
+            init(vm.facet);
         }
 
         function disableFacet() {
