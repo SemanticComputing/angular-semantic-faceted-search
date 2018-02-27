@@ -3,15 +3,17 @@
 describe('TextFacetController', function() {
     beforeEach(module('seco.facetedSearch'));
 
-    var $controller, $rootScope, $scope, mock, initial, controller;
+    var $controller, $rootScope, $q, $scope, mock, initial, controller, value;
 
     beforeEach(module(function($provide) {
+        value = 'text';
         mock = {
-            getSelectedValue: function() { return 'text'; },
+            getSelectedValue: function() { return value; },
             getConstraint: function() { return 'constraint'; },
             getPriority: function() { return 1; },
             facetId: 'textId',
-            clear: function() { },
+            clear: function() { value = undefined; },
+            update: function() { return $q.when(); },
             enable: function() { },
             disable: function() { },
             isEnabled: function() { return true; }
@@ -21,9 +23,10 @@ describe('TextFacetController', function() {
         $provide.value('TextFacet', mockConstructor);
     }));
 
-    beforeEach(inject(function(_$controller_, _$rootScope_){
+    beforeEach(inject(function(_$controller_, _$rootScope_, _$q_){
         $rootScope = _$rootScope_;
         $controller = _$controller_;
+        $q = _$q_;
         $scope = $rootScope.$new();
 
         initial = {
@@ -54,19 +57,14 @@ describe('TextFacetController', function() {
     });
 
     describe('vm.changed', function() {
-        beforeEach(function() {
-            $scope.options = {};
-            controller = $controller('TextFacetController', { $scope: $scope });
-            $scope.$digest();
-            $scope.$broadcast('sf-initial-constraints', initial);
-        });
-
         it('should emit the state of the facet', function() {
             spyOn($scope, '$emit');
 
+            value = 'new text';
+
             controller.changed();
 
-            var args = { id: 'textId', constraint: 'constraint', value: 'text', priority: 1 };
+            var args = { id: 'textId', constraint: 'constraint', value: value, priority: 1 };
             expect($scope.$emit).toHaveBeenCalledWith('sf-facet-changed', args);
         });
     });
@@ -74,7 +72,7 @@ describe('TextFacetController', function() {
     describe('vm.clear', function() {
         it('should call facet.clear, and emit change event', function() {
             spyOn($scope, '$emit');
-            spyOn(controller.facet, 'clear');
+            spyOn(controller.facet, 'clear').and.callThrough();
 
             controller.clear();
 
@@ -104,17 +102,6 @@ describe('TextFacetController', function() {
 
             expect(controller.facet.disable).toHaveBeenCalled();
             expect($scope.$emit).toHaveBeenCalledWith('sf-facet-changed', jasmine.any(Object));
-        });
-    });
-
-    describe('vm.isFacetEnabled', function() {
-        it('should check if the facet is enabled', function() {
-            spyOn(controller.facet, 'isEnabled').and.returnValue(true);
-
-            var res = controller.isFacetEnabled();
-
-            expect(res).toBe(true);
-            expect(controller.facet.isEnabled).toHaveBeenCalled();
         });
     });
 });

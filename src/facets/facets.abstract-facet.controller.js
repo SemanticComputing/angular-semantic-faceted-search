@@ -19,14 +19,20 @@
 
         vm.getFacetSize = getFacetSize;
 
+        vm.init = init;
         vm.listener = function() { };
+        vm.listen = listen;
+        vm.update = update;
+        vm.emitChange = emitChange;
+        vm.handleUpdateSuccess = handleUpdateSuccess;
+        vm.handleError = handleError;
 
         vm.getSpinnerKey = getSpinnerKey;
 
         // Wait until the options attribute has been set.
         var watcher = $scope.$watch('options', function(val) {
             if (val) {
-                init();
+                vm.init();
                 watcher();
             }
         });
@@ -39,8 +45,8 @@
                 vm.facet = facet || new FacetImpl(opts);
                 if (vm.facet.isEnabled()) {
                     vm.previousVal = _.cloneDeep(vm.facet.getSelectedValue());
-                    listen();
-                    update(cons);
+                    vm.listen();
+                    vm.update(cons);
                 }
                 // Unregister initListener
                 initListener();
@@ -58,13 +64,13 @@
 
         function listen() {
             vm.listener = $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
-                update(cons);
+                vm.update(cons);
             });
         }
 
         function update(constraints) {
             vm.isLoadingFacet = true;
-            return vm.facet.update(constraints).then(handleUpdateSuccess, handleError);
+            return vm.facet.update(constraints).then(vm.handleUpdateSuccess, handleError);
         }
 
         function isLoading() {
@@ -89,21 +95,23 @@
 
         function changed() {
             vm.isLoadingFacet = true;
-            emitChange();
+            vm.emitChange();
         }
 
         function enableFacet() {
-            listen();
+            vm.listen();
             vm.isLoadingFacet = true;
             vm.facet.enable();
-            init(vm.facet);
+            vm.init(vm.facet);
         }
 
         function disableFacet() {
-            vm.listener();
+            if (vm.listener) {
+                vm.listener();
+            }
             vm.facet.disable();
             var forced = vm.facet.getSelectedValue() ? true : false;
-            emitChange(forced);
+            vm.emitChange(forced);
         }
 
         function handleUpdateSuccess() {

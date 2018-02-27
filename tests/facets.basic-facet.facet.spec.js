@@ -179,20 +179,21 @@ describe('BasicFacet', function() {
             '     } GROUP BY ?value ' +
             '    } ' +
             '    FILTER(BOUND(?value)) ' +
+            '    BIND(COALESCE(?value, <http://ldf.fi/NONEXISTENT_URI>) AS ?labelValue) ' +
             '    OPTIONAL {' +
-            '     ?value skos:prefLabel ?lbl . ' +
+            '     ?labelValue skos:prefLabel ?lbl . ' +
             '     FILTER(langMatches(lang(?lbl), "fi")) .' +
             '    }' +
             '    OPTIONAL {' +
-            '     ?value rdfs:label ?lbl . ' +
+            '     ?labelValue rdfs:label ?lbl . ' +
             '     FILTER(langMatches(lang(?lbl), "fi")) .' +
             '    }' +
             '    OPTIONAL {' +
-            '     ?value skos:prefLabel ?lbl . ' +
+            '     ?labelValue skos:prefLabel ?lbl . ' +
             '     FILTER(langMatches(lang(?lbl), "")) .' +
             '    }' +
             '    OPTIONAL {' +
-            '     ?value rdfs:label ?lbl . ' +
+            '     ?labelValue rdfs:label ?lbl . ' +
             '     FILTER(langMatches(lang(?lbl), "")) .' +
             '    } ' +
             '    BIND(COALESCE(?lbl, IF(!ISURI(?value), ?value, "")) AS ?facet_text)' +

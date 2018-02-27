@@ -85,9 +85,8 @@ describe('BasicFacetController', function() {
 
             controller.enableFacet();
 
-            var args = { id: 'basicId', constraint: 'constraint', value: '<uri>', priority: 1 };
             expect(controller.facet.enable).toHaveBeenCalled();
-            expect($scope.$emit).toHaveBeenCalledWith('sf-facet-changed', args);
+            expect($scope.$emit).toHaveBeenCalledWith('sf-request-constraints');
         });
     });
 
