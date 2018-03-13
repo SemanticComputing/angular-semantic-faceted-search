@@ -187,7 +187,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.8.1...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.10.0...HEAD
+[1.10.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.9.1...1.10.0
+[1.9.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.9.0...1.9.1
+[1.9.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.8.1...1.9.0
 [1.8.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.8.0...1.8.1
 [1.8.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.7.1...1.8.0
 [1.7.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.7.0...1.7.1
