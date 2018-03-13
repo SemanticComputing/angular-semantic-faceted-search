@@ -7,6 +7,7 @@ module.exports = function(grunt) {
         ngtemplates: {
             'seco.facetedSearch': {
                 src: [
+                    'src/facets/facets.facet-wrapper.directive.html',
                     'src/facets/basic/facets.basic-facet.directive.html',
                     'src/facets/text/facets.text-facet.directive.html',
                     'src/facets/timespan/facets.timespan-facet.directive.html',
@@ -25,6 +26,7 @@ module.exports = function(grunt) {
                     'src/facets/facets.facet-mapper-service.js',
                     'src/facets/facets.facet-selection-formatter.js',
                     'src/facets/facets.facet-handler.service.js',
+                    'src/facets/facets.facet-wrapper.directive.js',
                     'src/facets/facets.text-with-selection.filter.js',
                     'src/facets/facets.abstract-facet.controller.js',
                     'src/facets/basic/facets.basic-facet.facet.js',

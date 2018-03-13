@@ -14,6 +14,7 @@
         vm.isLoading = isLoading;
         vm.changed = changed;
 
+        vm.toggleFacetEnabled = toggleFacetEnabled;
         vm.disableFacet = disableFacet;
         vm.enableFacet = enableFacet;
 
@@ -96,6 +97,10 @@
         function changed() {
             vm.isLoadingFacet = true;
             vm.emitChange();
+        }
+
+        function toggleFacetEnabled() {
+            vm.facet.isEnabled() ? vm.disableFacet() : vm.enableFacet();
         }
 
         function enableFacet() {

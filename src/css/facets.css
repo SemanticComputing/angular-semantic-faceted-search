@@ -8,7 +8,7 @@
   align-items: center;
 }
 .facet-enable-btn-container {
-  justify-content: center;
+  justify-content: flex-end;
 }
 .row.no-gutter {
   margin-left: 0;
@@ -18,4 +18,18 @@
 .row.no-gutter [class*='col-']:not(:last-child) {
   padding-right: 0;
   padding-left: 0;
+}
+.btn-facet-toggle {
+  width: 25px;
+}
+.btn-facet-close {
+  color: white;
+  background-color: #999;
+}
+.btn-facet-close > .glyphicon-minus {
+  letter-spacing: 0.1em;
+}
+.btn-facet-open > .glyphicon-plus {
+  letter-spacing: -0.085em;
+  top: 1.2px;
 }
