@@ -657,6 +657,29 @@
 (function() {
     'use strict';
 
+    /**
+    * @ngdoc directive
+    * @name seco.facetedSearch.directive:secoFacetWrapper
+    * @restrict 'E'
+    * @element ANY
+    * @description
+    * Wraps facets in a shared template.
+    */
+    angular.module('seco.facetedSearch')
+    .directive('secoFacetWrapper', facetWrapper);
+
+    function facetWrapper() {
+        return {
+            restrict: 'E',
+            transclude: true,
+            templateUrl: 'src/facets/facets.facet-wrapper.directive.html'
+        };
+    }
+})();
+
+(function() {
+    'use strict';
+
     angular.module('seco.facetedSearch')
     .filter('textWithSelection', ['_', function(_) {
         return function(values, text, selection) {
@@ -700,19 +723,26 @@
         vm.isLoading = isLoading;
         vm.changed = changed;
 
+        vm.toggleFacetEnabled = toggleFacetEnabled;
         vm.disableFacet = disableFacet;
         vm.enableFacet = enableFacet;
 
         vm.getFacetSize = getFacetSize;
 
+        vm.init = init;
         vm.listener = function() { };
+        vm.listen = listen;
+        vm.update = update;
+        vm.emitChange = emitChange;
+        vm.handleUpdateSuccess = handleUpdateSuccess;
+        vm.handleError = handleError;
 
         vm.getSpinnerKey = getSpinnerKey;
 
         // Wait until the options attribute has been set.
         var watcher = $scope.$watch('options', function(val) {
             if (val) {
-                init();
+                vm.init();
                 watcher();
             }
         });
@@ -725,8 +755,8 @@
                 vm.facet = facet || new FacetImpl(opts);
                 if (vm.facet.isEnabled()) {
                     vm.previousVal = _.cloneDeep(vm.facet.getSelectedValue());
-                    listen();
-                    update(cons);
+                    vm.listen();
+                    vm.update(cons);
                 }
                 // Unregister initListener
                 initListener();
@@ -744,13 +774,13 @@
 
         function listen() {
             vm.listener = $scope.$on(EVENT_FACET_CONSTRAINTS, function(event, cons) {
-                update(cons);
+                vm.update(cons);
             });
         }
 
         function update(constraints) {
             vm.isLoadingFacet = true;
-            return vm.facet.update(constraints).then(handleUpdateSuccess, handleError);
+            return vm.facet.update(constraints).then(vm.handleUpdateSuccess, handleError);
         }
 
         function isLoading() {
@@ -775,21 +805,27 @@
 
         function changed() {
             vm.isLoadingFacet = true;
-            emitChange();
+            vm.emitChange();
+        }
+
+        function toggleFacetEnabled() {
+            vm.facet.isEnabled() ? vm.disableFacet() : vm.enableFacet();
         }
 
         function enableFacet() {
-            listen();
+            vm.listen();
             vm.isLoadingFacet = true;
             vm.facet.enable();
-            init(vm.facet);
+            vm.init(vm.facet);
         }
 
         function disableFacet() {
-            vm.listener();
+            if (vm.listener) {
+                vm.listener();
+            }
             vm.facet.disable();
             var forced = vm.facet.getSelectedValue() ? true : false;
-            emitChange(forced);
+            vm.emitChange(forced);
         }
 
         function handleUpdateSuccess() {
@@ -1231,18 +1267,20 @@
 (function() {
     'use strict';
 
-    TextFacet.$inject = ['_'];
+    TextFacet.$inject = ['$q', '_'];
     angular.module('seco.facetedSearch')
     .factory('TextFacet', TextFacet);
 
     /* ngInject */
-    function TextFacet(_) {
+    function TextFacet($q, _) {
 
         TextFacetConstructor.prototype.getConstraint = getConstraint;
         TextFacetConstructor.prototype.getPriority = getPriority;
         TextFacetConstructor.prototype.getPreferredLang = getPreferredLang;
         TextFacetConstructor.prototype.disable = disable;
         TextFacetConstructor.prototype.enable = enable;
+        TextFacetConstructor.prototype.update = update;
+        TextFacetConstructor.prototype.isLoading = isLoading;
         TextFacetConstructor.prototype.clear = clear;
         TextFacetConstructor.prototype.isEnabled = isEnabled;
         TextFacetConstructor.prototype.getSelectedValue = getSelectedValue;
@@ -1322,81 +1360,51 @@
             this.selectedValue = undefined;
             this._isEnabled = false;
         }
+
+        function update() {
+            return $q.when();
+        }
+
+        function isLoading() {
+            return false;
+        }
     }
 })();
 
 (function() {
     'use strict';
 
-    TextFacetController.$inject = ['$scope', '_', 'EVENT_FACET_CHANGED', 'EVENT_REQUEST_CONSTRAINTS', 'EVENT_INITIAL_CONSTRAINTS', 'TextFacet'];
+    TextFacetController.$inject = ['$scope', '$controller', 'TextFacet'];
     angular.module('seco.facetedSearch')
     .controller('TextFacetController', TextFacetController);
 
     /* ngInject */
-    function TextFacetController($scope, _, EVENT_FACET_CHANGED,
-            EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS, TextFacet) {
-        var vm = this;
+    function TextFacetController($scope, $controller, TextFacet) {
+        var args = { $scope: $scope, FacetImpl: TextFacet };
+        var vm = $controller('AbstractFacetController', args);
+
+        vm.listen = function() { };
+        vm.listener = function() { };
 
         vm.changed = changed;
         vm.clear = clear;
         vm.enableFacet = enableFacet;
-        vm.disableFacet = disableFacet;
-        vm.isFacetEnabled = isFacetEnabled;
+        vm.isLoadingFacet = false;
 
-        // Wait until the options attribute has been set.
-        var watcher = $scope.$watch('options', function(val) {
-            if (val) {
-                init();
-                watcher();
-            }
-        });
-
-        function init() {
-            var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                var opts = _.cloneDeep($scope.options);
-                opts.initial = cons.facets;
-                vm.facet = new TextFacet(opts);
-                // Unregister initListener
-                initListener();
-            });
-            $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
-        }
-
-        function emitChange() {
-            var args = {
-                id: vm.facet.facetId,
-                constraint: vm.facet.getConstraint(),
-                value: vm.facet.getSelectedValue(),
-                priority: vm.facet.getPriority()
-            };
-            $scope.$emit(EVENT_FACET_CHANGED, args);
-        }
+        return vm;
 
         function changed() {
-            emitChange();
+            vm.emitChange();
         }
 
         function clear() {
             vm.facet.clear();
-            emitChange();
+            vm.emitChange();
         }
 
         function enableFacet() {
             vm.facet.enable();
         }
-
-        function disableFacet() {
-            vm.facet.disable();
-            emitChange();
-        }
-
-        function isFacetEnabled() {
-            if (!vm.facet) {
-                return false;
-            }
-            return vm.facet.isEnabled();
-        }
-
     }
 })();
 
@@ -2505,268 +2513,151 @@
 angular.module('seco.facetedSearch').run(['$templateCache', function($templateCache) {
   'use strict';
 
-  $templateCache.put('src/facets/basic/facets.basic-facet.directive.html',
+  $templateCache.put('src/facets/facets.facet-wrapper.directive.html',
     "<div class=\"facet-wrapper\">\n" +
-    "  <div class=\"facet\" ng-if=vm.facet.isEnabled()>\n" +
+    "  <div class=\"facet\">\n" +
     "    <div class=\"well well-sm\">\n" +
     "      <div class=\"row\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
     "          <div class=\"alert alert-danger\" ng-if=\"vm.error\">{{ vm.error|limitTo:100 }}</div>\n" +
-    "          <span spinner-key=\"vm.getSpinnerKey()\" spinner-start-active=\"true\"\n" +
-    "            us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoading()\"></span>\n" +
-    "          <h5 class=\"facet-name pull-left\">{{ vm.facet.name }}</h5>\n" +
-    "          <button\n" +
-    "            ng-disabled=\"vm.isLoading()\"\n" +
-    "            ng-click=\"vm.disableFacet()\"\n" +
-    "            class=\"btn btn-danger btn-xs pull-right glyphicon glyphicon-remove\">\n" +
-    "          </button>\n" +
-    "          <div class=\"facet-input-container\">\n" +
-    "            <input\n" +
-    "            ng-disabled=\"vm.isLoading()\"\n" +
-    "            type=\"text\"\n" +
-    "            class=\"form-control\"\n" +
-    "            ng-model=\"textFilter\" />\n" +
-    "            <select\n" +
-    "              ng-change=\"vm.changed()\"\n" +
-    "              ng-disabled=\"vm.isLoading()\"\n" +
-    "              ng-attr-size=\"{{ vm.getFacetSize(vm.facet.getState()) }}\"\n" +
-    "              id=\"{{ ::vm.facet.name + '_select' }}\"\n" +
-    "              class=\"selector form-control\"\n" +
-    "              ng-options=\"value as (value.text + ' (' + value.count + ')') for value in vm.facet.getState() | textWithSelection:textFilter:vm.facet.selectedValue track by value.value\"\n" +
-    "              ng-model=\"vm.facet.selectedValue\">\n" +
-    "            </select>\n" +
-    "          </div>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "    </div>\n" +
-    "  </div>\n" +
-    "  <div class=\"facet\" ng-if=!vm.facet.isEnabled()>\n" +
-    "    <div class=\"well well-sm\">\n" +
-    "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12\">\n" +
     "          <div class=\"row vertical-align\">\n" +
     "            <div class=\"col-xs-10 text-left\">\n" +
-    "              <h5 class=\"facet-name\">{{ vm.facet.name }}</h5>\n" +
+    "              <h5 class=\"facet-name pull-left\">{{ vm.facet.name }}</h5>\n" +
     "            </div>\n" +
     "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
     "              <button\n" +
-    "                ng-disabled=\"vm.isLoading()\"\n" +
-    "                ng-click=\"vm.enableFacet()\"\n" +
-    "                class=\"facet-enable-btn btn btn-default btn-xs pull-right glyphicon glyphicon-plus\">\n" +
+    "                 ng-disabled=\"vm.isLoading()\"\n" +
+    "                 ng-click=\"vm.toggleFacetEnabled()\"\n" +
+    "                 class=\"btn btn-default btn-facet-toggle btn-xs pull-right\"\n" +
+    "                 ng-class=\"vm.facet.isEnabled() ? 'btn-facet-close' : 'btn-facet-open'\">\n" +
+    "                <span class=\"glyphicon\" ng-class=\"vm.facet.isEnabled() ? 'glyphicon-minus' : 'glyphicon-plus'\"></span>\n" +
     "              </button>\n" +
     "            </div>\n" +
     "          </div>\n" +
     "        </div>\n" +
     "      </div>\n" +
+    "      <div class=\"row\" ng-if=\"vm.facet.isEnabled()\">\n" +
+    "        <div class=\"col-xs-12 text-left\">\n" +
+    "          <span spinner-key=\"vm.getSpinnerKey()\" spinner-start-active=\"true\"\n" +
+    "              us-spinner=\"{radius:15, width:6, length: 20}\" ng-if=\"vm.isLoading()\"></span>\n" +
+    "          <div class=\"facet-input-container\" ng-transclude></div>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +
     "</div>\n"
+  );
+
+
+  $templateCache.put('src/facets/basic/facets.basic-facet.directive.html',
+    "<seco-facet-wrapper>\n" +
+    "  <input\n" +
+    "    ng-disabled=\"vm.isLoading()\"\n" +
+    "    type=\"text\"\n" +
+    "    class=\"form-control\"\n" +
+    "    ng-model=\"textFilter\" />\n" +
+    "  <select\n" +
+    "    ng-change=\"vm.changed()\"\n" +
+    "    ng-disabled=\"vm.isLoading()\"\n" +
+    "    ng-attr-size=\"{{ vm.getFacetSize(vm.facet.getState()) }}\"\n" +
+    "    id=\"{{ ::vm.facet.name + '_select' }}\"\n" +
+    "    class=\"selector form-control\"\n" +
+    "    ng-options=\"value as (value.text + ' (' + value.count + ')') for value in vm.facet.getState() | textWithSelection:textFilter:vm.facet.selectedValue track by value.value\"\n" +
+    "    ng-model=\"vm.facet.selectedValue\">\n" +
+    "  </select>\n" +
+    "</seco-facet-wrapper>\n"
   );
 
 
   $templateCache.put('src/facets/text/facets.text-facet.directive.html',
-    "<div class=\"facet-wrapper\">\n" +
-    "  <span us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoading()\"></span>\n" +
-    "  <div class=\"facet\" ng-if=vm.isFacetEnabled()>\n" +
-    "    <div class=\"well well-sm\">\n" +
-    "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12 text-left\">\n" +
-    "          <h5 class=\"facet-name pull-left\">{{ vm.facet.name }}</h5>\n" +
-    "          <button\n" +
-    "            ng-disabled=\"vm.isLoading()\"\n" +
-    "            ng-click=\"vm.disableFacet()\"\n" +
-    "            class=\"btn btn-danger btn-xs pull-right glyphicon glyphicon-remove\">\n" +
-    "          </button>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12 text-left\">\n" +
-    "          <div class=\"facet-input-container\">\n" +
-    "            <p class=\"input-group\">\n" +
-    "            <input type=\"text\" class=\"form-control\"\n" +
-    "            ng-change=\"vm.changed()\"\n" +
-    "            ng-disabled=\"vm.isLoading()\"\n" +
-    "            ng-model=\"vm.facet.selectedValue\"\n" +
-    "            ng-model-options=\"{ debounce: 1000 }\">\n" +
-    "            </input>\n" +
-    "            <span class=\"input-group-btn\">\n" +
-    "              <button type=\"button\" class=\"btn btn-default\"\n" +
-    "                ng-disabled=\"vm.isDisabled()\"\n" +
-    "                ng-click=\"vm.clear()\">\n" +
-    "                <i class=\"glyphicon glyphicon-remove\"></i>\n" +
-    "              </button>\n" +
-    "            </span>\n" +
-    "            </p>\n" +
-    "          </div>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "    </div>\n" +
-    "  </div>\n" +
-    "  <div class=\"facet\" ng-if=!vm.isFacetEnabled()>\n" +
-    "    <div class=\"well well-sm\">\n" +
-    "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12\">\n" +
-    "          <div class=\"row vertical-align\">\n" +
-    "            <div class=\"col-xs-10 text-left\">\n" +
-    "              <h5 class=\"facet-name\">{{ vm.facet.name }}</h5>\n" +
-    "            </div>\n" +
-    "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
-    "              <button\n" +
-    "                ng-disabled=\"vm.isLoading()\"\n" +
-    "                ng-click=\"vm.enableFacet(id)\"\n" +
-    "                class=\"facet-enable-btn btn btn-default btn-xs pull-right glyphicon glyphicon-plus\">\n" +
-    "              </button>\n" +
-    "            </div>\n" +
-    "          </div>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "    </div>\n" +
-    "  </div>\n" +
-    "</div>\n"
+    "<seco-facet-wrapper>\n" +
+    "  <p class=\"input-group\">\n" +
+    "    <input type=\"text\" class=\"form-control\"\n" +
+    "      ng-change=\"vm.changed()\"\n" +
+    "      ng-disabled=\"vm.isLoading()\"\n" +
+    "      ng-model=\"vm.facet.selectedValue\"\n" +
+    "      ng-model-options=\"{ debounce: 1000 }\">\n" +
+    "    </input>\n" +
+    "    <span class=\"input-group-btn\">\n" +
+    "      <button type=\"button\" class=\"btn btn-default\"\n" +
+    "        ng-disabled=\"vm.isDisabled()\"\n" +
+    "        ng-click=\"vm.clear()\">\n" +
+    "        <i class=\"glyphicon glyphicon-remove\"></i>\n" +
+    "      </button>\n" +
+    "    </span>\n" +
+    "  </p>\n" +
+    "</seco-facet-wrapper>\n"
   );
 
 
   $templateCache.put('src/facets/timespan/facets.timespan-facet.directive.html',
-    "<div class=\"facet-wrapper\">\n" +
-    "  <div class=\"facet\" ng-if=vm.facet.isEnabled()>\n" +
-    "    <div class=\"well well-sm\">\n" +
-    "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12 text-left\">\n" +
-    "          <span spinner-key=\"vm.getSpinnerKey()\" spinner-start-active=\"true\"\n" +
-    "            us-spinner=\"{radius:15, width:4, length: 20}\" ng-if=\"vm.isLoading()\"></span>\n" +
-    "          <h5 class=\"facet-name pull-left\">{{ vm.facet.name }}</h5>\n" +
-    "          <button\n" +
+    "<seco-facet-wrapper>\n" +
+    "  <div class=\"row no-gutter\">\n" +
+    "    <div class=\"col-md-6 facet-date-left\">\n" +
+    "      <span class=\"input-group\">\n" +
+    "        <span class=\"input-group-btn\">\n" +
+    "          <button type=\"button\" class=\"btn btn-default\"\n" +
     "            ng-disabled=\"vm.isLoading()\"\n" +
-    "            ng-click=\"vm.disableFacet()\"\n" +
-    "            class=\"btn btn-danger btn-xs pull-right glyphicon glyphicon-remove\">\n" +
+    "            ng-click=\"startDate.opened = !startDate.opened\">\n" +
+    "            <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
     "          </button>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "      <div class=\"row no-gutter\">\n" +
-    "        <div class=\"col-md-6 facet-date-left\">\n" +
-    "          <span class=\"input-group\">\n" +
-    "            <span class=\"input-group-btn\">\n" +
-    "              <button type=\"button\" class=\"btn btn-default\"\n" +
-    "                ng-disabled=\"vm.isLoading()\"\n" +
-    "                ng-click=\"startDate.opened = !startDate.opened\">\n" +
-    "                <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
-    "              </button>\n" +
-    "            </span>\n" +
-    "            <input type=\"text\" class=\"form-control\"\n" +
-    "            uib-datepicker-popup=\"\"\n" +
-    "            ng-readonly=\"true\"\n" +
-    "            ng-change=\"vm.changed()\"\n" +
-    "            ng-model=\"vm.facet.selectedValue.start\"\n" +
-    "            is-open=\"startDate.opened\"\n" +
-    "            show-button-bar=\"false\"\n" +
-    "            datepicker-options=\"vm.facet.state.start\"\n" +
-    "            close-text=\"Close\" />\n" +
-    "          </span>\n" +
-    "        </div>\n" +
-    "        <div class=\"col-md-6 facet-date-right\">\n" +
-    "          <span class=\"input-group\">\n" +
-    "            <span class=\"input-group-btn\">\n" +
-    "              <button type=\"button\" class=\"btn btn-default\"\n" +
-    "                ng-disabled=\"vm.isLoading()\"\n" +
-    "                ng-click=\"endDate.opened = !endDate.opened\">\n" +
-    "                <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
-    "              </button>\n" +
-    "            </span>\n" +
-    "            <input type=\"text\" class=\"form-control\"\n" +
-    "            uib-datepicker-popup=\"\"\n" +
-    "            ng-readonly=\"true\"\n" +
-    "            ng-change=\"vm.changed()\"\n" +
-    "            ng-model=\"vm.facet.selectedValue.end\"\n" +
-    "            is-open=\"endDate.opened\"\n" +
-    "            show-button-bar=\"false\"\n" +
-    "            datepicker-options=\"vm.facet.state.end\"\n" +
-    "            close-text=\"Close\" />\n" +
-    "          </span>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
+    "        </span>\n" +
+    "        <input type=\"text\" class=\"form-control\"\n" +
+    "          uib-datepicker-popup=\"\"\n" +
+    "          ng-readonly=\"true\"\n" +
+    "          ng-change=\"vm.changed()\"\n" +
+    "          ng-model=\"vm.facet.selectedValue.start\"\n" +
+    "          is-open=\"startDate.opened\"\n" +
+    "          show-button-bar=\"false\"\n" +
+    "          datepicker-options=\"vm.facet.state.start\"\n" +
+    "          close-text=\"Close\" />\n" +
+    "      </span>\n" +
+    "    </div>\n" +
+    "    <div class=\"col-md-6 facet-date-right\">\n" +
+    "      <span class=\"input-group\">\n" +
+    "        <span class=\"input-group-btn\">\n" +
+    "          <button type=\"button\" class=\"btn btn-default\"\n" +
+    "            ng-disabled=\"vm.isLoading()\"\n" +
+    "            ng-click=\"endDate.opened = !endDate.opened\">\n" +
+    "            <i class=\"glyphicon glyphicon-calendar\"></i>\n" +
+    "          </button>\n" +
+    "        </span>\n" +
+    "        <input type=\"text\" class=\"form-control\"\n" +
+    "          uib-datepicker-popup=\"\"\n" +
+    "          ng-readonly=\"true\"\n" +
+    "          ng-change=\"vm.changed()\"\n" +
+    "          ng-model=\"vm.facet.selectedValue.end\"\n" +
+    "          is-open=\"endDate.opened\"\n" +
+    "          show-button-bar=\"false\"\n" +
+    "          datepicker-options=\"vm.facet.state.end\"\n" +
+    "          close-text=\"Close\" />\n" +
+    "      </span>\n" +
     "    </div>\n" +
     "  </div>\n" +
-    "  <div class=\"facet\" ng-if=!vm.facet.isEnabled()>\n" +
-    "    <div class=\"well well-sm\">\n" +
-    "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12\">\n" +
-    "          <div class=\"row vertical-align\">\n" +
-    "            <div class=\"col-xs-10 text-left\">\n" +
-    "              <h5 class=\"facet-name\">{{ vm.facet.name }}</h5>\n" +
-    "            </div>\n" +
-    "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
-    "              <button\n" +
-    "                ng-disabled=\"vm.isLoading()\"\n" +
-    "                ng-click=\"vm.enableFacet()\"\n" +
-    "                class=\"facet-enable-btn btn btn-default btn-xs pull-right glyphicon glyphicon-plus\">\n" +
-    "              </button>\n" +
-    "            </div>\n" +
-    "          </div>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "    </div>\n" +
-    "  </div>\n" +
-    "</div>\n"
+    "</seco-facet-wrapper>\n"
   );
 
 
   $templateCache.put('src/facets/checkbox/facets.checkbox-facet.directive.html',
-    "<div class=\"facet-wrapper\">\n" +
-    "  <div class=\"facet\" ng-if=vm.facet.isEnabled()>\n" +
-    "    <div class=\"well well-sm\">\n" +
-    "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12 text-left\">\n" +
-    "          <div class=\"alert alert-danger\" ng-if=\"vm.error\">{{ vm.error|limitTo:100 }}</div>\n" +
-    "          <span spinner-key=\"vm.getSpinnerKey()\" spinner-start-active=\"true\"\n" +
-    "            us-spinner=\"{radius:30, width:8, length: 40}\" ng-if=\"vm.isLoading()\"></span>\n" +
-    "          <h5 class=\"facet-name pull-left\">{{ vm.facet.name }}</h5>\n" +
-    "          <button\n" +
-    "            ng-disabled=\"vm.isLoading()\"\n" +
-    "            ng-click=\"vm.disableFacet()\"\n" +
-    "            class=\"btn btn-danger btn-xs pull-right glyphicon glyphicon-remove\">\n" +
-    "          </button>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12 text-left\">\n" +
-    "          <div class=\"facet-input-container\">\n" +
-    "            <div class=\"checkbox\" ng-repeat=\"choice in vm.facet.getState()\">\n" +
-    "            <label>\n" +
-    "              <input type=\"checkbox\"\n" +
-    "              checklist-change=\"vm.changed()\"\n" +
-    "              ng-disabled=\"(vm.isLoading() || !choice.count)\"\n" +
-    "              class=\"selector checkbox\"\n" +
-    "              checklist-model=\"vm.facet.selectedValue.value\"\n" +
-    "              checklist-value=\"choice.value\" />\n" +
-    "              {{ choice.text }} ({{ choice.count }})\n" +
-    "            </label>\n" +
-    "            </div>\n" +
-    "          </div>\n" +
+    "<seco-facet-wrapper>\n" +
+    "  <div class=\"row\">\n" +
+    "    <div class=\"col-xs-12 text-left\">\n" +
+    "      <div class=\"facet-input-container\">\n" +
+    "        <div class=\"checkbox\" ng-repeat=\"choice in vm.facet.getState()\">\n" +
+    "        <label>\n" +
+    "          <input type=\"checkbox\"\n" +
+    "            checklist-change=\"vm.changed()\"\n" +
+    "            ng-disabled=\"(vm.isLoading() || !choice.count)\"\n" +
+    "            class=\"selector checkbox\"\n" +
+    "            checklist-model=\"vm.facet.selectedValue.value\"\n" +
+    "            checklist-value=\"choice.value\" />\n" +
+    "          {{ choice.text }} ({{ choice.count }})\n" +
+    "        </label>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +
-    "  <div class=\"facet\" ng-if=!vm.facet.isEnabled()>\n" +
-    "    <div class=\"well well-sm\">\n" +
-    "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12\">\n" +
-    "          <div class=\"row vertical-align\">\n" +
-    "            <div class=\"col-xs-10 text-left\">\n" +
-    "              <h5 class=\"facet-name\">{{ vm.facet.name }}</h5>\n" +
-    "            </div>\n" +
-    "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
-    "              <button\n" +
-    "                ng-disabled=\"vm.isLoading()\"\n" +
-    "                ng-click=\"vm.enableFacet()\"\n" +
-    "                class=\"facet-enable-btn btn btn-default btn-xs pull-right glyphicon glyphicon-plus\">\n" +
-    "              </button>\n" +
-    "            </div>\n" +
-    "          </div>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "    </div>\n" +
-    "  </div>\n" +
-    "</div>\n"
+    "</seco-facet-wrapper>\n"
   );
 
 }]);
