@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.10.0] - 2018-03-13
+
+### Changed
+
+- Cosmetic changes:
+    - Facet disable button is now more subtle.
+    - The enable/disable button is consistently placed.
+    - Loading spinner is smaller.
+- Refactored facet templates (this has some DOM/CSS implications).
+
 ## [1.9.1] - 2017-11-28
 
 ### Fixed
