@@ -87,7 +87,7 @@ describe('TextFacet', function() {
             expect(isIncluded).toBe(true);
         });
 
-        it('should should lowercase the value', function() {
+        it('should lowercase the value', function() {
             var searchTerms = ['FoO', 'BBAR'];
             facet.selectedValue = searchTerms.join(' ');
 
@@ -98,7 +98,7 @@ describe('TextFacet', function() {
             });
         });
 
-        it('should should split the search terms if there are multiple words', function() {
+        it('should split the search terms if there are multiple words', function() {
             var searchTerms = ['foooz', 'barzz'];
             facet.selectedValue = searchTerms.join(' ');
 

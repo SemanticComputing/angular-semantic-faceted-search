@@ -30,8 +30,15 @@
     *
     * The score is captured as variable `?score`, and can thus be used to sort results.
     *
-    * The search terms are sanitized in order to avoid syntax errors from the backend.
-    * In case there is an even number of quotes (`"`) they are escaped in the search terms.
+    * There are multiple configuration options with which to modify how the user's query is interpreted.
+    * The default configuration allows the use of the Lucene query syntax to some extent, and attempts
+    * to fix the query in case it is not sytactically valid. This behavior can be turned off by either
+    * enabling `raw` for full syntax support and no sanitization, or `escapeSpecialCharacters` for
+    * escaping the syntax. Backslashes and quotes are always escaped in the SPARQL query in order
+    * to keep it syntactically correct.
+    *
+    * The search terms are sanitized by default in order to avoid syntax errors from the backend.
+    * In case there is an even number of quotes (`"`) they are kept in the search terms.
     * If there is an odd number of quotes, they are removed.
     * Backslashes, and parentheses are removed, as well as `AND`, `OR`, and `NOT`,
     * if they are the first or last tokens in the query.
@@ -58,6 +65,17 @@
     * - **[limit]** - `{number}` - Limit for the text search results.
     *   See [Jena text query documentation](https://jena.apache.org/documentation/query/text-query.html#query-with-sparql).
     * - **[graph]** - `{string}` - The URI of the graph to use for the text search.
+    * - **[raw]** - `{boolean}` - If truthy, no attempt is made to fix syntax errors in the text query.
+    *   Backslashes and quotes are escaped for the SPARQL query. Default is false.
+    *   None of the options below are recomended if this option is enabled.
+    * - **[escapeSpecialCharacters]** - `{boolean}` - If truthy, Lucene query parser special characters
+    *   (`+ - && || ! ( ) { } [ ] ^ " ~ * ? : \ /`) are escaped. If `raw` is true, this option is ignored.
+    *   This option is recommended if either of the options below is used. Default is false.
+    * - **[wildcard]** - `{boolean|string}` - If `true`, `*` is appended to each word in the query for partial matching.
+    *   If the value is `"full"`, `*` is appended *and* prepended to each word.
+    *   An attempt is made to not add the `*` before or after special characters.
+    *   Default is false.
+    * - **[intersection]** `{boolean}` - If truthy, `&&` will be added between terms. Default is false.
     *
     */
     angular.module('seco.facetedSearch')
