@@ -193,7 +193,7 @@
      * Main module.
      */
     angular.module('seco.facetedSearch', [
-        'sparql', 'ui.bootstrap', 'angularSpinner', 'checklist-model'
+        'sparql', 'ui.bootstrap', 'angularSpinner', 'checklist-model', 'chart.js'
     ])
     .constant('_', _) // eslint-disable-line no-undef
     .constant('PREFIXES',

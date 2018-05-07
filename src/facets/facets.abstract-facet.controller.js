@@ -17,6 +17,9 @@
         vm.toggleFacetEnabled = toggleFacetEnabled;
         vm.disableFacet = disableFacet;
         vm.enableFacet = enableFacet;
+        vm.toggleChart = toggleChart;
+
+        vm.showChart = false;
 
         vm.getFacetSize = getFacetSize;
 
@@ -27,6 +30,9 @@
         vm.emitChange = emitChange;
         vm.handleUpdateSuccess = handleUpdateSuccess;
         vm.handleError = handleError;
+        vm.handleChartClick = handleChartClick;
+        vm.updateChartData = updateChartData;
+        vm.clearChartData = clearChartData;
 
         vm.getSpinnerKey = getSpinnerKey;
 
@@ -120,8 +126,53 @@
         }
 
         function handleUpdateSuccess() {
+            vm.updateChartData();
             vm.error = undefined;
             vm.isLoadingFacet = false;
+        }
+
+        function toggleChart() {
+            vm.showChart = !vm.showChart;
+        }
+
+        function clearChartData() {
+            vm.chartData = {
+                values: [],
+                data: [],
+                labels: []
+            };
+        }
+
+        function updateChartData() {
+            vm.clearChartData();
+            if (vm.facet.getState) {
+                var state = vm.facet.getState();
+                state.forEach(function(val) {
+                    // Don't add "no selection"
+                    if (angular.isDefined(val.value)) {
+                        vm.chartData.values.push(val.value);
+                        vm.chartData.data.push(val.count);
+                        vm.chartData.labels.push(val.text);
+                    }
+                });
+            }
+        }
+
+        function handleChartClick(chartElement) {
+            chartElement = chartElement[0];
+            chartElement.custom = chartElement.custom || {};
+            chartElement.custom.backgroundColor = 'grey';
+            chartElement.custom.borderWidth = 10;
+            if (vm.previousElement) {
+                vm.previousElement.custom.backgroundColor = null;
+                vm.previousElement.custom.borderWidth = null;
+            }
+            vm.previousElement = chartElement;
+            chartElement._chart.update();
+            var selectedValue = vm.chartData.values[chartElement._index];
+
+            vm.facet.selectedValue = _.find(vm.facet.getState(), ['value', selectedValue]);
+            vm.changed();
         }
 
         function handleError(error) {
