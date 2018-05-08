@@ -7,7 +7,7 @@
     /* @ngInject */
     function AbstractFacetController($scope, $log, _, EVENT_FACET_CONSTRAINTS,
             EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS,
-            FacetImpl) {
+            FacetChartService, FacetImpl) {
 
         var vm = this;
 
@@ -32,7 +32,6 @@
         vm.handleError = handleError;
         vm.handleChartClick = handleChartClick;
         vm.updateChartData = updateChartData;
-        vm.clearChartData = clearChartData;
 
         vm.getSpinnerKey = getSpinnerKey;
 
@@ -55,6 +54,7 @@
                     vm.listen();
                     vm.update(cons);
                 }
+                vm.chart = vm.chart || new FacetChartService({ facet: vm.facet, scope: $scope });
                 // Unregister initListener
                 initListener();
             });
@@ -135,44 +135,13 @@
             vm.showChart = !vm.showChart;
         }
 
-        function clearChartData() {
-            vm.chartData = {
-                values: [],
-                data: [],
-                labels: []
-            };
-        }
-
         function updateChartData() {
-            vm.clearChartData();
-            if (vm.facet.getState) {
-                var state = vm.facet.getState();
-                state.forEach(function(val) {
-                    // Don't add "no selection"
-                    if (angular.isDefined(val.value)) {
-                        vm.chartData.values.push(val.value);
-                        vm.chartData.data.push(val.count);
-                        vm.chartData.labels.push(val.text);
-                    }
-                });
-            }
+            return vm.chart.updateChartData();
         }
 
         function handleChartClick(chartElement) {
-            chartElement = chartElement[0];
-            chartElement.custom = chartElement.custom || {};
-            chartElement.custom.backgroundColor = 'grey';
-            chartElement.custom.borderWidth = 10;
-            if (vm.previousElement) {
-                vm.previousElement.custom.backgroundColor = null;
-                vm.previousElement.custom.borderWidth = null;
-            }
-            vm.previousElement = chartElement;
-            chartElement._chart.update();
-            var selectedValue = vm.chartData.values[chartElement._index];
-
-            vm.facet.selectedValue = _.find(vm.facet.getState(), ['value', selectedValue]);
-            vm.changed();
+            vm.chart.handleChartClick(chartElement);
+            return vm.changed();
         }
 
         function handleError(error) {

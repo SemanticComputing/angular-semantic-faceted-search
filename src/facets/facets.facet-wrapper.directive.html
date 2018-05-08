@@ -33,8 +33,8 @@
             <div ng-switch-when="true">
               <canvas class="chart chart-pie"
                 chart-click="vm.handleChartClick"
-                chart-data="vm.chartData.data"
-                chart-labels="vm.chartData.labels"></canvas>
+                chart-data="vm.chart.chartData.data"
+                chart-labels="vm.chart.chartData.labels"></canvas>
             </div>
             <div ng-switch-default>
               <div class="facet-input-container" ng-transclude></div>
