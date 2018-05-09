@@ -11,6 +11,8 @@ module.exports = function(config) {
         '../bower_components/spin.js/spin.js',
         '../bower_components/angular-spinner/dist/angular-spinner.js',
         '../bower_components/checklist-model/checklist-model.js',
+        '../bower_components/chart.js/dist/Chart.js',
+        '../bower_components/angular-chart.js/angular-chart.js',
         '../src/facets/facets.module.js',
         '../src/**/*.js',
         '*.js'

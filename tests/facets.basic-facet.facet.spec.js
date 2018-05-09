@@ -1,5 +1,5 @@
 /* eslint-env jasmine */
-/* global inject, module  */
+/* global inject, module, _  */
 
 describe('BasicFacet', function() {
     var $rootScope, $q, $timeout, mock, mockConstructor, BasicFacet, facet,
@@ -16,7 +16,7 @@ describe('BasicFacet', function() {
         $provide.value('AdvancedSparqlService', mockConstructor);
     }));
 
-    beforeEach(inject(function(){
+    beforeEach(inject(function() {
         spyOn(mock, 'getObjectsNoGrouping').and.callThrough();
     }));
 
@@ -117,6 +117,39 @@ describe('BasicFacet', function() {
             facet.disable();
 
             expect(facet.isEnabled()).toBe(false);
+        });
+    });
+
+    describe('setSelectedValue', function() {
+        it('should set the selected value', function() {
+            var value = '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Mies>';
+            facet.state = _.cloneDeep(genResponse);
+            expect(facet.getSelectedValue()).toBeUndefined();
+
+            facet.setSelectedValue(value);
+
+            expect(facet.getSelectedValue()).toEqual(value);
+            expect(facet.selectedValue).toEqual(genResponse[1]);
+
+            facet.setSelectedValue(undefined);
+
+            expect(facet.getSelectedValue()).toBeUndefined();
+            expect(facet.selectedValue).toEqual(genResponse[0]);
+        });
+    });
+
+    describe('deselectValue', function() {
+        it('should select the "no selection" value', function() {
+            var value = '<http://ldf.fi/narc-menehtyneet1939-45/sukupuoli/Mies>';
+
+            facet.state = _.cloneDeep(genResponse);
+            expect(facet.getSelectedValue()).toBeUndefined();
+
+            facet.setSelectedValue(value);
+            expect(facet.getSelectedValue()).toEqual(value);
+
+            facet.deselectValue();
+            expect(facet.selectedValue).toEqual(genResponse[0]);
         });
     });
 

@@ -3,25 +3,27 @@
 describe('BasicFacetController', function() {
     beforeEach(module('seco.facetedSearch'));
 
-    var $q, $controller, $rootScope, $scope, mock, initial, controller,
+    var $q, $controller, $rootScope, $scope, initial, controller,
         selectedValue;
 
     beforeEach(module(function($provide) {
         selectedValue = '<uri>';
 
-        mock = {
-            getSelectedValue: function() { return selectedValue; },
-            getConstraint: function() { return 'constraint'; },
-            getPriority: function() { return 1; },
-            facetId: 'basicId',
-            enable: function() { },
-            update: function() { return $q.when(); },
-            disable: function() { },
-            isEnabled: function() { return true; }
-        };
-        var mockConstructor = function() { return mock; };
+        function MockConstructor() {
+            var enabled = true;
+            return {
+                getSelectedValue: function() { return selectedValue; },
+                getConstraint: function() { return 'constraint'; },
+                getPriority: function() { return 1; },
+                facetId: 'basicId',
+                enable: function() { enabled = true; },
+                update: function() { return $q.when(); },
+                disable: function() { enabled = false; },
+                isEnabled: function() { return enabled; }
+            };
+        }
 
-        $provide.value('BasicFacet', mockConstructor);
+        $provide.value('BasicFacet', MockConstructor);
     }));
 
     beforeEach(inject(function(_$controller_, _$rootScope_, _$q_){
@@ -99,6 +101,22 @@ describe('BasicFacetController', function() {
 
             expect(controller.facet.disable).toHaveBeenCalled();
             expect($scope.$emit).toHaveBeenCalledWith('sf-facet-changed', jasmine.any(Object));
+        });
+    });
+
+    describe('vm.hasChartButton', function() {
+        it('should be true if facet is enabled and the option is enabled', function() {
+            expect(controller.hasChartButton()).toBe(false);
+
+            controller.disableFacet();
+            expect(controller.hasChartButton()).toBe(false);
+
+            controller.enableFacet();
+            expect(controller.hasChartButton()).toBe(false);
+
+            $scope.options.chart = true;
+            controller.initOptions();
+            expect(controller.hasChartButton()).toBe(true);
         });
     });
 });

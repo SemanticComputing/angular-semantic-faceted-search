@@ -33,6 +33,8 @@
         BasicFacetConstructor.prototype.isEnabled = isEnabled;
         BasicFacetConstructor.prototype.hasError = hasError;
         BasicFacetConstructor.prototype.getSelectedValue = getSelectedValue;
+        BasicFacetConstructor.prototype.setSelectedValue = setSelectedValue;
+        BasicFacetConstructor.prototype.deselectValue = deselectValue;
 
         return BasicFacetConstructor;
 
@@ -304,6 +306,14 @@
                 val = this.selectedValue.value;
             }
             return val;
+        }
+
+        function setSelectedValue(value) {
+            this.selectedValue = _.find(this.getState(), ['value', value]);
+        }
+
+        function deselectValue() {
+            this.setSelectedValue(undefined);
         }
 
         function isEnabled() {

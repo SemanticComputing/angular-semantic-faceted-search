@@ -16,6 +16,8 @@
         CheckboxFacet.prototype.buildQueryTemplate = buildQueryTemplate;
         CheckboxFacet.prototype.buildQuery = buildQuery;
         CheckboxFacet.prototype.fetchState = fetchState;
+        CheckboxFacet.prototype.deselectValue = deselectValue;
+        CheckboxFacet.prototype.setSelectedValue = setSelectedValue;
 
         return CheckboxFacet;
 
@@ -105,6 +107,14 @@
                 self._error = true;
                 return $q.reject(error);
             });
+        }
+
+        function setSelectedValue(value) {
+            this.selectedValue.value = _.uniq((this.selectedValue.value || []).concat(value));
+        }
+
+        function deselectValue(value) {
+            _.pull(this.selectedValue.value, value);
         }
 
         function getConstraint() {

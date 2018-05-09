@@ -9,16 +9,16 @@
               <h5 class="facet-name pull-left">{{ vm.facet.name }}</h5>
             </div>
             <div class="facet-enable-btn-container col-xs-2 text-right">
-              <button ng-show="vm.facet.isEnabled()"
-                class="btn btn-primary btn-toggle-chart btn-xs pull-right"
-                ng-click="vm.toggleChart()">
-                <span class="glyphicon glyphicon-picture"></span>
+              <button ng-show="vm.hasChartButton()"
+                  class="btn btn-default btn-toggle-chart btn-xs pull-right"
+                  ng-click="vm.toggleChart()">
+                <span class="glyphicon glyphicon-stats"></span>
               </button>
               <button
-                 ng-disabled="vm.isLoading()"
-                 ng-click="vm.toggleFacetEnabled()"
-                 class="btn btn-default btn-facet-toggle btn-xs pull-right"
-                 ng-class="vm.facet.isEnabled() ? 'btn-facet-close' : 'btn-facet-open'">
+                  ng-disabled="vm.isLoading()"
+                  ng-click="vm.toggleFacetEnabled()"
+                  class="btn btn-default btn-facet-toggle btn-xs pull-right"
+                  ng-class="vm.facet.isEnabled() ? 'btn-facet-close' : 'btn-facet-open'">
                 <span class="glyphicon" ng-class="vm.facet.isEnabled() ? 'glyphicon-minus' : 'glyphicon-plus'"></span>
               </button>
             </div>
@@ -29,7 +29,7 @@
         <div class="col-xs-12 text-left">
           <span spinner-key="vm.getSpinnerKey()" spinner-start-active="true"
                 us-spinner="{radius:15, width:6, length: 20}" ng-if="vm.isLoading()"></span>
-          <div ng-switch="vm.showChart">
+          <div ng-switch="vm.isChartVisible()">
             <div ng-switch-when="true">
               <canvas class="chart chart-pie"
                 chart-click="vm.handleChartClick"

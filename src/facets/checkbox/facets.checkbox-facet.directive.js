@@ -33,6 +33,9 @@
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
     *   Optional, as it can also be given globally in
     *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
+    * - **[chart]** `{boolean}` - If truthy, there will be an additional button next to the
+    *   enable/disable button of the facet. Clicking the button will display the facet values
+    *   as a pie chart.
     * - **[headers]** `{Object}` - Additional HTTP headers.
     * - **[priority]** - `{number}` - Priority for constraint sorting.
     *   Undefined by default.

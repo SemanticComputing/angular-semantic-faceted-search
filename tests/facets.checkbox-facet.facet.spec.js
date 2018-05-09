@@ -1,5 +1,5 @@
 /* eslint-env jasmine */
-/* global inject, module  */
+/* global inject, module, _ */
 
 describe('CheckboxFacet', function() {
     var $rootScope, $q, $timeout, mock, mockConstructor, CheckboxFacet, facet,
@@ -116,13 +116,64 @@ describe('CheckboxFacet', function() {
         });
     });
 
+    describe('setSelectedValue', function() {
+        it('should set the selected value', function() {
+            var value = 'wikipedia';
+            facet.state = genResponse;
+            expect(facet.getSelectedValue()).toBeUndefined();
+
+            facet.setSelectedValue(value);
+
+            expect(facet.getSelectedValue()).toEqual([value]);
+            expect(facet.selectedValue).toEqual({ value: ['wikipedia'] });
+        });
+
+        it('should should add another selected value, if a value is already selected', function() {
+            facet.state = genResponse;
+            expect(facet.getSelectedValue()).toBeUndefined();
+
+            facet.setSelectedValue('wikipedia');
+            facet.setSelectedValue('kansallisbiografia');
+
+            expect(facet.getSelectedValue()).toEqual(['wikipedia', 'kansallisbiografia']);
+            expect(facet.selectedValue).toEqual({ value: ['wikipedia', 'kansallisbiografia'] });
+        });
+    });
+
+    describe('deselectValue', function() {
+        it('should deselect the given selected value', function() {
+            var first = 'wikipedia';
+            var second = 'kansallisbiografia';
+
+            facet.state = _.cloneDeep(genResponse);
+            expect(facet.getSelectedValue()).toBeUndefined();
+
+            facet.setSelectedValue(first);
+            expect(facet.getSelectedValue()).toEqual([first]);
+
+            facet.deselectValue(first);
+            expect(facet.selectedValue).toEqual({ value: [] });
+
+            facet.setSelectedValue(first);
+            facet.setSelectedValue(second);
+            expect(facet.getSelectedValue()).toEqual([first, second]);
+
+            facet.deselectValue(first);
+            expect(facet.selectedValue).toEqual({ value: [second] });
+
+            facet.setSelectedValue(first);
+            facet.deselectValue(second);
+            expect(facet.selectedValue).toEqual({ value: [first] });
+        });
+    });
+
     describe('getSelectedValue', function() {
         it('should get the selected value', function() {
             expect(facet.getSelectedValue()).toBeUndefined();
 
-            facet.selectedValue = { value: '<obj>' };
+            facet.selectedValue = { value: ['<obj>'] };
 
-            expect(facet.getSelectedValue()).toEqual('<obj>');
+            expect(facet.getSelectedValue()).toEqual(['<obj>']);
         });
     });
 
