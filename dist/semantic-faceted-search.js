@@ -193,7 +193,7 @@
      * Main module.
      */
     angular.module('seco.facetedSearch', [
-        'sparql', 'ui.bootstrap', 'angularSpinner', 'checklist-model'
+        'sparql', 'ui.bootstrap', 'angularSpinner', 'checklist-model', 'chart.js'
     ])
     .constant('_', _) // eslint-disable-line no-undef
     .constant('PREFIXES',
@@ -709,26 +709,31 @@
 (function() {
     'use strict';
 
-    AbstractFacetController.$inject = ['$scope', '$log', '_', 'EVENT_FACET_CONSTRAINTS', 'EVENT_FACET_CHANGED', 'EVENT_REQUEST_CONSTRAINTS', 'EVENT_INITIAL_CONSTRAINTS', 'FacetImpl'];
+    AbstractFacetController.$inject = ['$scope', '$log', '_', 'EVENT_FACET_CONSTRAINTS', 'EVENT_FACET_CHANGED', 'EVENT_REQUEST_CONSTRAINTS', 'EVENT_INITIAL_CONSTRAINTS', 'FacetChartService', 'FacetImpl'];
     angular.module('seco.facetedSearch')
     .controller('AbstractFacetController', AbstractFacetController);
 
     /* @ngInject */
     function AbstractFacetController($scope, $log, _, EVENT_FACET_CONSTRAINTS,
             EVENT_FACET_CHANGED, EVENT_REQUEST_CONSTRAINTS, EVENT_INITIAL_CONSTRAINTS,
-            FacetImpl) {
+            FacetChartService, FacetImpl) {
 
         var vm = this;
 
         vm.isLoading = isLoading;
+        vm.isChartVisible = isChartVisible;
+        vm.hasChartButton = hasChartButton;
+
         vm.changed = changed;
 
         vm.toggleFacetEnabled = toggleFacetEnabled;
         vm.disableFacet = disableFacet;
         vm.enableFacet = enableFacet;
+        vm.toggleChart = toggleChart;
 
         vm.getFacetSize = getFacetSize;
 
+        vm.initOptions = initOptions;
         vm.init = init;
         vm.listener = function() { };
         vm.listen = listen;
@@ -736,6 +741,8 @@
         vm.emitChange = emitChange;
         vm.handleUpdateSuccess = handleUpdateSuccess;
         vm.handleError = handleError;
+        vm.handleChartClick = handleChartClick;
+        vm.updateChartData = updateChartData;
 
         vm.getSpinnerKey = getSpinnerKey;
 
@@ -747,21 +754,29 @@
             }
         });
 
-        function init(facet) {
+        function init() {
             var initListener = $scope.$on(EVENT_INITIAL_CONSTRAINTS, function(event, cons) {
-                var opts = _.cloneDeep($scope.options);
-                opts = angular.extend({}, cons.config, opts);
-                opts.initial = cons.facets;
-                vm.facet = facet || new FacetImpl(opts);
-                if (vm.facet.isEnabled()) {
-                    vm.previousVal = _.cloneDeep(vm.facet.getSelectedValue());
-                    vm.listen();
-                    vm.update(cons);
-                }
+                vm.initOptions(cons);
                 // Unregister initListener
                 initListener();
             });
             $scope.$emit(EVENT_REQUEST_CONSTRAINTS);
+        }
+
+        function initOptions(cons) {
+            cons = cons || {};
+            var opts = _.cloneDeep($scope.options);
+            opts = angular.extend({}, cons.config, opts);
+            opts.initial = cons.facets;
+            vm.facet = vm.facet || new FacetImpl(opts);
+            if (vm.facet.isEnabled()) {
+                vm.previousVal = _.cloneDeep(vm.facet.getSelectedValue());
+                vm.listen();
+                vm.update(cons);
+            }
+            if (opts.chart) {
+                vm.chart = vm.chart || new FacetChartService({ facet: vm.facet, scope: $scope });
+            }
         }
 
         var spinnerKey;
@@ -816,7 +831,7 @@
             vm.listen();
             vm.isLoadingFacet = true;
             vm.facet.enable();
-            vm.init(vm.facet);
+            vm.init();
         }
 
         function disableFacet() {
@@ -829,8 +844,32 @@
         }
 
         function handleUpdateSuccess() {
+            vm.updateChartData();
             vm.error = undefined;
             vm.isLoadingFacet = false;
+        }
+
+        function toggleChart() {
+            vm._showChart = !vm._showChart;
+        }
+
+        function isChartVisible() {
+            return vm._showChart;
+        }
+
+        function hasChartButton() {
+            return vm.facet.isEnabled() && !!vm.chart;
+        }
+
+        function updateChartData() {
+            if (vm.chart) {
+                return vm.chart.updateChartData();
+            }
+        }
+
+        function handleChartClick(chartElement) {
+            vm.chart.handleChartClick(chartElement);
+            return vm.changed();
         }
 
         function handleError(error) {
@@ -851,6 +890,112 @@
                 return Math.min(facetStates.length + 2, 10).toString();
             }
             return '10';
+        }
+    }
+})();
+
+(function() {
+    'use strict';
+
+    FacetChartService.$inject = ['_'];
+    angular.module('seco.facetedSearch')
+    .factory('FacetChartService', FacetChartService);
+
+    /* @ngInject */
+    function FacetChartService(_) {
+
+        return FacetChartService;
+
+        function FacetChartService(config) {
+            var self = this;
+
+            self.scope = config.scope;
+            self.facet = config.facet;
+
+            self.handleChartClick = handleChartClick;
+            self.updateChartData = updateChartData;
+            self.clearChartData = clearChartData;
+
+            self.scope.$on('chart-create', function(evt, chart) {
+                // Highlight the selected value on init
+                updateChartHighlight(chart, self.facet.getSelectedValue());
+            });
+
+            function clearChartData() {
+                self.chartData = {
+                    values: [],
+                    data: [],
+                    labels: []
+                };
+            }
+
+            function updateChartData() {
+                self.clearChartData();
+                if (self.facet.getState) {
+                    self.facet.getState().forEach(function(val) {
+                        // Don't add "no selection"
+                        if (angular.isDefined(val.value)) {
+                            self.chartData.values.push(val.value);
+                            self.chartData.data.push(val.count);
+                            self.chartData.labels.push(val.text);
+                        }
+                    });
+                }
+            }
+
+            function clearChartSliceHighlight(chartElement, updateChart) {
+                _.set(chartElement.custom, 'backgroundColor', null);
+                _.set(chartElement.custom, 'borderWidth', null);
+                if (updateChart) {
+                    chartElement._chart.update();
+                }
+            }
+
+            function highlightChartElement(chartElement, updateChart) {
+                _.set(chartElement, 'custom.backgroundColor', 'grey');
+                chartElement.custom.borderWidth = 10;
+                if (updateChart) {
+                    chartElement._chart.update();
+                }
+            }
+
+            function updateChartHighlight(chart, values) {
+                var chartElements = chart.getDatasetMeta(0).data;
+                // Clear previous selection
+                chartElements.forEach(function(elem) {
+                    clearChartSliceHighlight(elem);
+                });
+
+                values = _.compact(_.castArray(values));
+                values.forEach(function(value) {
+                    var index = _.indexOf(self.chartData.values, value);
+                    var chartElement = _.find(chartElements, ['_index', index]);
+                    highlightChartElement(chartElement);
+                });
+
+                chart.update();
+            }
+
+            function updateChartSelection(chartElement) {
+                var selectedValue = self.chartData.values[chartElement._index];
+
+                if (_.get(chartElement, 'custom.backgroundColor')) {
+                    // Slice was already selected, so clear the selection
+                    clearChartSliceHighlight(chartElement, true);
+                    self.facet.deselectValue(selectedValue);
+                    return self.facet.getSelectedValue();
+                }
+
+                self.facet.setSelectedValue(selectedValue);
+
+                updateChartHighlight(chartElement._chart, self.facet.getSelectedValue());
+
+                return self.facet.getSelectedValue();
+            }
+
+            function handleChartClick(chartElement) {
+                return updateChartSelection(chartElement[0]);
+            }
         }
     }
 })();
@@ -891,6 +1036,8 @@
         BasicFacetConstructor.prototype.isEnabled = isEnabled;
         BasicFacetConstructor.prototype.hasError = hasError;
         BasicFacetConstructor.prototype.getSelectedValue = getSelectedValue;
+        BasicFacetConstructor.prototype.setSelectedValue = setSelectedValue;
+        BasicFacetConstructor.prototype.deselectValue = deselectValue;
 
         return BasicFacetConstructor;
 
@@ -1164,6 +1311,14 @@
             return val;
         }
 
+        function setSelectedValue(value) {
+            this.selectedValue = _.find(this.getState(), ['value', value]);
+        }
+
+        function deselectValue() {
+            this.setSelectedValue(undefined);
+        }
+
         function isEnabled() {
             return this._isEnabled;
         }
@@ -1230,6 +1385,9 @@
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
     *   Optional, as it can also be given globally in
     *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
+    * - **[chart]** `{boolean}` - If truthy, there will be an additional button next to the
+    *   enable/disable button of the facet. Clicking the button will display the facet values
+    *   as a pie chart.
     * - **[headers]** `{Object}` - Additional HTTP headers.
     *   Note that currently it is not possible to specify separate headers for separate
     *   services.
@@ -2083,6 +2241,8 @@
         CheckboxFacet.prototype.buildQueryTemplate = buildQueryTemplate;
         CheckboxFacet.prototype.buildQuery = buildQuery;
         CheckboxFacet.prototype.fetchState = fetchState;
+        CheckboxFacet.prototype.deselectValue = deselectValue;
+        CheckboxFacet.prototype.setSelectedValue = setSelectedValue;
 
         return CheckboxFacet;
 
@@ -2174,6 +2334,14 @@
             });
         }
 
+        function setSelectedValue(value) {
+            this.selectedValue.value = _.uniq((this.selectedValue.value || []).concat(value));
+        }
+
+        function deselectValue(value) {
+            _.pull(this.selectedValue.value, value);
+        }
+
         function getConstraint() {
             var self = this;
             var selections = _.compact(self.getSelectedValue());
@@ -2245,6 +2413,9 @@
     * - **[endpointUrl]** `{string}` - The URL of the SPARQL endpoint.
     *   Optional, as it can also be given globally in
     *   {@link seco.facetedSearch.FacetHandler `FacetHandler`} config.
+    * - **[chart]** `{boolean}` - If truthy, there will be an additional button next to the
+    *   enable/disable button of the facet. Clicking the button will display the facet values
+    *   as a pie chart.
     * - **[headers]** `{Object}` - Additional HTTP headers.
     * - **[priority]** - `{number}` - Priority for constraint sorting.
     *   Undefined by default.
@@ -2525,11 +2696,16 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "              <h5 class=\"facet-name pull-left\">{{ vm.facet.name }}</h5>\n" +
     "            </div>\n" +
     "            <div class=\"facet-enable-btn-container col-xs-2 text-right\">\n" +
+    "              <button ng-show=\"vm.hasChartButton()\"\n" +
+    "                  class=\"btn btn-default btn-toggle-chart btn-xs pull-right\"\n" +
+    "                  ng-click=\"vm.toggleChart()\">\n" +
+    "                <span class=\"glyphicon glyphicon-stats\"></span>\n" +
+    "              </button>\n" +
     "              <button\n" +
-    "                 ng-disabled=\"vm.isLoading()\"\n" +
-    "                 ng-click=\"vm.toggleFacetEnabled()\"\n" +
-    "                 class=\"btn btn-default btn-facet-toggle btn-xs pull-right\"\n" +
-    "                 ng-class=\"vm.facet.isEnabled() ? 'btn-facet-close' : 'btn-facet-open'\">\n" +
+    "                  ng-disabled=\"vm.isLoading()\"\n" +
+    "                  ng-click=\"vm.toggleFacetEnabled()\"\n" +
+    "                  class=\"btn btn-default btn-facet-toggle btn-xs pull-right\"\n" +
+    "                  ng-class=\"vm.facet.isEnabled() ? 'btn-facet-close' : 'btn-facet-open'\">\n" +
     "                <span class=\"glyphicon\" ng-class=\"vm.facet.isEnabled() ? 'glyphicon-minus' : 'glyphicon-plus'\"></span>\n" +
     "              </button>\n" +
     "            </div>\n" +
@@ -2539,8 +2715,18 @@ angular.module('seco.facetedSearch').run(['$templateCache', function($templateCa
     "      <div class=\"row\" ng-if=\"vm.facet.isEnabled()\">\n" +
     "        <div class=\"col-xs-12 text-left\">\n" +
     "          <span spinner-key=\"vm.getSpinnerKey()\" spinner-start-active=\"true\"\n" +
-    "              us-spinner=\"{radius:15, width:6, length: 20}\" ng-if=\"vm.isLoading()\"></span>\n" +
-    "          <div class=\"facet-input-container\" ng-transclude></div>\n" +
+    "                us-spinner=\"{radius:15, width:6, length: 20}\" ng-if=\"vm.isLoading()\"></span>\n" +
+    "          <div ng-switch=\"vm.isChartVisible()\">\n" +
+    "            <div ng-switch-when=\"true\">\n" +
+    "              <canvas class=\"chart chart-pie\"\n" +
+    "                chart-click=\"vm.handleChartClick\"\n" +
+    "                chart-data=\"vm.chart.chartData.data\"\n" +
+    "                chart-labels=\"vm.chart.chartData.labels\"></canvas>\n" +
+    "            </div>\n" +
+    "            <div ng-switch-default>\n" +
+    "              <div class=\"facet-input-container\" ng-transclude></div>\n" +
+    "            </div>\n" +
+    "          </div>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "    </div>\n" +
