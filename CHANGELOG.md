@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Configuration option for displaying facets as pie charts. If the option `chart` is truthy,
+  the user can click a button next to the disable facet button to see and interact with the
+  facet as a pie chart. The option is applicable for
+  [BasicFacet](http://semanticcomputing.github.io/angular-semantic-faceted-search/#/api/seco.facetedSearch.directive:secoBasicFacet)
+  and [CheckboxFacet](http://semanticcomputing.github.io/angular-semantic-faceted-search/#/api/seco.facetedSearch.directive:secoCheckboxFacet).
+  It also works with
+  [HierachyFacet](http://semanticcomputing.github.io/angular-semantic-faceted-search/#/api/seco.facetedSearch.directive:secoHierarchyFacet),
+  but the hierarchy is not visualized, so usage with that facet is not recommended.
+  The option is disabled by default.
+
 ## [1.10.0] - 2018-03-13
 
 ### Changed
