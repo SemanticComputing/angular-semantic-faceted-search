@@ -1,11 +1,8 @@
 {
-  "name": "semantic-faceted-search",
-  "version": "0.2.0",
-  "description": "## Installation",
-  "main": "tests/test.js",
-  "directories": {
-    "test": "tests"
-  },
+  "name": "sparql-faceter",
+  "version": "1.11.0",
+  "description": "Faceted search using AngularJS and SPARQL",
+  "browser": "dist/semantic-faceted-search.js",
   "devDependencies": {
     "eslint": "^4.18.1",
     "eslint-plugin-angular": "^3.2.0",
@@ -21,7 +18,11 @@
     "karma-chrome-launcher": "^0.2.3",
     "karma-jasmine": "^0.3.8"
   },
-  "dependencies": {},
+  "dependencies": {
+    "angular": "^1.7.0",
+    "angular-paging-sparql-service": "^0.9.0",
+    "lodash": "^4.17.10"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -29,7 +30,7 @@
     "type": "git",
     "url": "git+https://github.com/SemanticComputing/angular-semantic-faceted-search.git"
   },
-  "author": "",
+  "author": "Erkki Heino",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/SemanticComputing/angular-semantic-faceted-search/issues"

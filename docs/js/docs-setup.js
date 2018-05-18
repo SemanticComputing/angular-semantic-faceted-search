@@ -30,7 +30,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A basic select box facet with text filtering.",
-      "keywords": "additional api basic bound box case config configuration constraint currently default define defined defines directive disabled displayed en enabled endpoint endpoints example facet facetedsearch facethandler facets filtering friendly generate generated globally headers helpful http kinds label labels language languages list multiple note object optional options order org pattern patterns people predicate preferred priority properties property query rdfs resource restriction retrieve seco select selectable selection separate service services set skos sorting sparql specifier structure subjects supported tag text title triple undefined unique uri uris url usable users values variable",
+      "keywords": "additional api basic bound box button case chart clicking config configuration constraint currently default define defined defines directive disabled display displayed en enable enabled endpoint endpoints example facet facetedsearch facethandler facets filtering friendly generate generated globally headers helpful http kinds label labels language languages list multiple note object optional options order org pattern patterns people pie predicate preferred priority properties property query rdfs resource restriction retrieve seco select selectable selection separate service services set skos sorting sparql specifier structure subjects supported tag text title triple truthy undefined unique uri uris url usable users values variable",
       "isDeprecated": false
     },
     {
@@ -40,7 +40,7 @@ NG_DOCS={
       "type": "directive",
       "moduleName": "seco.facetedSearch",
       "shortDescription": "A facet for a checkbox selector based on a triple pattern.",
-      "keywords": "additional api based bound checkbox checkboxes choice choices config configuration constraint create default definitions directive disabled displayed element enabled endpoint example facet facetedsearch facethandler facets friendly globally headers hobby http label list multiple object optional options org pattern priority property resource resources restrict result seco selected selections selector set sorting sparql structure title triple undefined union unique uniqueidforthischoice url usable users variable",
+      "keywords": "additional api based bound button chart checkbox checkboxes choice choices clicking config configuration constraint create default definitions directive disabled display displayed element enable enabled endpoint example facet facetedsearch facethandler facets friendly globally headers hobby http label list multiple object optional options org pattern pie priority property resource resources restrict result seco selected selections selector set sorting sparql structure title triple truthy undefined union unique uniqueidforthischoice url usable users values variable",
       "isDeprecated": false
     },
     {

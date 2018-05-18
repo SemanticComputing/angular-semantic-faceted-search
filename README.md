@@ -11,6 +11,10 @@ Install via Bower:
 
 `bower install sparql-faceter`
 
+or
+
+`npm install sparql-faceter`
+
 Include `seco.facetedSearch` in your module dependencies:
 
 ```

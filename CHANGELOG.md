@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.11.0] - 2018-05-18
+
 ### Added
 
 - Configuration option for displaying facets as pie charts. If the option `chart` is truthy,
@@ -199,7 +201,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix the timespan facet, and its documentation
 
-[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.10.0...HEAD
+[Unreleased]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.11.0...HEAD
+[1.11.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.10.0...1.11.0
 [1.10.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.9.1...1.10.0
 [1.9.1]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.9.0...1.9.1
 [1.9.0]: https://github.com/SemanticComputing/angular-semantic-faceted-search/compare/1.8.1...1.9.0
